@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧪 参数化共振峰合成探索器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23 2.3-.7 4.8-.7 6 0 2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+</div></nav>
+
+<!-- 紫色 page-hero -->
+<header class="page-hero" style="background:linear-gradient(135deg,#6d28d9,#a855f7);color:#fff">
+  <div class="hero-inner">
+    <h1>🧪 参数化共振峰合成探索器</h1>
+    <p class="hero-sub">
+      拖动滑块调节 F0（基频）、F1/F2/F3（共振峰）、带宽、声门脉冲、噪声比例，<br>
+      实时听合成出来的元音——原来 [i] 就是 F1 低 + F2 高 + F3 低！比看公式直观100倍。
+    </p>
+  </div>
+</header>
+
+<body class="page-body">
+<div class="container">
+
+<!-- 1. ctrl-row -->
+<div class="ctrl-row card" style="padding:18px 24px;margin-bottom:24px;border-radius:16px">
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+    <button id="playBtn" class="btn btn-primary" style="background:#6d28d9">🔊 播放（持续发声）</button>
+    <button id="stopBtn" class="btn btn-danger">⏹ 停止</button>
+    <button id="demoBtn" class="btn btn-accent">🎵 发"啊-衣-乌"三个元音演示（每个0.5s）</button>
+    <span style="width:24px"></span>
+    <span style="color:#475569;font-weight:600">预设元音：</span>
+    <button class="vowel-preset btn btn-outline" data-v="a">[ɑ] 啊</button>
+    <button class="vowel-preset btn btn-outline" data-v="i">[i] 衣</button>
+    <button class="vowel-preset btn btn-outline" data-v="u">[u] 乌</button>
+    <button class="vowel-preset btn btn-outline" data-v="e">[e] 诶</button>
+    <button class="vowel-preset btn btn-outline" data-v="o">[o] 喔</button>
+    <span style="flex:1"></span>
+    <span id="status" style="color:#6d28d9;font-weight:600;font-size:14px">未启动</span>
+  </div>
+</div>
+
+<!-- 2. 主区 grid-2 -->
+<div class="grid-2" style="gap:24px;align-items:start;margin-bottom:24px">
+
+  <!-- 左：参数控制面板 -->
+  <div class="card" style="padding:22px 24px;border-radius:16px">
+    <h3 style="margin:0 0 16px;color:#1e293b;font-size:18px">🎚️ 合成参数控制面板</h3>
+    <div id="sliders" style="display:flex;flex-direction:column;gap:14px">
+
+      <div class="sld-group">
+        <div class="sld-label"><span>F0 基频</span><span class="sld-val" id="f0Val">160 Hz</span></div>
+        <input type="range" id="f0" min="80" max="400" step="1" value="160" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>F1 第一共振峰</span><span class="sld-val" id="f1Val">700 Hz</span></div>
+        <input type="range" id="f1" min="200" max="900" step="5" value="700" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>F2 第二共振峰</span><span class="sld-val" id="f2Val">1200 Hz</span></div>
+        <input type="range" id="f2" min="600" max="2800" step="10" value="1200" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>F3 第三共振峰</span><span class="sld-val" id="f3Val">2600 Hz</span></div>
+        <input type="range" id="f3" min="1500" max="3500" step="20" value="2600" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>BW1 F1带宽</span><span class="sld-val" id="bw1Val">80 Hz</span></div>
+        <input type="range" id="bw1" min="20" max="200" step="5" value="80" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>BW2 F2带宽</span><span class="sld-val" id="bw2Val">100 Hz</span></div>
+        <input type="range" id="bw2" min="20" max="200" step="5" value="100" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>BW3 F3带宽</span><span class="sld-val" id="bw3Val">150 Hz</span></div>
+        <input type="range" id="bw3" min="20" max="200" step="5" value="150" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>OQ 声门开闭比</span><span class="sld-val" id="oqVal">0.55</span></div>
+        <input type="range" id="oq" min="0" max="1" step="0.01" value="0.55" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>Aspiration 气声噪声</span><span class="sld-val" id="aspVal">0.02</span></div>
+        <input type="range" id="asp" min="0" max="1" step="0.01" value="0.02" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>Vibrato 颤音深度</span><span class="sld-val" id="vibVal">0 Hz</span></div>
+        <input type="range" id="vib" min="0" max="8" step="0.1" value="0" class="slider">
+      </div>
+
+      <div class="sld-group">
+        <div class="sld-label"><span>音量</span><span class="sld-val" id="volVal">0.3</span></div>
+        <input type="range" id="vol" min="0" max="1" step="0.01" value="0.3" class="slider">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 右：canvas 频谱 + IPA元音图 -->
+  <div class="card" style="padding:18px;border-radius:16px;background:#0f172a;position:relative">
+    <canvas id="specCanvas" width="900" height="400" style="width:100%;height:400px;border-radius:10px;display:block"></canvas>
+    <canvas id="ipaCanvas" width="200" height="160" style="position:absolute;right:20px;bottom:20px;border-radius:10px;background:rgba(255,255,255,0.92);border:1px solid #334155"></canvas>
+    <div style="color:#94a3b8;font-size:12px;margin-top:8px;display:flex;gap:18px;flex-wrap:wrap">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#4ade80;border-radius:2px;margin-right:4px"></span>频谱</span>
+      <span><span style="display:inline-block;width:2px;height:10px;background:#ef4444;margin-right:4px"></span>F1/F2/F3 共振峰</span>
+      <span>右下角：当前元音在 IPA 元音图位置 ●</span>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 原理区 -->
+<div class="card" style="padding:28px 32px;border-radius:16px;margin-bottom:24px">
+  <h2 style="margin:0 0 18px;color:#1e293b;font-size:22px">🔬 原理：源-滤波器理论（Source-Filter Theory）</h2>
+
+  <!-- SVG 声源-滤波器模型图 -->
+  <div style="text-align:center;margin-bottom:22px">
+    <svg width="100%" viewBox="0 0 900 200" style="max-width:900px">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+        </marker>
+        <linearGradient id="srcGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/>
+        </linearGradient>
+        <linearGradient id="filtGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#bfdbfe"/><stop offset="1" stop-color="#3b82f6"/>
+        </linearGradient>
+        <linearGradient id="radGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#fecaca"/><stop offset="1" stop-color="#ef4444"/>
+        </linearGradient>
+      </defs>
+
+      <!-- 声门 Source -->
+      <rect x="20" y="60" width="150" height="80" rx="12" fill="url(#srcGrad)" stroke="#d97706" stroke-width="2"/>
+      <text x="95" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#92400e">声门脉冲 Source</text>
+      <!-- 三角波示意 -->
+      <polyline points="40,120 55,80 70,120 85,80 100,120 115,80 130,120 145,80" fill="none" stroke="#92400e" stroke-width="2"/>
+      <text x="95" y="160" text-anchor="middle" font-size="11" fill="#78350f">三角波/锯齿波（F0）</text>
+
+      <!-- 箭头1 -->
+      <line x1="175" y1="100" x2="225" y2="100" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- 声道 Vocal Tract -->
+      <path d="M230,70 Q330,40 430,70 Q530,100 630,75 L630,125 Q530,100 430,130 Q330,160 230,130 Z"
+            fill="url(#filtGrad)" stroke="#1d4ed8" stroke-width="2"/>
+      <text x="430" y="55" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">声道滤波 Vocal Tract</text>
+      <text x="320" y="100" font-size="11" fill="#1e40af">F1</text>
+      <text x="430" y="92" font-size="11" fill="#1e40af">F2</text>
+      <text x="540" y="98" font-size="11" fill="#1e40af">F3</text>
+      <text x="430" y="170" text-anchor="middle" font-size="11" fill="#1e3a8a">管子形状决定共振峰位置</text>
+
+      <!-- 箭头2 -->
+      <line x1="635" y1="100" x2="695" y2="100" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- 嘴唇辐射 Radiation -->
+      <path d="M700,80 Q740,60 780,75 L800,80 L800,120 L780,125 Q740,140 700,120 Z"
+            fill="url(#radGrad)" stroke="#b91c1c" stroke-width="2"/>
+      <text x="750" y="55" text-anchor="middle" font-size="14" font-weight="700" fill="#7f1d1d">嘴唇辐射</text>
+      <text x="750" y="160" text-anchor="middle" font-size="11" fill="#7f1d1d">+6dB/oct 高频提升</text>
+
+      <!-- 输出 -->
+      <text x="860" y="105" font-size="20" font-weight="700" fill="#0f172a">🔊</text>
+    </svg>
+    <p style="color:#64748b;font-size:13px;margin:8px 0 0">数据流向：声门振动产生脉冲 → 声道像管子一样共振（选频放大）→ 嘴唇向外辐射 → 听到元音</p>
+  </div>
+
+  <!-- 公式 -->
+  <div style="background:#f8fafc;border-left:4px solid #8b5cf6;padding:16px 20px;border-radius:8px;margin-bottom:22px">
+    <p style="margin:0 0 6px;color:#334155;font-size:14px;font-weight:600">📐 源-滤波器理论（Gunnar Fant, 1960）：</p>
+    <p style="margin:0;font-family:Georgia,serif;font-size:20px;color:#1e293b;text-align:center;padding:8px 0">
+      <strong>Speech(t) = Source(t) * VocalTract(t)</strong>
+      <span style="font-size:14px;color:#64748b;font-weight:400;font-family:sans-serif">　（* 表示卷积，不是乘法）</span>
+    </p>
+    <p style="margin:6px 0 0;font-size:13px;color:#64748b">
+      声源（声带振动产生的周期性脉冲）与声道（共振峰滤波响应）<strong>在频域相乘、时域卷积</strong>，最终输出语音信号。
+    </p>
+  </div>
+
+  <!-- 手搓代码片段（NumPy） -->
+  <h3 style="margin:0 0 10px;color:#1e293b;font-size:17px">🐍 手搓元音合成（极简 NumPy 版，15行核心代码）</h3>
+<pre style="background:#0f172a;color:#e2e8f0;padding:20px 24px;border-radius:10px;overflow-x:auto;font-size:13px;line-height:1.6;margin:0"><code><span style="color:#94a3b8">import numpy as np</span>
+<span style="color:#94a3b8">from scipy.signal import lfilter</span>
+
+<span style="color:#94a3b8">fs = 16000; dur = 1.0; f0 = 160          # 采样率16k，时长1s，基频160Hz</span>
+t = np.arange(fs*dur)/fs
+<span style="color:#94a3b8"># 1) 声源：三角波脉冲串（模拟声门振动）</span>
+phase = (t*f0) % 1.0
+source = np.where(phase&lt;0.5, 2*phase, 2*(1-phase)) * 2 - 1   <span style="color:#94a3b8"># 三角波 [-1,1]</span>
+
+<span style="color:#94a3b8"># 2) 声道：3个并联/串联二阶IIR谐振滤波器（共振峰）</span>
+def <span style="color:#fbbf24">resonator</span>(f, bw, fs):              <span style="color:#94a3b8"># 二阶谐振器系数</span>
+    r = np.exp(-np.pi*bw/fs); c = -r*r
+    b = [1-r, 0, r-c-1]                <span style="color:#94a3b8"># 简化系数，真实Klatt合成器更复杂</span>
+    a = [1, -2*r*np.cos(2*np.pi*f/fs), r*r]
+    return b, a
+
+<span style="color:#94a3b8"># 目标元音 [ɑ]：F1=730 F2=1090 F3=2600 (Hz)</span>
+x = source
+for F,BW in [(730,80),(1090,100),(2600,150)]:
+    b,a = resonator(F, BW, fs)
+    x = lfilter(b, a, x)
+
+<span style="color:#94a3b8"># 3) 嘴唇辐射：一阶差分（高通 +6dB/oct）</span>
+speech = np.diff(x, prepend=0) * 0.1
+<span style="color:#94a3b8"># speech 就是合成的元音 "啊" 🎉 ——把共振峰值换成 (270,2290,3000) 就是 "衣"！</span>
+</code></pre>
+
+  <div style="margin-top:14px;padding:12px 16px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:6px;font-size:13px;color:#78350f">
+    💡 <strong>核心洞察：</strong>
+    决定你听到"啊/衣/乌"的不是 F0（那是音调高低），而是 <strong>F1、F2、F3 三个共振峰的位置</strong>——
+    它们就是声道这根"管子"在不同形状下的固有频率。本页面就是用 WebAudio 的 BiquadFilter 实时把这三步做了一遍，
+    你拖滑块就是在"捏管子"。
+  </div>
+</div>
+
+<!-- 页脚 -->
+<footer style="text-align:center;padding:24px;color:#94a3b8;font-size:13px;border-top:1px solid #e2e8f0;margin-top:24px">
+  © 2026 语音AI实验室 · 语音信号处理可视化教学平台 &nbsp;|&nbsp; 🧪 参数化共振峰合成探索器
+</footer>
+
+</div>
+</body>
+
+<script src="audio-utils.js"></script>
+<script>
+// ============== TARGETS 元音目标值（与 vowel.html 一致） ==============
+const TARGETS = {
+  a: { f1: 730, f2: 1090, f3: 2600, bw1: 80,  bw2: 100, bw3: 150, label: 'ɑ' },
+  i: { f1: 270, f2: 2290, f3: 3000, bw1: 60,  bw2: 100, bw3: 150, label: 'i' },
+  u: { f1: 300, f2: 870,  f3: 2200, bw1: 70,  bw2: 90,  bw3: 140, label: 'u' },
+  e: { f1: 530, f2: 1840, f3: 2600, bw1: 70,  bw2: 100, bw3: 150, label: 'e' },
+  o: { f1: 570, f2: 840,  f3: 2400, bw1: 80,  bw2: 90,  bw3: 140, label: 'o' }
+};
+
+// ============== DOM 缓存 ==============
+const $ = id => document.getElementById(id);
+const sliders = {
+  f0: $('f0'), f1: $('f1'), f2: $('f2'), f3: $('f3'),
+  bw1: $('bw1'), bw2: $('bw2'), bw3: $('bw3'),
+  oq: $('oq'), asp: $('asp'), vib: $('vib'), vol: $('vol')
+};
+const vals = {
+  f0: $('f0Val'), f1: $('f1Val'), f2: $('f2Val'), f3: $('f3Val'),
+  bw1: $('bw1Val'), bw2: $('bw2Val'), bw3: $('bw3Val'),
+  oq: $('oqVal'), asp: $('aspVal'), vib: $('vibVal'), vol: $('volVal')
+};
+const statusEl = $('status');
+const playBtn = $('playBtn'), stopBtn = $('stopBtn'), demoBtn = $('demoBtn');
+const specCanvas = $('specCanvas'), ipaCanvas = $('ipaCanvas');
+const specCtx = specCanvas.getContext('2d'), ipaCtx = ipaCanvas.getContext('2d');
+
+// 滑块值显示同步
+Object.keys(sliders).forEach(k => {
+  sliders[k].addEventListener('input', () => {
+    const v = parseFloat(sliders[k].value);
+    vals[k].textContent = (k==='f0'||k.startsWith('f')&&k.length===2||k.startsWith('bw')||k==='vib') ? v+' Hz' : v.toFixed(2);
+    if (playing) updateFilters();
+    // 音量实时
+    if (masterGain) masterGain.gain.setTargetAtTime(parseFloat(sliders.vol.value), ac.currentTime, 0.02);
+    if (aspGain) aspGain.gain.setTargetAtTime(parseFloat(sliders.asp.value)*0.5, ac.currentTime, 0.02);
+    if (vibGain) vibGain.gain.setTargetAtTime(parseFloat(sliders.vib.value), ac.currentTime, 0.02);
+    drawIPAStatic();
+  });
+});
+
+// ============== Audio 节点 ==============
+let ac = null, masterGain = null, analyser = null;
+let osc = null, f1filter = null, f2filter = null, f3filter = null;
+let noiseSrc = null, noiseGain = null, aspGain = null;
+let lipFilter = null, vibOsc = null, vibGain = null;
+let playing = false;
+let rafId = null;
+
+function ensureAC() {
+  if (!ac) {
+    ac = new (window.AudioContext||window.webkitAudioContext)();
+  }
+  if (ac.state === 'suspended') ac.resume();
+}
+
+// 创建白噪声buffer
+let noiseBuf = null;
+function makeNoise() {
+  if (!noiseBuf) {
+    const len = ac.sampleRate * 2;
+    noiseBuf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i=0;i<len;i++) d[i] = Math.random()*2-1;
+  }
+  return noiseBuf;
+}
+
+function startSynth() {
+  ensureAC();
+  stopSynth(false);
+
+  const f0 = parseFloat(sliders.f0.value);
+  const F1=+sliders.f1.value, F2=+sliders.f2.value, F3=+sliders.f3.value;
+  const BW1=+sliders.bw1.value, BW2=+sliders.bw2.value, BW3=+sliders.bw3.value;
+  const oq = +sliders.oq.value;
+  const asp = +sliders.asp.value;
+  const vib = +sliders.vib.value;
+  const vol = +sliders.vol.value;
+
+  // 声源：锯齿波（近似声门脉冲，OQ通过波形对称性影响谐波）
+  osc = ac.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.value = f0;
+
+  // Vibrato LFO -> f0
+  vibOsc = ac.createOscillator();
+  vibOsc.frequency.value = 5; // 颤音频率 5Hz
+  vibGain = ac.createGain();
+  vibGain.gain.value = vib;
+  vibOsc.connect(vibGain);
+  vibGain.connect(osc.frequency);
+  vibOsc.start();
+
+  // F1/F2/F3 带通（Q = F/BW）
+  f1filter = ac.createBiquadFilter(); f1filter.type='bandpass'; f1filter.frequency.value=F1; f1filter.Q.value=F1/BW1;
+  f2filter = ac.createBiquadFilter(); f2filter.type='bandpass'; f2filter.frequency.value=F2; f2filter.Q.value=F2/BW2;
+  f3filter = ac.createBiquadFilter(); f3filter.type='bandpass'; f3filter.frequency.value=F3; f3filter.Q.value=F3/BW3;
+
+  // Aspiration 噪声
+  noiseSrc = ac.createBufferSource();
+  noiseSrc.buffer = makeNoise();
+  noiseSrc.loop = true;
+  aspGain = ac.createGain();
+  aspGain.gain.value = asp * 0.5;
+
+  // 嘴唇辐射：高通 ~80Hz （+6dB/oct 一阶近似）
+  lipFilter = ac.createBiquadFilter();
+  lipFilter.type = 'highpass';
+  lipFilter.frequency.value = 80;
+
+  // 主音量 + 分析器
+  masterGain = ac.createGain();
+  masterGain.gain.value = vol;
+  analyser = ac.createAnalyser();
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0.75;
+
+  // 链路：osc -> f1 -> f2 -> f3 -> lip -> master
+  // 噪声：noise -> aspGain -> lip
+  osc.connect(f1filter); f1filter.connect(f2filter); f2filter.connect(f3filter);
+  f3filter.connect(lipFilter);
+  noiseSrc.connect(aspGain); aspGain.connect(lipFilter);
+  lipFilter.connect(masterGain);
+  masterGain.connect(analyser);
+  analyser.connect(ac.destination);
+
+  osc.start();
+  noiseSrc.start();
+  playing = true;
+  playBtn.textContent = '🔊 正在发声…';
+  statusEl.textContent = '🎙️ 合成中 —— 拖动滑块实时听效果！';
+  drawSpec();
+  drawIPAStatic();
+}
+
+function stopSynth(updateUI=true) {
+  if (!playing) {
+    if (rafId) { cancelAnimationFrame(rafId); rafId=null; }
+    return;
+  }
+  try { osc && osc.stop(); } catch(e){}
+  try { noiseSrc && noiseSrc.stop(); } catch(e){}
+  try { vibOsc && vibOsc.stop(); } catch(e){}
+  try {
+    osc && osc.disconnect(); f1filter&&f1filter.disconnect(); f2filter&&f2filter.disconnect(); f3filter&&f3filter.disconnect();
+    noiseSrc&&noiseSrc.disconnect(); aspGain&&aspGain.disconnect(); lipFilter&&lipFilter.disconnect();
+    masterGain&&masterGain.disconnect(); analyser&&analyser.disconnect();
+    vibOsc&&vibOsc.disconnect(); vibGain&&vibGain.disconnect();
+  } catch(e){}
+  playing = false;
+  if (updateUI) {
+    playBtn.textContent = '🔊 播放（持续发声）';
+    statusEl.textContent = '⏹ 已停止';
+  }
+  if (rafId) { cancelAnimationFrame(rafId); rafId=null; }
+  // 清空画布
+  specCtx.fillStyle='#0f172a'; specCtx.fillRect(0,0,specCanvas.width,specCanvas.height);
+  drawSpecGrid();
+}
+
+// 实时更新滤波器参数
+function updateFilters() {
+  const t = ac.currentTime;
+  const F1=+sliders.f1.value, F2=+sliders.f2.value, F3=+sliders.f3.value;
+  const BW1=+sliders.bw1.value, BW2=+sliders.bw2.value, BW3=+sliders.bw3.value;
+  f1filter.frequency.setTargetAtTime(F1, t, 0.02); f1filter.Q.setTargetAtTime(F1/BW1, t, 0.02);
+  f2filter.frequency.setTargetAtTime(F2, t, 0.02); f2filter.Q.setTargetAtTime(F2/BW2, t, 0.02);
+  f3filter.frequency.setTargetAtTime(F3, t, 0.02); f3filter.Q.setTargetAtTime(F3/BW3, t, 0.02);
+  osc.frequency.setTargetAtTime(+sliders.f0.value, t, 0.02);
+}
+
+// ============== 绘制频谱 log X 轴 ==============
+function freqToX(f, W) {
+  // log mapping: 100Hz -> 0, 5000Hz -> W
+  if (f < 100) return 0;
+  return Math.log10(f/100) / Math.log10(5000/100) * W;
+}
+
+function drawSpecGrid() {
+  const W = specCanvas.width, H = specCanvas.height;
+  specCtx.strokeStyle = 'rgba(148,163,184,0.15)';
+  specCtx.lineWidth = 1;
+  specCtx.fillStyle = '#64748b';
+  specCtx.font = '11px sans-serif';
+  // 垂直网格：100/200/500/1k/2k/5k Hz
+  [100,200,500,1000,2000,3000,4000,5000].forEach(f=>{
+    const x = freqToX(f, W);
+    specCtx.beginPath(); specCtx.moveTo(x,0); specCtx.lineTo(x,H-20); specCtx.stroke();
+    specCtx.fillText(f>=1000?(f/1000)+'k':f+'Hz', x+3, H-5);
+  });
+  // 水平网格
+  for (let db=0;db<=1;db+=0.25) {
+    const y = (1-db)*(H-20);
+    specCtx.beginPath(); specCtx.moveTo(0,y); specCtx.lineTo(W,y); specCtx.stroke();
+  }
+}
+
+function drawSpec() {
+  if (!playing || !analyser) return;
+  const W = specCanvas.width, H = specCanvas.height;
+  const bins = analyser.frequencyBinCount;
+  const nyq = ac.sampleRate/2;
+  const data = new Uint8Array(bins);
+  analyser.getByteFrequencyData(data);
+
+  specCtx.fillStyle = '#0f172a';
+  specCtx.fillRect(0,0,W,H);
+  drawSpecGrid();
+
+  // 画频谱（log x 轴）
+  specCtx.beginPath();
+  specCtx.moveTo(0, H-20);
+  for (let px=0; px<W; px++) {
+    const logFrac = px/W;
+    const f = 100 * Math.pow(5000/100, logFrac);
+    const binIdx = Math.floor(f/nyq * bins);
+    if (binIdx>=bins) break;
+    const v = data[binIdx]/255;
+    const y = (1-v)*(H-20);
+    specCtx.lineTo(px, y);
+  }
+  specCtx.lineTo(W, H-20);
+  specCtx.closePath();
+  const grad = specCtx.createLinearGradient(0,0,0,H-20);
+  grad.addColorStop(0,'rgba(74,222,128,0.8)'); grad.addColorStop(1,'rgba(74,222,128,0.05)');
+  specCtx.fillStyle = grad;
+  specCtx.fill();
+  specCtx.strokeStyle = '#4ade80';
+  specCtx.lineWidth = 1.5;
+  specCtx.stroke();
+
+  // F1/F2/F3 红色竖线
+  const formants = [
+    {f:+sliders.f1.value, label:'F1', color:'#ef4444'},
+    {f:+sliders.f2.value, label:'F2', color:'#fb923c'},
+    {f:+sliders.f3.value, label:'F3', color:'#facc15'}
+  ];
+  formants.forEach(ff=>{
+    if (ff.f>5000) return;
+    const x = freqToX(ff.f, W);
+    specCtx.strokeStyle = ff.color;
+    specCtx.lineWidth = 2;
+    specCtx.beginPath(); specCtx.moveTo(x,0); specCtx.lineTo(x,H-20); specCtx.stroke();
+    specCtx.fillStyle = ff.color;
+    specCtx.font = 'bold 12px sans-serif';
+    specCtx.fillText(ff.label+' '+Math.round(ff.f)+'Hz', x+4, 16);
+  });
+
+  rafId = requestAnimationFrame(drawSpec);
+}
+
+// ============== IPA 元音小图 ==============
+function drawIPAStatic() {
+  const W=200, H=160;
+  ipaCtx.clearRect(0,0,W,H);
+  // 坐标：F1（竖，越大越低，闭->开），F2（横，越大越右，后->前）
+  // 范围 F1:200-900（下->上），F2:600-2800（左->右）
+  const f1Min=200, f1Max=900;
+  const f2Min=600, f2Max=2800;
+  const mapX = f2 => (f2-f2Min)/(f2Max-f2Min) * (W-30) + 20;
+  const mapY = f1 => H - 20 - (f1-f1Min)/(f1Max-f1Min) * (H-40);
+
+  // 轴
+  ipaCtx.strokeStyle='#334155';
+  ipaCtx.lineWidth=1;
+  ipaCtx.beginPath();
+  ipaCtx.moveTo(20,20); ipaCtx.lineTo(20,H-20); ipaCtx.lineTo(W-10,H-20);
+  ipaCtx.stroke();
+  ipaCtx.fillStyle='#64748b';
+  ipaCtx.font='10px sans-serif';
+  ipaCtx.fillText('F2→前',W-60,H-8);
+  ipaCtx.fillText('F1↓开',2,H-20);
+  ipaCtx.save(); ipaCtx.translate(10,20); ipaCtx.rotate(-Math.PI/2);
+  ipaCtx.fillText('闭↑',0,0); ipaCtx.restore();
+
+  // 参考5个元音位置
+  Object.entries(TARGETS).forEach(([k,t])=>{
+    const x=mapX(t.f2), y=mapY(t.f1);
+    ipaCtx.fillStyle='#94a3b8';
+    ipaCtx.beginPath(); ipaCtx.arc(x,y,4,0,Math.PI*2); ipaCtx.fill();
+    ipaCtx.fillStyle='#475569';
+    ipaCtx.font='bold 14px serif';
+    ipaCtx.fillText('/'+t.label+'/', x+6, y+4);
+  });
+
+  // 当前位置
+  const cf1=+sliders.f1.value, cf2=+sliders.f2.value;
+  const cx=mapX(cf2), cy=mapY(cf1);
+  ipaCtx.fillStyle='#8b5cf6';
+  ipaCtx.beginPath(); ipaCtx.arc(cx,cy,7,0,Math.PI*2); ipaCtx.fill();
+  ipaCtx.strokeStyle='#fff'; ipaCtx.lineWidth=2; ipaCtx.stroke();
+  ipaCtx.fillStyle='#581c87'; ipaCtx.font='bold 10px sans-serif';
+  ipaCtx.fillText('●你',cx-10,cy-10);
+}
+setTimeout(drawIPAStatic, 100);
+
+// ============== 预设元音按钮 ==============
+document.querySelectorAll('.vowel-preset').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const v = btn.dataset.v;
+    const t = TARGETS[v];
+    sliders.f1.value = t.f1; sliders.f2.value = t.f2; sliders.f3.value = t.f3;
+    sliders.bw1.value = t.bw1; sliders.bw2.value = t.bw2; sliders.bw3.value = t.bw3;
+    // 更新显示
+    ['f1','f2','f3','bw1','bw2','bw3'].forEach(k=>{
+      vals[k].textContent = sliders[k].value + ' Hz';
+    });
+    if (playing) updateFilters();
+    drawIPAStatic();
+    statusEl.textContent = '🎯 预设元音 /'+t.label+'/ — F1='+t.f1+' F2='+t.f2+' F3='+t.f3;
+  });
+});
+
+// ============== 按钮绑定 ==============
+playBtn.addEventListener('click', startSynth);
+stopBtn.addEventListener('click', ()=>stopSynth(true));
+
+// 啊-衣-乌 演示
+demoBtn.addEventListener('click', async ()=>{
+  ensureAC();
+  if (playing) stopSynth(false);
+  statusEl.textContent = '🎵 演示中：啊 - 衣 - 乌 ...';
+  const seq = ['a','i','u'];
+  // 启动合成
+  startSynth();
+  for (let i=0;i<seq.length;i++) {
+    const t = TARGETS[seq[i]];
+    sliders.f1.value=t.f1; sliders.f2.value=t.f2; sliders.f3.value=t.f3;
+    ['f1','f2','f3'].forEach(k=>vals[k].textContent=sliders[k].value+' Hz');
+    updateFilters(); drawIPAStatic();
+    statusEl.textContent = '🎵 正在发 /'+t.label+'/  ('+(i+1)+'/3)';
+    await new Promise(r=>setTimeout(r,500));
+  }
+  stopSynth(true);
+  statusEl.textContent = '✅ 演示完成。注意听三个元音的差别——全部只由F1/F2/F3决定！';
+});
+
+// 初始化网格
+drawSpecGrid();
+</script>
+</body>
+</html>

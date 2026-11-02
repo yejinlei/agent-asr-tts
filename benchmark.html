@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>📊 ASR/TTS 模型选购 Bench 对比 · agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .page-hero .wrap h1 em{font-style:normal;background:linear-gradient(120deg,#ddd6fe,#fde68a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .scene-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1.5rem 0}
+  .scene-card{background:#fff;border:1px solid var(--border);border-radius:.7rem;padding:1.1rem 1.25rem;transition:.2s;border-top:3px solid #7c3aed}
+  .scene-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(124,58,237,.12)}
+  .scene-card h4{font-size:1.05rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+  .scene-card .asr-rec,.scene-card .tts-rec{font-size:.85rem;margin-top:.35rem;color:#475569}
+  .scene-card .lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#7c3aed;margin-right:.4rem}
+  .scene-card .tts-rec .lbl{color:#c2410c}
+  .table-wrap{overflow-x:auto;margin:1rem 0;-webkit-overflow-scrolling:touch;border-radius:.6rem;border:1px solid var(--border);background:#fff}
+  .table-wrap table{margin:0;border:none;border-radius:0}
+  .table-wrap th{white-space:nowrap;position:sticky;top:0}
+  .table-wrap td{white-space:normal;font-size:.83rem;vertical-align:top}
+  .table-wrap td:first-child{font-weight:600;color:#1e293b;white-space:nowrap}
+  .tree-wrap{background:#fff;border:1px solid var(--border);border-radius:.7rem;padding:1rem;overflow-x:auto;margin:1.5rem 0}
+  @media(max-width:900px){.scene-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:640px){.scene-grid{grid-template-columns:1fr}}
+  .verdict{font-style:italic;color:#7c3aed;font-size:.82rem;display:block;margin-top:.2rem}
+  .muted{color:var(--muted)}
+  .good{color:#059669;font-weight:600}
+  .warn{color:#d97706;font-weight:600}
+  .bad{color:#dc2626;font-weight:600}
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23 2.3-.7 4.8-.7 6 0 2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / 📊 模型选购 Bench 对比</div>
+  <h1>📊 ASR/TTS 模型选购 <em>Bench 对比</em></h1>
+  <p>一张表看清 Whisper/Paraformer/Conformer/SenseVoice 等 ASR 模型，以及 Piper/VITS/CosyVoice/F5-TTS/GPT-SoVITS 等 TTS 模型——参数量、RTF、WER/MOS、支持语言、流式能力、开源协议、显存占用、适合场景，助你选对模型不踩坑。</p>
+</div></header>
+
+<div class="page-body">
+
+<!-- 顶部说明 callout -->
+<div class="callout callout-i">
+  <span class="ic">📌</span>
+  <div>
+    <b>数据说明</b>：以下 benchmark 数据截至 2025 年底公开资料（LibriSpeech test-clean/other、AISHELL-1、中文普通话 MOS 主观测试、CPU/GPU RTF），具体数字以各官方仓库为准。<br>
+    <b>阅读指南</b>：WER/CER <span class="good">越低越好</span>；MOS <span class="good">越高越好</span>（5 分满分，自然真人约 4.8+）；RTF（实时率）<span class="good">&lt;1 为实时</span>，越小越快，如 RTF=0.1 代表 10 秒音频 1 秒合成完。
+  </div>
+</div>
+
+<!-- ============ ASR 模型对比表 ============ -->
+<h2 style="font-size:1.5rem;margin-top:2rem;display:flex;align-items:center;gap:.5rem"><span style="color:#0ea5e9">🎤</span> ASR 语音识别模型对比</h2>
+<p style="color:#475569;font-size:.92rem">共收录 12 款主流开源 ASR 模型，从端侧 19M 到云端 1.5B，覆盖多语/中文/流式/小语种场景。</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th>模型</th>
+  <th>发布方</th>
+  <th>年份</th>
+  <th>参数量</th>
+  <th>LibriSpeech test-clean WER%</th>
+  <th>LibriSpeech test-other WER%</th>
+  <th>AISHELL-1 CER%</th>
+  <th>语言数</th>
+  <th>流式支持</th>
+  <th>显存(推理)</th>
+  <th>CPU RTF</th>
+  <th>GPU RTF</th>
+  <th>协议</th>
+  <th>最适合场景</th>
+  <th>一句话评价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Whisper-tiny</td>
+  <td>OpenAI</td><td>2022</td><td>39M</td>
+  <td>7.8</td><td>18.2</td><td>~20</td>
+  <td>99</td><td><span class="bad">否</span></td>
+  <td>256MB</td><td>~0.5</td><td>~0.05</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-grn">端侧</span><span class="chip chip-org">多语</span></td>
+  <td><span class="verdict">"够用但不准"，嵌入式 demo 首选</span></td>
+</tr>
+<tr>
+  <td>Whisper-base</td>
+  <td>OpenAI</td><td>2022</td><td>74M</td>
+  <td>6.3</td><td>14.4</td><td>~15</td>
+  <td>99</td><td><span class="bad">否</span></td>
+  <td>500MB</td><td>~0.8</td><td>~0.07</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-org">多语</span></td>
+  <td><span class="verdict">桌面多语快速验证</span></td>
+</tr>
+<tr>
+  <td>Whisper-small</td>
+  <td>OpenAI</td><td>2022</td><td>244M</td>
+  <td>4.7</td><td>10.8</td><td>~8</td>
+  <td>99</td><td><span class="bad">否</span></td>
+  <td>1.2GB</td><td>~1.5</td><td>~0.12</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-org">多语</span><span class="chip chip-rose">平衡</span></td>
+  <td><span class="verdict">"平衡之选"，个人项目最常用</span></td>
+</tr>
+<tr>
+  <td>Whisper-medium</td>
+  <td>OpenAI</td><td>2022</td><td>769M</td>
+  <td>3.8</td><td>8.8</td><td>~6</td>
+  <td>99</td><td><span class="bad">否</span></td>
+  <td>3GB</td><td>~3</td><td>~0.3</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-rose">高精度</span></td>
+  <td><span class="verdict">"准但慢"，GPU 推荐起步档</span></td>
+</tr>
+<tr>
+  <td>Whisper-large-v3</td>
+  <td>OpenAI</td><td>2023</td><td>1550M</td>
+  <td class="good">2.5</td><td class="good">5.6</td><td>~4.5</td>
+  <td>99</td><td><span class="bad">否</span></td>
+  <td>7GB</td><td>~8</td><td>~0.5</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-org">多语</span><span class="chip chip-rose">高精度</span></td>
+  <td><span class="verdict">"云端多语天花板"，通用 ASR 首选大模型</span></td>
+</tr>
+<tr>
+  <td>SenseVoice-Small</td>
+  <td>阿里</td><td>2024</td><td>234M</td>
+  <td>—</td><td>—</td><td class="good">2.8</td>
+  <td>50+（含粤语）</td><td><span class="bad">否</span></td>
+  <td>500MB</td><td>~1</td><td>~0.05</td>
+  <td><span class="chip chip-grn">Apache2</span></td>
+  <td><span class="chip chip-rose">中文</span><span class="chip chip-org">多语</span></td>
+  <td><span class="verdict">"中文小模型王"，中日韩粤一把梭</span></td>
+</tr>
+<tr>
+  <td>Paraformer-large</td>
+  <td>阿里达摩院</td><td>2022</td><td>220M</td>
+  <td>—</td><td>—</td><td class="good">1.95</td>
+  <td>中/英/日/粤</td><td><span class="good">非流式/流式版本</span></td>
+  <td>1.5GB</td><td>~2</td><td>~0.1</td>
+  <td><span class="chip chip-grn">Apache2</span></td>
+  <td><span class="chip chip-rose">高精度</span><span class="chip chip-sky">流式</span></td>
+  <td><span class="verdict">中文生产高准确率事实标准</span></td>
+</tr>
+<tr>
+  <td>Conformer-CTC-L</td>
+  <td>Google/ESPnet</td><td>2020</td><td>120M</td>
+  <td class="good">2.1</td><td class="good">4.5</td><td>~4.5</td>
+  <td>依赖训练</td><td><span class="good">可流式</span></td>
+  <td>700MB</td><td>~1</td><td>~0.08</td>
+  <td><span class="chip chip-grn">Apache2</span></td>
+  <td><span class="chip chip-sky">流式</span><span class="chip chip-rose">高精度</span></td>
+  <td><span class="verdict">学术界/工业界流式 baseline</span></td>
+</tr>
+<tr>
+  <td>WeNet-Conformer</td>
+  <td>出门问问</td><td>2021</td><td>127M</td>
+  <td>—</td><td>—</td><td>~4.6</td>
+  <td>中/英</td><td><span class="good">流式+非流式统一</span></td>
+  <td>600MB</td><td>~0.8</td><td>~0.06</td>
+  <td><span class="chip chip-grn">Apache2</span></td>
+  <td><span class="chip chip-sky">流式</span></td>
+  <td><span class="verdict">"中文流式工业标准"，U2/U2++ 部署成熟</span></td>
+</tr>
+<tr>
+  <td>QuartzNet-15x5</td>
+  <td>NVIDIA</td><td>2019</td><td>19M</td>
+  <td>3.5</td><td>10.2</td><td>—</td>
+  <td>多语</td><td><span class="good">流式</span></td>
+  <td>200MB</td><td class="good">~0.2</td><td class="good">~0.02</td>
+  <td><span class="chip chip-org">CC-BY</span></td>
+  <td><span class="chip chip-grn">端侧</span><span class="chip chip-sky">流式</span></td>
+  <td><span class="verdict">边缘设备/嵌入式神器，Jetson 友好</span></td>
+</tr>
+<tr>
+  <td>Wav2Vec2-large</td>
+  <td>Meta</td><td>2020</td><td>317M</td>
+  <td class="good">1.8</td><td class="good">3.6</td><td>~5.0</td>
+  <td>单语（需微调）</td><td><span class="good">可流式</span></td>
+  <td>2GB</td><td>~1.2</td><td>~0.1</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-rose">高精度</span></td>
+  <td><span class="verdict">"单语极致"，自监督鼻祖</span></td>
+</tr>
+<tr>
+  <td>MMS-1b-FT</td>
+  <td>Meta</td><td>2023</td><td>1B</td>
+  <td>—</td><td>—</td><td>—</td>
+  <td>1100+</td><td><span class="bad">否</span></td>
+  <td>4GB</td><td>~5</td><td>~0.3</td>
+  <td><span class="chip chip-rose">CC-BY-NC</span></td>
+  <td><span class="chip chip-org">多语</span></td>
+  <td><span class="verdict">"小语种救援"，1107 种语言覆盖</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ TTS 模型对比表 ============ -->
+<h2 style="font-size:1.5rem;margin-top:2.5rem;display:flex;align-items:center;gap:.5rem"><span style="color:#f97316">📢</span> TTS 语音合成模型对比</h2>
+<p style="color:#475569;font-size:.92rem">共收录 11 款主流开源 TTS 模型，从树莓派可跑的 30M 到零样本克隆 1B，覆盖端侧/流式/克隆/情感全场景。</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th>模型</th>
+  <th>发布方</th>
+  <th>年份</th>
+  <th>类型</th>
+  <th>参数量</th>
+  <th>MOS (中/英)</th>
+  <th>RTF (CPU/GPU)</th>
+  <th>零样本克隆</th>
+  <th>多说话人</th>
+  <th>情感控制</th>
+  <th>流式</th>
+  <th>显存</th>
+  <th>协议</th>
+  <th>适合场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Piper</td>
+  <td>Rhasspy</td><td>2023</td><td>VITS-based</td><td>~30M</td>
+  <td>~4.0</td>
+  <td class="good">0.02 / 0.005</td>
+  <td><span class="bad">否</span></td><td>单模型单话者</td><td><span class="bad">否</span></td><td><span class="bad">否</span></td>
+  <td>200MB</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-grn">端侧</span><span class="verdict">"本地神"，树莓派 4 实时跑</span></td>
+</tr>
+<tr>
+  <td>VITS</td>
+  <td>Kim et al.</td><td>2021</td><td>E2E GAN</td><td>~80M</td>
+  <td>~4.4</td>
+  <td>0.5 / 0.03</td>
+  <td><span class="bad">否</span></td><td>多话者嵌入</td><td><span class="warn">有限</span></td><td><span class="bad">否</span></td>
+  <td>500MB</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="verdict">研究基线 / 中质量，中文社区衍生 Bert-VITS2</span></td>
+</tr>
+<tr>
+  <td>Coqui XTTS-v2</td>
+  <td>Coqui</td><td>2023</td><td>GPT+VITS</td><td>470M</td>
+  <td>~4.6</td>
+  <td>2 / 0.1</td>
+  <td><span class="good">6 秒参考</span></td><td><span class="good">多</span></td><td><span class="warn">基本</span></td><td><span class="bad">否</span></td>
+  <td>1.5GB</td>
+  <td><span class="chip chip-rose">CPML</span></td>
+  <td><span class="chip chip-org">零样本克隆</span><span class="verdict">多语克隆开发者首选（注意商用）</span></td>
+</tr>
+<tr>
+  <td>Bark</td>
+  <td>Suno</td><td>2023</td><td>GPT-style</td><td>~1B</td>
+  <td>~4.3</td>
+  <td class="bad">10 / 0.5</td>
+  <td><span class="good">简短参考</span></td><td><span class="good">多</span></td><td><span class="good">强</span></td><td><span class="bad">否</span></td>
+  <td>3GB</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-rose">情感表现力</span><span class="verdict">"丰富表现力但慢"，非实时创作</span></td>
+</tr>
+<tr>
+  <td>VALL-E-X</td>
+  <td>Microsoft</td><td>2023</td><td>GPT+codec</td><td>470M</td>
+  <td>~4.5</td>
+  <td>1 / 0.05</td>
+  <td><span class="good">3 秒</span></td><td><span class="good">多</span></td><td><span class="warn">中</span></td><td><span class="bad">否</span></td>
+  <td>1.5GB</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-org">零样本克隆</span><span class="verdict">零样本克隆研究开山之作</span></td>
+</tr>
+<tr>
+  <td>CosyVoice</td>
+  <td>阿里</td><td>2024</td><td>Flow+GAN</td><td>~700M</td>
+  <td class="good">~4.7</td>
+  <td>0.5 / 0.02</td>
+  <td><span class="good">3-10 秒</span></td><td><span class="good">多</span></td><td><span class="good">细粒度情感</span></td><td><span class="warn">非原生</span></td>
+  <td>2GB</td>
+  <td><span class="chip chip-grn">Apache2</span></td>
+  <td><span class="chip chip-rose">情感表现力</span><span class="chip chip-org">零样本克隆</span><span class="verdict">"中文最佳之一/工业生产"</span></td>
+</tr>
+<tr>
+  <td>CosyVoice 2</td>
+  <td>阿里</td><td>2024</td><td>Flow+改进</td><td>~700M</td>
+  <td class="good">~4.8</td>
+  <td class="good">0.3 / 0.01</td>
+  <td><span class="good">3 秒</span></td><td><span class="good">多</span></td><td><span class="good">强</span></td><td><span class="good">是</span></td>
+  <td>2GB</td>
+  <td><span class="chip chip-grn">Apache2</span></td>
+  <td><span class="chip chip-sky">流式</span><span class="chip chip-org">零样本克隆</span><span class="verdict">"低延迟流式中文新王"</span></td>
+</tr>
+<tr>
+  <td>F5-TTS</td>
+  <td>SWivid</td><td>2024</td><td>Flow Matching</td><td>~700M</td>
+  <td>~4.6</td>
+  <td>0.8 / 0.03</td>
+  <td><span class="good">零样本</span></td><td><span class="good">多</span></td><td><span class="warn">中</span></td><td><span class="bad">否</span></td>
+  <td>2GB</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-org">零样本克隆</span><span class="verdict">中英混零样本，开源后社区火热</span></td>
+</tr>
+<tr>
+  <td>GPT-SoVITS</td>
+  <td>RVC-Boss</td><td>2024</td><td>GPT+SoVITS</td><td>~400M</td>
+  <td class="good">~4.7</td>
+  <td>1 / 0.04</td>
+  <td><span class="good">1 分参考微调</span></td><td><span class="good">多</span></td><td><span class="good">强</span></td><td><span class="bad">否</span></td>
+  <td>1.5GB</td>
+  <td><span class="chip chip-grn">MIT</span></td>
+  <td><span class="chip chip-org">零样本克隆</span><span class="chip chip-rose">情感表现力</span><span class="verdict">"社区最火/小样本定制"，B 站配音主力</span></td>
+</tr>
+<tr>
+  <td>Fish-Speech</td>
+  <td>FishAudio</td><td>2024</td><td>GPT+codec</td><td>700M</td>
+  <td>~4.6</td>
+  <td>0.8 / 0.03</td>
+  <td><span class="good">零样本</span></td><td><span class="good">多</span></td><td><span class="warn">中</span></td><td><span class="bad">否</span></td>
+  <td>2GB</td>
+  <td><span class="chip chip-grn">Apache2</span></td>
+  <td><span class="chip chip-org">零样本克隆</span><span class="verdict">中英混速度快，部署友好</span></td>
+</tr>
+<tr>
+  <td>ChatTTS</td>
+  <td>2Noise</td><td>2024</td><td>GPT-style</td><td>400M</td>
+  <td>~4.5</td>
+  <td>2 / 0.05</td>
+  <td><span class="bad">否（拟随机声）</span></td><td>多风格</td><td><span class="good">笑声/停顿/语气</span></td><td><span class="bad">否</span></td>
+  <td>1GB</td>
+  <td><span class="chip chip-rose">AGPL</span></td>
+  <td><span class="chip chip-rose">情感表现力</span><span class="verdict">"对话/旁白生动"，笑声/呼吸一绝</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ 选购决策树 SVG ============ -->
+<h2 style="font-size:1.5rem;margin-top:2.5rem;display:flex;align-items:center;gap:.5rem">🌳 选购决策树</h2>
+<p style="color:#475569;font-size:.92rem">跟着这棵树走 30 秒锁定目标模型。</p>
+
+<div class="tree-wrap">
+<svg viewBox="0 0 1200 720" width="100%" style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;font-size:12px">
+  <defs>
+    <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    <linearGradient id="rootG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7c3aed"/><stop offset="1" stop-color="#4f46e5"/></linearGradient>
+  </defs>
+
+  <!-- Root -->
+  <rect x="490" y="20" width="220" height="50" rx="12" fill="url(#rootG)"/>
+  <text x="600" y="50" text-anchor="middle" fill="#fff" font-weight="700" font-size="14">我需要什么 ASR/TTS？</text>
+
+  <!-- ASR branch -->
+  <path d="M540,70 L540,100 L300,100 L300,115" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <rect x="220" y="115" width="160" height="44" rx="10" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2"/>
+  <text x="300" y="142" text-anchor="middle" font-weight="700" fill="#0369a1" font-size="13">🎤 ASR 语音识别</text>
+
+  <!-- TTS branch -->
+  <path d="M660,70 L660,100 L900,100 L900,115" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <rect x="820" y="115" width="160" height="44" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+  <text x="900" y="142" text-anchor="middle" font-weight="700" fill="#c2410c" font-size="13">📢 TTS 语音合成</text>
+
+  <!-- ===== ASR 分支 ===== -->
+  <!-- 是否流式 -->
+  <path d="M260,159 L260,190 L260,200" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <text x="260" y="183" text-anchor="middle" fill="#64748b" font-size="11">是否需要流式？</text>
+
+  <!-- 是 -->
+  <path d="M260,240 L260,260 L120,260 L120,275" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <text x="180" y="255" text-anchor="middle" fill="#059669" font-weight="600" font-size="11">是 →</text>
+  <rect x="30" y="275" width="180" height="40" rx="8" fill="#ecfdf5" stroke="#10b981"/>
+  <text x="120" y="300" text-anchor="middle" font-weight="600" fill="#065f46">WeNet / Paraformer-online</text>
+
+  <!-- 是 -> 中文？ -->
+  <path d="M70,315 L70,345" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="70" y="338" text-anchor="middle" fill="#64748b" font-size="10">中文？</text>
+  <rect x="10" y="345" width="120" height="36" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="70" y="367" text-anchor="middle" font-weight="600" fill="#14532d" font-size="11">Paraformer / WeNet</text>
+
+  <!-- 是 -> 多语？ -->
+  <path d="M170,315 L170,345" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="170" y="338" text-anchor="middle" fill="#64748b" font-size="10">多语？</text>
+  <rect x="140" y="345" width="90" height="36" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="185" y="367" text-anchor="middle" font-weight="600" fill="#075985" font-size="11">Conformer</text>
+
+  <!-- 否（非流式） -->
+  <path d="M260,240 L260,260 L400,260 L400,275" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <text x="340" y="255" text-anchor="middle" fill="#dc2626" font-weight="600" font-size="11">否 (离线) →</text>
+  <rect x="320" y="275" width="160" height="40" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="400" y="300" text-anchor="middle" font-weight="600" fill="#92400e">端侧？（资源受限？）</text>
+
+  <!-- 端侧=是 -->
+  <path d="M350,315 L350,345" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="350" y="338" text-anchor="middle" fill="#059669" font-weight="600" font-size="10">是</text>
+  <rect x="280" y="345" width="140" height="36" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="350" y="367" text-anchor="middle" font-weight="600" fill="#14532d" font-size="11">Whisper-tiny / QuartzNet</text>
+
+  <!-- 端侧=否 -->
+  <path d="M450,315 L450,345 L450,355" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="450" y="338" text-anchor="middle" fill="#dc2626" font-weight="600" font-size="10">否 → 看需求</text>
+
+  <rect x="380" y="395" width="140" height="34" rx="6" fill="#e0f2fe" stroke="#0ea5e9"/>
+  <text x="450" y="416" text-anchor="middle" font-weight="600" fill="#0369a1" font-size="11">多语：Whisper 系列</text>
+  <path d="M450,355 L450,395" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+
+  <rect x="380" y="440" width="180" height="34" rx="6" fill="#fecdd3" stroke="#e11d48"/>
+  <text x="470" y="461" text-anchor="middle" font-weight="600" fill="#9f1239" font-size="11">中文高精度：Paraformer-large / SenseVoice</text>
+  <path d="M450,355 L470,400 L470,440" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+
+  <rect x="380" y="485" width="140" height="34" rx="6" fill="#f5f3ff" stroke="#8b5cf6"/>
+  <text x="450" y="506" text-anchor="middle" font-weight="600" fill="#6d28d9" font-size="11">小语种：MMS-1b</text>
+  <path d="M450,355 L450,485" stroke="#64748b" stroke-width="1.2" fill="none" stroke-dasharray="3,3"/>
+
+  <!-- ===== TTS 分支 ===== -->
+  <path d="M900,159 L900,190 L900,200" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <text x="900" y="183" text-anchor="middle" fill="#64748b" font-size="11">是否需要零样本克隆？</text>
+
+  <!-- 是：克隆 -->
+  <path d="M900,240 L900,260 L1050,260 L1050,275" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <text x="980" y="255" text-anchor="middle" fill="#059669" font-weight="600" font-size="11">是 →</text>
+  <rect x="930" y="275" width="240" height="40" rx="8" fill="#fff7ed" stroke="#f97316"/>
+  <text x="1050" y="300" text-anchor="middle" font-weight="600" fill="#c2410c">F5-TTS / XTTS / CosyVoice / GPT-SoVITS</text>
+
+  <path d="M1000,315 L1000,345" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="1000" y="338" text-anchor="middle" fill="#64748b" font-size="10">中文强？</text>
+  <rect x="930" y="345" width="140" height="36" rx="6" fill="#fed7aa" stroke="#ea580c"/>
+  <text x="1000" y="367" text-anchor="middle" font-weight="600" fill="#9a3412" font-size="11">CosyVoice / F5-TTS</text>
+
+  <path d="M1100,315 L1100,345" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="1100" y="338" text-anchor="middle" fill="#64748b" font-size="10">社区？</text>
+  <rect x="1030" y="345" width="130" height="36" rx="6" fill="#f3e8ff" stroke="#9333ea"/>
+  <text x="1095" y="367" text-anchor="middle" font-weight="600" fill="#6b21a8" font-size="11">GPT-SoVITS</text>
+
+  <!-- 否：不克隆 -->
+  <path d="M900,240 L900,260 L740,260 L740,275" stroke="#64748b" stroke-width="1.5" fill="none" marker-end="url(#arrB)"/>
+  <text x="820" y="255" text-anchor="middle" fill="#dc2626" font-weight="600" font-size="11">否 →</text>
+  <rect x="650" y="275" width="180" height="40" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="740" y="300" text-anchor="middle" font-weight="600" fill="#92400e">端侧？（资源受限？）</text>
+
+  <!-- 端侧=是 -->
+  <path d="M680,315 L680,345" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="680" y="338" text-anchor="middle" fill="#059669" font-weight="600" font-size="10">是</text>
+  <rect x="630" y="345" width="100" height="36" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="680" y="367" text-anchor="middle" font-weight="600" fill="#14532d" font-size="11">Piper</text>
+
+  <!-- 端侧=否 -->
+  <path d="M800,315 L800,345 L800,355" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+  <text x="800" y="338" text-anchor="middle" fill="#dc2626" font-weight="600" font-size="10">否 → 看需求</text>
+
+  <rect x="600" y="395" width="120" height="34" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="660" y="416" text-anchor="middle" font-weight="600" fill="#075985" font-size="11">流式：CosyVoice2</text>
+  <path d="M800,355 L660,380 L660,395" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+
+  <rect x="730" y="395" width="130" height="34" rx="6" fill="#fecdd3" stroke="#e11d48"/>
+  <text x="795" y="416" text-anchor="middle" font-weight="600" fill="#9f1239" font-size="11">情感：ChatTTS / Bark</text>
+  <path d="M800,355 L795,395" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+
+  <rect x="870" y="395" width="140" height="34" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="940" y="416" text-anchor="middle" font-weight="600" fill="#14532d" font-size="11">生产稳定：CosyVoice</text>
+  <path d="M800,355 L940,380 L940,395" stroke="#64748b" stroke-width="1.2" fill="none" marker-end="url(#arrB)"/>
+
+  <!-- 图例 -->
+  <rect x="40" y="620" width="14" height="14" rx="3" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="60" y="632" fill="#475569" font-size="11">端侧/轻量</text>
+  <rect x="150" y="620" width="14" height="14" rx="3" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="170" y="632" fill="#475569" font-size="11">流式/实时</text>
+  <rect x="260" y="620" width="14" height="14" rx="3" fill="#e0f2fe" stroke="#0ea5e9"/>
+  <text x="280" y="632" fill="#475569" font-size="11">多语/通用</text>
+  <rect x="370" y="620" width="14" height="14" rx="3" fill="#fecdd3" stroke="#e11d48"/>
+  <text x="390" y="632" fill="#475569" font-size="11">高精度/情感</text>
+  <rect x="500" y="620" width="14" height="14" rx="3" fill="#fff7ed" stroke="#f97316"/>
+  <text x="520" y="632" fill="#475569" font-size="11">零样本克隆</text>
+  <rect x="620" y="620" width="14" height="14" rx="3" fill="#f5f3ff" stroke="#8b5cf6"/>
+  <text x="640" y="632" fill="#475569" font-size="11">小语种/特殊场景</text>
+</svg>
+</div>
+
+<!-- ============ 场景推荐卡 ============ -->
+<h2 style="font-size:1.5rem;margin-top:2.5rem;display:flex;align-items:center;gap:.5rem">🎯 9 大典型场景推荐</h2>
+
+<div class="scene-grid">
+
+  <div class="scene-card">
+    <h4>📱 端侧 / 嵌入式</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">树莓派、Jetson、移动端本地跑</p>
+    <div class="asr-rec"><span class="lbl">ASR</span>QuartzNet / Whisper-tiny.cpp</div>
+    <div class="tts-rec"><span class="lbl">TTS</span>Piper</div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🎙️ 会议实时转录</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">长音频、实时出字、多人说话</p>
+    <div class="asr-rec"><span class="lbl">ASR</span>WeNet / Paraformer-online</div>
+    <div class="tts-rec"><span class="lbl">TTS</span><span class="muted">（不需要）</span></div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🌐 多语翻译</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">跨语种识别 + 合成翻译音</p>
+    <div class="asr-rec"><span class="lbl">ASR</span>Whisper-large-v3</div>
+    <div class="tts-rec"><span class="lbl">TTS</span>XTTS-v2</div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🇨🇳 中文生产</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">客服、语音输入法、智能座舱</p>
+    <div class="asr-rec"><span class="lbl">ASR</span>Paraformer-large / SenseVoice</div>
+    <div class="tts-rec"><span class="lbl">TTS</span>CosyVoice 2</div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🎭 配音 / 有声书</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">克隆名人声线、多角色情感</p>
+    <div class="asr-rec"><span class="lbl">ASR</span><span class="muted">（不需要）</span></div>
+    <div class="tts-rec"><span class="lbl">TTS</span>CosyVoice / GPT-SoVITS (微调) / F5-TTS</div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🤖 聊天机器人</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">低延迟、带笑声/停顿/语气</p>
+    <div class="asr-rec"><span class="lbl">ASR</span>SenseVoice / Whisper-small</div>
+    <div class="tts-rec"><span class="lbl">TTS</span>ChatTTS / CosyVoice 2</div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🏫 研究基线</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">写论文、做对比实验首选</p>
+    <div class="asr-rec"><span class="lbl">ASR</span>Whisper / Wav2Vec2</div>
+    <div class="tts-rec"><span class="lbl">TTS</span>VITS / FastSpeech2</div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🌍 小语种</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">非洲/东南亚/低资源语言</p>
+    <div class="asr-rec"><span class="lbl">ASR</span>MMS-1b / Whisper</div>
+    <div class="tts-rec"><span class="lbl">TTS</span>XTTS-v2 <span class="muted">（非所有语言）</span></div>
+  </div>
+
+  <div class="scene-card">
+    <h4>🔧 开源可商用</h4>
+    <p style="font-size:.83rem;color:var(--muted);margin:.2rem 0 .5rem">协议合规第一优先</p>
+    <div class="asr-rec" style="margin-top:.4rem">
+      <span class="chip chip-grn">MIT</span> 宽松商用：Whisper/Wav2Vec2/Piper/GPT-SoVITS/F5-TTS/ChatTTS*
+    </div>
+    <div class="asr-rec">
+      <span class="chip chip-grn">Apache2</span> 专利友好：SenseVoice/Paraformer/WeNet/CosyVoice/Fish-Speech
+    </div>
+    <div class="tts-rec">
+      <span class="chip chip-rose">AGPL/CPML</span> <b class="bad">商用避坑</b>：XTTS(CPML)/ChatTTS(AGPL)
+    </div>
+  </div>
+
+</div>
+
+<!-- 经验法则 callout -->
+<div class="callout callout-tip" style="margin-top:2rem">
+  <span class="ic">💡</span>
+  <div>
+    <b>经验法则</b>：
+    <ol style="margin:.5rem 0 0 1.2em;padding:0">
+      <li><b>先跑小模型 baseline，再升大模型</b>——Whisper-tiny/Piper 一小时出原型，再按瓶颈升级，别上来就堆 1.5B。</li>
+      <li><b>垂直领域必须做微调</b>——大模型是"通才"，医疗/法律/方言场景通用 WER/MOS 会掉档，领域微调 &gt; 盲目升规模。</li>
+      <li><b>RTF 是硬件相关指标</b>——本页 RTF 为参考值（CPU 常见 i7-13700 / GPU RTX 3090），务必在你的<b>目标硬件</b>上实测。</li>
+      <li><b>协议比性能重要</b>——商用务必避开 AGPL（需开源你的整套服务）/ CPML（Coqui 商用限制），MIT &gt; Apache2 &gt; BSD 最安全。</li>
+    </ol>
+  </div>
+</div>
+
+</div><!-- /page-body -->
+
+<footer style="text-align:center;padding:28px;color:#94a3b8;font-size:13px;border-top:1px solid #e2e8f0;margin-top:24px;background:#fff">
+  © agent-speech · 📊 ASR/TTS 模型选购 Bench 对比 · 数据截至 2025 年底公开 benchmark · 100% 静态站点零 CDN
+</footer>
+
+<script src="audio-utils.js"></script>
+</body>
+</html>

@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>声音变脸 · 实时变声 | agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .preset-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.9rem}
+  .preset-row button{padding:.45rem .8rem;border:1px solid #e2e8f0;background:#fff;border-radius:.5rem;cursor:pointer;font-size:.88rem;font-family:inherit;transition:.15s}
+  .preset-row button:hover{border-color:#7c3aed;background:#f5f3ff}
+  .preset-row button.active{background:#7c3aed;color:#fff;border-color:#7c3aed}
+  .slider-row{display:grid;grid-template-columns:140px 1fr 70px;gap:.6rem;align-items:center;margin-bottom:.7rem}
+  .slider-row label{font-size:.88rem;color:#334155}
+  .slider-row input[type=range]{width:100%;accent-color:#7c3aed}
+  .slider-row .val{font-family:Monaco,monospace;font-size:.85rem;color:#7c3aed;text-align:right}
+  .slider-row .hint{grid-column:1/-1;font-size:.75rem;color:#94a3b8;margin-top:-.3rem;margin-bottom:.2rem}
+  .emo-btn-row{display:flex;gap:.4rem;margin-bottom:.7rem}
+  .emo-btn{flex:1;padding:.5rem;border:1px solid #e2e8f0;background:#fff;border-radius:.5rem;cursor:pointer;font-size:.9rem;font-family:inherit;transition:.15s}
+  .emo-btn.active{background:#7c3aed;color:#fff;border-color:#7c3aed}
+  .emo-btn.sad.active{background:#475569;border-color:#475569}
+  .emo-btn.exc.active{background:#dc2626;border-color:#dc2626}
+  .wave-block{background:#0f172a;border-radius:.5rem;padding:.6rem;margin-bottom:.7rem}
+  .wave-block .wcap{color:#94a3b8;font-size:.78rem;margin-bottom:.3rem;display:flex;justify-content:space-between}
+  .wave-block canvas{width:100%;height:200px;display:block;border-radius:.3rem}
+  .status{font-size:.85rem;color:#64748b;padding:.25rem .6rem;background:#f1f5f9;border-radius:1rem;margin-left:auto}
+  .status.on{color:#059669;background:#d1fae5}
+  .status.err{color:#dc2626;background:#fee2e2}
+  .algo-block{background:#fff;border:1px solid var(--border);border-radius:.7rem;padding:1.2rem}
+  .algo-block h3{margin:0 0 .8rem;font-size:1.05rem;color:#7c3aed}
+  .code-block{background:#0f172a;color:#e2e9f5;padding:.9rem 1rem;border-radius:.5rem;font-family:Monaco,'Courier New',monospace;font-size:.8rem;line-height:1.55;overflow-x:auto;margin-top:.7rem;white-space:pre}
+  .code-block .kw{color:#c084fc}
+  .code-block .cm{color:#64748b}
+  .code-block .str{color:#86efac}
+  .principle-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.8rem}
+  .principle-item{background:#faf5ff;border-radius:.5rem;padding:.8rem;border-left:3px solid #a78bfa}
+  .principle-item b{color:#7c3aed}
+  @media(max-width:680px){.principle-grid{grid-template-columns:1fr}.slider-row{grid-template-columns:110px 1fr 60px}}
+</style>
+</head>
+<body>
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11 11 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / <a href="lab.html">语音实验室</a> / 声音变脸 · 实时变声</div>
+  <h1>🎭 声音变脸 · 实时变声</h1>
+  <p>上传或录音，拖动滑块实时变声：男声↔女声↔童声（F0移位+共振峰尺度）、机器人/电话音/水下音；情绪滑块（平静→激动→悲伤）调节F0范围/语速/能量。纯前端实时合成，不跑大模型。</p>
+</div></header>
+
+<div class="page-body">
+
+<div class="ctrl-row">
+  <button id="btnUpload" class="btn btn-p" style="background:#7c3aed">📁 上传音频</button>
+  <input type="file" id="fileInput" accept="audio/*" style="display:none">
+  <button id="btnMic" class="btn btn-outline">🎙️ 开始实时变声</button>
+  <button id="btnStop" class="btn btn-ghost btn-disabled" disabled>⏹ 停止</button>
+  <button id="btnPlay" class="btn btn-ghost btn-disabled" disabled>🔊 试听输出</button>
+  <span id="status" class="status">选择上传文件或开启麦克风</span>
+</div>
+
+<section>
+<div class="grid-2">
+
+<div class="card">
+  <h3 style="margin:0 0 .9rem;font-size:1.05rem">🎛️ 变声参数</h3>
+
+  <div style="font-size:.85rem;color:#64748b;margin-bottom:.4rem">性别 / 年龄 / 音色预设</div>
+  <div class="preset-row" id="presets">
+    <button data-preset="male">👨 男声</button>
+    <button data-preset="female">👩 女声</button>
+    <button data-preset="child">👦 童声</button>
+    <button data-preset="robot">🤖 机器人</button>
+    <button data-preset="phone">📞 电话音</button>
+    <button data-preset="underwater">🤿 水下</button>
+  </div>
+
+  <div class="slider-row">
+    <label>F0 移位</label>
+    <input type="range" id="f0shift" min="-12" max="19" step="1" value="0">
+    <span class="val" id="f0shiftVal">0 st</span>
+  </div>
+  <div class="slider-row">
+    <div></div>
+    <div class="hint">半音：男声+7≈女声，+12≈童声，-5≈低沉大叔；范围 -12 ~ +19（一个半八度）</div>
+  </div>
+
+  <div class="slider-row">
+    <label>共振峰尺度</label>
+    <input type="range" id="formant" min="0.7" max="1.4" step="0.01" value="1.0">
+    <span class="val" id="formantVal">1.00</span>
+  </div>
+  <div class="slider-row">
+    <div></div>
+    <div class="hint">声道长度比：女声 1.15（短声道→频率高），童声 1.3，老人/低沉 0.85——这是"不像花栗鼠"的关键</div>
+  </div>
+
+  <div class="slider-row">
+    <label>机器人感</label>
+    <input type="range" id="robot" min="0" max="100" step="1" value="0">
+    <span class="val" id="robotVal">0%</span>
+  </div>
+  <div class="slider-row">
+    <div></div>
+    <div class="hint">压平 F0 动态 + 8-bit 量化 + 20Hz 颤音，数值越大越机械</div>
+  </div>
+
+  <div class="slider-row">
+    <label>噪声 / 气声</label>
+    <input type="range" id="noise" min="0" max="1" step="0.01" value="0">
+    <span class="val" id="noiseVal">0.00</span>
+  </div>
+  <div class="slider-row">
+    <div></div>
+    <div class="hint">加白噪声模拟呼吸气声（0–1）</div>
+  </div>
+
+  <div style="font-size:.85rem;color:#64748b;margin:.6rem 0 .3rem">情绪（韵律调节）</div>
+  <div class="emo-btn-row">
+    <button class="emo-btn sad" data-emo="-1">😢 悲伤</button>
+    <button class="emo-btn active" data-emo="0">😐 平静</button>
+    <button class="emo-btn exc" data-emo="1">😤 激动</button>
+  </div>
+  <div class="slider-row">
+    <label>情绪强度</label>
+    <input type="range" id="emo" min="-1" max="1" step="0.05" value="0">
+    <span class="val" id="emoVal">0.00</span>
+  </div>
+  <div class="slider-row">
+    <div></div>
+    <div class="hint">激动→F0 动态+4st + 语速+15% + 能量+3dB；悲伤→F0 动态减小 + 语速-15% + 能量-2dB</div>
+  </div>
+
+  <div style="margin-top:.7rem;font-size:.82rem;color:#94a3b8">
+    提示：麦克风模式下参数<span style="color:#7c3aed">实时生效</span>；文件模式下点击<span style="color:#7c3aed">▶️ 试听输出</span>合成播放。
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin:0 0 .9rem;font-size:1.05rem">📊 输入 / 输出波形对比</h3>
+
+  <div class="wave-block">
+    <div class="wcap"><span>输入波形</span><span id="inPeak">0 dB</span></div>
+    <canvas id="inCanvas" width="600" height="200"></canvas>
+  </div>
+
+  <div class="wave-block">
+    <div class="wcap"><span>输出波形（变声后）</span><span id="outPeak">0 dB</span></div>
+    <canvas id="outCanvas" width="600" height="200"></canvas>
+  </div>
+
+  <div id="fileInfo" style="font-size:.85rem;color:#64748b;display:none"></div>
+</div>
+
+</div>
+</section>
+
+<section>
+<h2>🧠 变声的声学原理</h2>
+<div class="grid-2">
+
+<div class="algo-block">
+<h3>📐 F0 与共振峰：声音的两个维度</h3>
+<div class="principle-grid">
+  <div class="principle-item"><b>声带振动 → F0（基频）</b><br>
+  决定"音高"：成年男声 ≈ 85–180Hz，女声 ≈ 165–255Hz，童声 ≈ 250–400Hz。仅靠 F0 只能"变调"。</div>
+  <div class="principle-item"><b>声道长度 → 共振峰（Formant）</b><br>
+  声道是一根共振管：男性≈17cm、女性≈14cm、儿童≈10cm。<b>管越短→共振峰频率整体越高</b>，这才是"性别/年龄音色"的物理基础。</div>
+</div>
+<p style="font-size:.9rem;color:#334155;line-height:1.7;margin:.5rem 0">
+<b>变调 ≠ 变声。</b>简单把男声升 12 半音会得到"花栗鼠"（Alvin and the Chipmunks）——因为所有频率（包括共振峰）一起被拉高，声道也跟着"虚拟缩短"成不可能的尺寸。真正的变声（Voice Conversion）必须<b>独立控制 F0 和共振峰</b>：
+</p>
+<table class="symbol-table" style="margin-top:.5rem">
+<tr><td>操作</td><td>F0</td><td>共振峰</td><td>听感</td></tr>
+<tr><td>单纯变速</td><td>一起变</td><td>一起变</td><td>快慢 + 花栗鼠</td></tr>
+<tr><td>相声码器 pitch shift</td><td>移位</td><td>不变</td><td>高低声（像同个人唱高音）</td></tr>
+<tr><td>完整变声</td><td>移位</td><td>整体缩放</td><td>真的像另一个人</td></tr>
+</table>
+<p style="font-size:.85rem;color:#64748b;margin-top:.6rem">本页通过「重采样+交叉淡化拼接」做 pitch shift 保持时长，用「biquad 高低 shelf 链」近似共振峰整体搬移——没有神经网络，但足以听出男/女/童/机器人/电话/水下的差异。</p>
+</div>
+
+<div class="algo-block">
+<h3>🔧 手搓核心：pitch shift 伪代码</h3>
+<p style="font-size:.88rem;color:#334155;line-height:1.7;margin:0 0 .4rem">基于重采样 + 帧交叉淡化的简化 SOLA 算法（相位声码器的时域近似，延迟低、实时友好）：</p>
+<div class="code-block"><span class="cm">// ratio = 2^(semitones/12) ；升高音调→重采样后信号更长，要裁切回来</span>
+<span class="kw">function</span> pitchShift(buf, ratio, sr) {
+  <span class="kw">const</span> frameSize = 2048, hop = 512;
+  <span class="cm">// 1. 把输入按 ratio 重采样：长度变为 n/ratio（升调变短、降调变长）</span>
+  <span class="kw">const</span> rs = resample(buf, sr, sr * ratio);
+  <span class="kw">const</span> out = <span class="kw">new</span> Float32Array(buf.length);
+  <span class="kw">const</span> win = hanning(frameSize);
+  <span class="cm">// 2. 以 hop 为步长加窗叠加，实现无缝拼接（OLA）</span>
+  <span class="kw">for</span> (<span class="kw">let</span> i=0, j=0; i<buf.length-frameSize; i+=hop, j+=Math.round(hop/ratio)) {
+    <span class="kw">for</span> (<span class="kw">let</span> k=0; k<frameSize; k++) {
+      <span class="kw">if</span> (j+k < rs.length) out[i+k] += rs[j+k] * win[k];
+    }
+  }
+  <span class="cm">// 3. 归一化、返回与输入等长的变调信号</span>
+  <span class="kw">return</span> normalize(out);
+}
+<span class="cm">// 共振峰尺度：频率轴 warp，用 highshelf/lowshelf 组合近似整体频谱包络搬移</span>
+<span class="cm">// scale > 1 → 高频提升、低频切一点 → 更亮/更短声道（女/童）</span>
+<span class="cm">// scale < 1 → 高频切、低频抬 → 更闷/更长声道（男/老）</span></div>
+<p style="font-size:.82rem;color:#94a3b8;margin-top:.5rem">注：生产级变声用 WORLD / WORLD-vocoder 或神经声码器（HiFi-GAN + VC 模型）。这里为了零依赖、实时、零延迟，用了 O(1) 延迟的近似算法，足以演示原理并产生可辨的变声效果。</p>
+</div>
+
+</div>
+</section>
+
+</div>
+
+<footer>© agent-speech · 声音变脸 · 纯前端实时 DSP 实现（ScriptProcessor + biquad + OLA pitch shift）</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+(function(){
+  const AU = window.AU;
+  const $ = id => document.getElementById(id);
+
+  // ---- DOM ----
+  const btnUpload=$('btnUpload'), fileInput=$('fileInput'),
+        btnMic=$('btnMic'), btnStop=$('btnStop'), btnPlay=$('btnPlay'),
+        statusEl=$('status'), fileInfo=$('fileInfo'),
+        inCanvas=$('inCanvas'), outCanvas=$('outCanvas'),
+        inPeak=$('inPeak'), outPeak=$('outPeak'),
+        f0shift=$('f0shift'), formant=$('formant'), robot=$('robot'),
+        noise=$('noise'), emo=$('emo');
+  const f0shiftVal=$('f0shiftVal'), formantVal=$('formantVal'),
+        robotVal=$('robotVal'), noiseVal=$('noiseVal'), emoVal=$('emoVal');
+
+  const ictx = inCanvas.getContext('2d'), octx = outCanvas.getContext('2d');
+
+  // ---- params ----
+  let params = { f0:0, formant:1.0, robot:0, noise:0, emo:0 };
+  function bindSlider(el,valEl,fmt,key){
+    const update=()=>{valEl.textContent=fmt(el.value);params[key]=parseFloat(el.value);applyPresetUI()};
+    el.addEventListener('input',update);update();
+  }
+  bindSlider(f0shift,f0shiftVal,v=>v+' st','f0');
+  bindSlider(formant,formantVal,v=>(+v).toFixed(2),'formant');
+  bindSlider(robot,robotVal,v=>v+'%','robot');
+  bindSlider(noise,noiseVal,v=>(+v).toFixed(2),'noise');
+  bindSlider(emo,emoVal,v=>(+v).toFixed(2),'emo');
+
+  // preset buttons
+  const PRESETS={
+    male:       {f0:-3, formant:0.9, robot:0, noise:0.02, emo:0},
+    female:     {f0:7,  formant:1.15,robot:0, noise:0.02, emo:0},
+    child:      {f0:12, formant:1.3, robot:0, noise:0.03, emo:0},
+    robot:      {f0:0,  formant:1.0, robot:85,noise:0.05, emo:0},
+    phone:      {f0:0,  formant:1.0, robot:0, noise:0.01, emo:0, bandpass:true},
+    underwater: {f0:-4, formant:0.8, robot:0, noise:0.02, emo:0, underwater:true}
+  };
+  let curPreset=null;
+  function applyPresetUI(){
+    // de-highlight all when user drags
+    document.querySelectorAll('#presets button').forEach(b=>b.classList.remove('active'));
+    curPreset=null;
+  }
+  document.querySelectorAll('#presets button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const p=PRESETS[b.dataset.preset];if(!p)return;
+      document.querySelectorAll('#presets button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');curPreset=b.dataset.preset;
+      f0shift.value=p.f0;formant.value=p.formant;robot.value=p.robot;noise.value=p.noise;emo.value=p.emo;
+      f0shift.dispatchEvent(new Event('input'));
+      formant.dispatchEvent(new Event('input'));
+      robot.dispatchEvent(new Event('input'));
+      noise.dispatchEvent(new Event('input'));
+      emo.dispatchEvent(new Event('input'));
+      rebuildFX();
+    });
+  });
+  // emotion buttons sync slider
+  document.querySelectorAll('.emo-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.emo-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      emo.value=b.dataset.emo;emo.dispatchEvent(new Event('input'));
+    });
+  });
+  emo.addEventListener('input',()=>{
+    document.querySelectorAll('.emo-btn').forEach(x=>x.classList.remove('active'));
+    const v=parseFloat(emo.value);
+    if(Math.abs(v)<0.05)document.querySelector('.emo-btn[data-emo="0"]').classList.add('active');
+    else if(v>0.5)document.querySelector('.emo-btn[data-emo="1"]').classList.add('active');
+    else if(v<-0.5)document.querySelector('.emo-btn[data-emo="-1"]').classList.add('active');
+  });
+
+  // ---- AudioCtx ----
+  let AC=null, micStream=null, micSrc=null, procNode=null;
+  let inAnalyser=null, outAnalyser=null;
+  let srcNode=null, audioBuf=null; // file mode
+  // FX chain nodes
+  let fxInput=null, fxOutput=null, hpNode=null, lsNode=null, hsNode=null, bpNode=null, lpNode=null, wetGain=null, outGain=null;
+  // pitch shift state (ring buffer)
+  let psState={readPos:0, writeBuf:null, writePos:0, hop:512, buf:null};
+  const PS_FRAME=2048, PS_HOP=512;
+
+  function ensureAC(){
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+  }
+
+  function buildFXGraph(){
+    if(!AC)return;
+    // clean previous
+    try{hpNode&&hpNode.disconnect();lsNode&&lsNode.disconnect();
+      hsNode&&hsNode.disconnect();bpNode&&bpNode.disconnect();lpNode&&lpNode.disconnect();
+      wetGain&&wetGain.disconnect();outGain&&outGain.disconnect();}catch(e){}
+
+    hpNode=AC.createBiquadFilter();hpNode.type='highpass';hpNode.frequency.value=80;
+    lsNode=AC.createBiquadFilter();lsNode.type='lowshelf';lsNode.frequency.value=250;
+    hsNode=AC.createBiquadFilter();hsNode.type='highshelf';hsNode.frequency.value=2500;
+    bpNode=AC.createBiquadFilter();bpNode.type='bandpass';bpNode.frequency.value=1500;bpNode.Q.value=0.6;
+    lpNode=AC.createBiquadFilter();lpNode.type='lowpass';lpNode.frequency.value=800;
+    wetGain=AC.createGain();
+    outGain=AC.createGain();outGain.gain.value=1;
+
+    inAnalyser=AC.createAnalyser();inAnalyser.fftSize=2048;
+    outAnalyser=AC.createAnalyser();outAnalyser.fftSize=2048;
+  }
+
+  function rebuildFX(){
+    if(!AC)return;
+    const s=params.formant||1;
+    // formant scale: s>1 提高频、降低频（短声道=女/童）
+    // 公式：db = (s-1)*24（经验值，范围约 ±10dB）
+    const db=(s-1)*24;
+    lsNode.gain.value=-db*0.6;   // 低频段反向
+    hsNode.gain.value=db;         // 高频段同向
+    // 机器人/电话/水下 滤波
+    const isBP=curPreset==='phone', isUW=curPreset==='underwater';
+    bpNode.frequency.value=isBP?1800:1500;bpNode.Q.value=isBP?0.9:0.6;
+    lpNode.frequency.value=isUW?800:(curPreset==='robot'?3500:18000);
+    // emotion → gain
+    const e=params.emo||0;
+    // +1激动+3dB, -1悲伤-2dB
+    const emoDb=e>0?3*e:-2*Math.abs(e);
+    outGain.gain.value=Math.pow(10,emoDb/20);
+  }
+
+  // ---- DSP: pitch shift via resample+OLA (frame by frame inside onaudioprocess) ----
+  // We use a simple ring-buffer pitch shifter.
+  // To keep it real-time cheap, we do a granular "windowed overlap-add" inside the script processor.
+  function initPS(){
+    psState={
+      grainBuf:new Float32Array(PS_FRAME*4), // rolling grain memory
+      writePos:0,
+      grainPos:0,
+      outGrain:new Float32Array(PS_FRAME),
+      grainActive:false,
+      pitchRatio:1.0,
+      // crossfade window
+      window:(function(){const w=new Float32Array(PS_FRAME);
+        for(let i=0;i<PS_FRAME;i++)w[i]=0.5*(1-Math.cos(2*Math.PI*i/(PS_FRAME-1)));
+        return w;})()
+    };
+  }
+  initPS();
+
+  // Simplest reliable pitch shifter for real-time: circular delay-line + two overlapping grains
+  // (based on Chris Wilson's approach; simplified).
+  let psDelay=null, psDelayLen=0, psDpos=0;
+  function psProcess(input, output, n, ratio){
+    // Use delay-line based pitch shifter (two-grain crossfade)
+    if(!psDelay||psDelayLen!==4096){
+      psDelayLen=4096;psDelay=new Float32Array(psDelayLen);psDpos=0;
+    }
+    const d=PS_FRAME/2; // grain delay
+    for(let i=0;i<n;i++){
+      psDelay[psDpos]=input[i];
+      // two read pointers with crossfade
+      const r1=(psDpos - d*ratio + psDelayLen*2)%psDelayLen|0;
+      const r2=(psDpos - 2*d*ratio + psDelayLen*2)%psDelayLen|0;
+      const frac=(psDpos%PS_HOP)/PS_HOP;
+      // hann crossfade
+      const w=0.5-0.5*Math.cos(2*Math.PI*frac);
+      let v=psDelay[r1]*(1-w)+psDelay[r2]*w;
+      output[i]=v;
+      psDpos=(psDpos+1)%psDelayLen;
+    }
+  }
+
+  // ---- ScriptProcessor node ----
+  function makeProcessor(){
+    // buffer size 4096, 1 in / 1 out; will connect via intermediate merger
+    const N=4096;
+    procNode=AC.createScriptProcessor(N,1,1);
+    const inBuf=new Float32Array(N), outBuf=new Float32Array(N);
+    const tmp=new Float32Array(N);
+    const quantStep=1/127;
+    let tremPhase=0;
+
+    procNode.onaudioprocess=function(e){
+      const inp=e.inputBuffer.getChannelData(0);
+      const out=e.outputBuffer.getChannelData(0);
+      // copy for analyser (tap input)
+      for(let i=0;i<N;i++)inBuf[i]=inp[i];
+
+      // 1. pitch shift into tmp
+      const ratio=Math.pow(2,(params.f0||0)/12);
+      // robot: flatten pitch (ratio -> 1, and quantize)
+      const rob=(params.robot||0)/100;
+      const effRatio=ratio*(1-rob)+1*rob;
+      psProcess(inp,tmp,N,effRatio);
+
+      // 2. copy tmp -> out for biquad chain to process (biquad runs via WebAudio graph on out, so here we just output tmp)
+      for(let i=0;i<N;i++){
+        let v=tmp[i];
+        // robot quantize (8-bit)
+        if(rob>0.01){
+          const q=Math.max(0.005,quantStep*(1-rob*0.7));
+          v=Math.round(v/q)*q;
+          // tremolo 20Hz
+          tremPhase+=2*Math.PI*20/AC.sampleRate;
+          v*=1-rob*0.5+rob*0.5*Math.sin(tremPhase)*0.5;
+        }
+        // noise
+        const ns=params.noise||0;
+        if(ns>0.001){
+          v+=(Math.random()*2-1)*ns*0.15;
+        }
+        out[i]=v;
+      }
+    };
+  }
+
+  // ---- Waveform drawing ----
+  let rafId=null;
+  function drawWave(){
+    rafId=requestAnimationFrame(drawWave);
+    drawOne(inCanvas,ictx,inAnalyser,inPeak,'#a78bfa');
+    drawOne(outCanvas,octx,outAnalyser,outPeak,'#f0abfc');
+  }
+  function drawOne(cvs,ctx,an,peakEl,color){
+    const W=cvs.width,H=cvs.height;
+    ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+    if(!an){return;}
+    const t=new Uint8Array(an.fftSize);
+    an.getByteTimeDomainData(t);
+    // center line
+    ctx.strokeStyle='#1e293b';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+    // wave
+    ctx.strokeStyle=color;ctx.lineWidth=1.5;
+    ctx.beginPath();
+    let pk=0;
+    for(let i=0;i<t.length;i++){
+      const v=(t[i]-128)/128;
+      pk=Math.max(pk,Math.abs(v));
+      const x=i/(t.length-1)*W;
+      const y=H/2-v*H*0.85;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // dB
+    const db=pk>0?(20*Math.log10(pk+1e-6)).toFixed(1):'-∞';
+    peakEl.textContent=db+' dB';
+  }
+
+  // ---- Connect graph ----
+  // src/hp -> hpNode->lsNode->hsNode->(bp/lp depending)->procNode->wetGain->outGain->outAnalyser->dest
+  function connectChain(src, destMode /*'speak'|'file'*/){
+    src.connect(hpNode);
+    hpNode.connect(lsNode);lsNode.connect(hsNode);
+    // route through bandpass/lp as needed
+    if(curPreset==='phone'){hsNode.connect(bpNode);bpNode.connect(procNode);}
+    else if(curPreset==='underwater'){hsNode.connect(lpNode);lpNode.connect(procNode);}
+    else{hsNode.connect(procNode);}
+    procNode.connect(wetGain);wetGain.connect(outGain);
+    outGain.connect(outAnalyser);
+    if(destMode==='speak')outGain.connect(AC.destination);
+    // input tap
+    src.connect(inAnalyser);
+  }
+  function disconnectAll(){
+    try{hpNode&&hpNode.disconnect();lsNode&&lsNode.disconnect();
+      hsNode&&hsNode.disconnect();bpNode&&bpNode.disconnect();lpNode&&lpNode.disconnect();
+      procNode&&procNode.disconnect();wetGain&&wetGain.disconnect();outGain&&outGain.disconnect();
+      micSrc&&micSrc.disconnect();srcNode&&srcNode.disconnect();}catch(e){}
+  }
+
+  function setStatus(t,cls){
+    statusEl.textContent=t;statusEl.className='status'+(cls?' '+cls:'');
+  }
+  function stopAll(){
+    try{disconnectAll();}catch(e){}
+    if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
+    if(srcNode){try{srcNode.stop();}catch(e){}srcNode=null;}
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+    btnStop.disabled=true;btnStop.classList.add('btn-disabled');
+    btnMic.disabled=false;btnPlay.disabled=!audioBuf;
+    if(audioBuf)btnPlay.classList.remove('btn-disabled');
+    setStatus(audioBuf?'已加载文件，点试听或开麦':'选择上传文件或开启麦克风');
+    // clear canvases
+    [ictx,octx].forEach((c,i)=>{
+      const cv=i===0?inCanvas:outCanvas;
+      c.fillStyle='#0f172a';c.fillRect(0,0,cv.width,cv.height);
+    });
+  }
+
+  // ---- Mic mode ----
+  btnMic.addEventListener('click',async()=>{
+    try{
+      ensureAC();
+      buildFXGraph();rebuildFX();
+      micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      micSrc=AC.createMediaStreamSource(micStream);
+      makeProcessor();
+      // reset pitch shifter state
+      psDelay=null;
+      connectChain(micSrc,'speak');
+      btnMic.disabled=true;btnStop.disabled=false;btnStop.classList.remove('btn-disabled');
+      btnPlay.disabled=true;btnPlay.classList.add('btn-disabled');
+      setStatus('🎙️ 实时变声进行中，说话即听','on');
+      drawWave();
+    }catch(err){
+      console.error(err);setStatus('❌ 麦克风访问失败: '+err.message,'err');
+    }
+  });
+
+  btnStop.addEventListener('click',stopAll);
+
+  // ---- File upload ----
+  btnUpload.addEventListener('click',()=>fileInput.click());
+  fileInput.addEventListener('change',async()=>{
+    const f=fileInput.files[0];if(!f)return;
+    try{
+      ensureAC();
+      setStatus('⏳ 解码文件中…');
+      const arr=await f.arrayBuffer();
+      audioBuf=await AC.decodeAudioData(arr.slice(0));
+      // mono-mix
+      if(audioBuf.numberOfChannels>1){
+        const mono=new Float32Array(audioBuf.length);
+        const L=audioBuf.getChannelData(0),R=audioBuf.getChannelData(1);
+        for(let i=0;i<audioBuf.length;i++)mono[i]=(L[i]+R[i])*0.5;
+        const nb=AC.createBuffer(1,audioBuf.length,audioBuf.sampleRate);
+        nb.copyToChannel(mono,0);audioBuf=nb;
+      }
+      fileInfo.style.display='block';
+      fileInfo.innerHTML=`📄 <b>${f.name}</b> · ${(f.size/1024).toFixed(1)} KB · ${audioBuf.duration.toFixed(1)}s · ${audioBuf.sampleRate}Hz`;
+      btnPlay.disabled=false;btnPlay.classList.remove('btn-disabled');
+      setStatus('✅ 已加载文件，点 🔊 试听输出');
+    }catch(err){
+      console.error(err);setStatus('❌ 文件解码失败: '+err.message,'err');
+    }
+  });
+
+  // ---- Play file with real-time FX ----
+  btnPlay.addEventListener('click',()=>{
+    if(!audioBuf)return;
+    if(srcNode){try{srcNode.stop();}catch(e){}srcNode=null;}
+    stopAllRAFOnly();
+    ensureAC();buildFXGraph();rebuildFX();makeProcessor();psDelay=null;
+    srcNode=AC.createBufferSource();srcNode.buffer=audioBuf;
+    // apply emotion playback rate
+    const e=params.emo||0;
+    srcNode.playbackRate.value=1+(e>0?0.15*e:-0.15*Math.abs(e));
+    connectChain(srcNode,'speak');
+    srcNode.start();
+    btnStop.disabled=false;btnStop.classList.remove('btn-disabled');
+    setStatus('▶️ 播放合成中…','on');
+    drawWave();
+    srcNode.onended=()=>{
+      setStatus('✅ 播放完成');
+      setTimeout(stopAllRAFOnly,200);
+    };
+  });
+  function stopAllRAFOnly(){
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+    try{disconnectAll();}catch(e){}
+    btnStop.disabled=true;btnStop.classList.add('btn-disabled');
+    btnPlay.disabled=!audioBuf;
+    if(audioBuf)btnPlay.classList.remove('btn-disabled');
+    if(srcNode){try{srcNode.stop();}catch(e){}srcNode=null;}
+  }
+
+  // redraw FX when any slider changes (in case no active graph it's harmless)
+  [f0shift,formant,robot,noise,emo].forEach(el=>{
+    el.addEventListener('change',()=>{rebuildFX();});
+  });
+
+  // initial canvases
+  [ictx,octx].forEach((c,i)=>{
+    const cv=i===0?inCanvas:outCanvas;
+    c.fillStyle='#0f172a';c.fillRect(0,0,cv.width,cv.height);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>语音技术宇宙 · 时间长河 | agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* 力导向图容器 */
+#universe-wrap{position:relative;background:#0f172a;border-radius:.8rem;overflow:hidden;}
+#universe{display:block;background:#0f172a;cursor:grab;}
+#universe.dragging{cursor:grabbing;}
+#tooltip{position:absolute;pointer-events:none;background:rgba(15,23,42,.95);color:#e2e8f0;border:1px solid rgba(148,163,184,.3);border-radius:.4rem;padding:.55rem .7rem;font-size:.8rem;line-height:1.5;max-width:220px;z-index:10;opacity:0;transition:opacity .12s;backdrop-filter:blur(6px);}
+#tooltip .tt-t{font-weight:700;color:#fff;font-size:.85rem;margin-bottom:.15rem;}
+#tooltip .tt-y{font-family:Monaco,monospace;color:#fbbf24;font-size:.72rem;margin-left:.3rem;}
+#tooltip .tt-d{color:#cbd5e1;font-size:.78rem;}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.8rem;padding:.6rem .8rem;background:#fff;border:1px solid var(--border);border-radius:.6rem;}
+.legend-item{display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#475569;cursor:pointer;user-select:none;padding:.2rem .4rem;border-radius:.3rem;transition:.15s;}
+.legend-item:hover{background:#f1f5f9;}
+.legend-item.disabled{opacity:.35;}
+.legend-item .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.uni-hint{font-size:.8rem;color:#94a3b8;margin-top:.4rem;}
+
+/* 翻转卡片3D增强（在style.css基础上增强） */
+.tl-node .flip{transform-style:preserve-3d;transition:transform .5s;position:relative;}
+.tl-node.flipped .flip{transform:rotateY(0);}
+.tl-node .flip-front,.tl-node .flip-back{backface-visibility:hidden;}
+.tl-node .flip-front{background:#fff;}
+.tl-node.asr .flip-front{border-left:4px solid var(--sky);}
+.tl-node.tts .flip-front{border-left:4px solid var(--org);}
+.tl-node .flip-back{background:#faf5ff;border-top:1px solid var(--border);display:block;color:#334155;}
+.tl-node.flipped .flip-back{display:block;animation:flipFade .4s ease;}
+.tl-node.flipped .flip-front{background:#f5f3ff;}
+.tl-node:not(.flipped) .flip-back{display:none;}
+@keyframes flipFade{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+.flip-hint{font-size:.72rem;color:#94a3b8;white-space:nowrap;}
+.flip-back .fbk{background:#0f172a;color:#e2e8f0;border-radius:.3rem;padding:.5rem .65rem;font-family:Monaco,Consolas,monospace;font-size:.72rem;margin:.5rem 0;overflow-x:auto;line-height:1.4;}
+.flip-back .fbd{margin-bottom:.4rem;}
+.flip-back .fbk b{color:#fbbf24;}
+.flip-back .flink{display:inline-block;margin-top:.3rem;font-size:.78rem;color:#7c3aed;font-weight:600;}
+.flip-back .flink:hover{text-decoration:underline;}
+
+/* 双线时间轴分组 */
+.tl-dual{position:relative;}
+.tl-dual .asr-col,.tl-dual .tts-col{padding-left:1.8rem;position:relative;}
+.tl-dual{display:grid;grid-template-columns:1fr 1fr;gap:0 2rem;position:relative;}
+.tl-dual::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:3px;background:linear-gradient(to bottom,var(--sky),var(--ppt),var(--org));transform:translateX(-50%);display:none;}
+@media(max-width:768px){.tl-dual{grid-template-columns:1fr;}.tl-dual > div{padding-left:2rem;}.tl-dual::before{left:.7rem;}}
+.tl-dual .tl-node{margin-bottom:1rem;}
+.tl-dual .asr-col .tl-node::before{left:.15rem;border-color:var(--sky);}
+.tl-dual .tts-col .tl-node::before{left:.15rem;border-color:var(--org);}
+.asr-col-h,.tts-col-h{font-weight:700;font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;padding-bottom:.5rem;border-bottom:2px solid var(--border);}
+.asr-col-h{color:var(--sky-d);border-color:var(--sky);}
+.tts-col-h{color:var(--org-d);border-color:var(--org);}
+
+@media(max-width:768px){.tl-dual .asr-col .tl-node::before,.tl-dual .tts-col .tl-node::before{left:-1.6rem;}}
+</style>
+</head>
+<body>
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11 11 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / 🌌 语音技术宇宙 · 时间长河</div>
+  <h1>🌌 语音技术宇宙 · 时间长河</h1>
+  <p>可拖动的力导向关系图 + 翻转卡片式时间轴。ASR/TTS 双线发展70年，节点代表算法/模型/论文/数据集/工具，边代表引用/改进/替代/依赖。</p>
+</div></header>
+
+<div class="page-body">
+
+<!-- A. 力导向图 -->
+<section>
+<h2>🧬 语音技术宇宙</h2>
+<p style="color:#475569;margin-bottom:.75rem">鼠标拖拽节点、hover 查看简介、点击固定/释放、滚轮缩放、双击重置视图；点击下方图例可隐藏/显示某一类节点。</p>
+
+<div id="universe-wrap">
+  <canvas id="universe" width="1200" height="600" style="width:100%;background:#0f172a"></canvas>
+  <div id="tooltip"></div>
+</div>
+
+<div class="legend" id="legend"></div>
+<div class="uni-hint">💡 提示：紫色里程碑 = 关键论文/模型；蓝色 = 算法；橙色 = 数据集；绿色 = 工具/框架；红色 = 终端应用。</div>
+</section>
+
+<!-- B. 时间轴 -->
+<section>
+<h2>📜 语音技术史时间轴（翻转看详情）</h2>
+<p style="color:#475569;margin-bottom:1rem">点击任意卡片可翻转查看关键贡献、直觉解释与对应章节。<b style="color:var(--sky-d)">ASR 蓝线</b>与<b style="color:var(--org-d)"> TTS 橙线</b>并行演进，深度学习时代两者深度耦合。</p>
+
+<div class="tl-dual">
+  <!-- ASR 线 -->
+  <div class="asr-col">
+    <div class="asr-col-h">🎤 ASR 自动语音识别</div>
+
+    <div class="tl-node asr" data-id="audrey1952">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">1952</span>
+          <span class="t">Audrey —— 第一个数字识别系统</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Bell Labs 制造，能识别单个说话者说的 0-9 十个英文数字；用模拟电路测量共振峰，模板匹配。</div>
+          <div class="fbd"><b>直觉：</b>语音识别的"Hello World"，告诉机器"听声音→分类"是可能的。</div>
+          <div class="fbk">@article{davis1952audrey,<br>&nbsp;&nbsp;<b>title</b>={Automatic Recognition of Spoken Digits},<br>&nbsp;&nbsp;<b>author</b>={Davis, Biddulph, Balashek},<br>&nbsp;&nbsp;<b>year</b>={1952}<br>}</div>
+          <a class="flink" href="asr/#intro">📖 对应章节：asr/#intro</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">1960s</span>
+          <span class="t">DTW 动态时间规整</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Vintsiuk/Bridle 等提出动态规划对齐两个时长不同的语音序列，解决"同一词语速不同"的匹配问题。</div>
+          <div class="fbd"><b>直觉：</b>像把两根长度不同的橡皮筋拉伸到等长，逐帧对齐比相似度。</div>
+          <div class="fbk">DTW: D(X,Y) = min<sub>W</sub> Σ d(x_i, y_{w(i)})</div>
+          <a class="flink" href="asr/#dtw">📖 对应章节：asr/#dtw</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">1970s</span>
+          <span class="t">HMM 隐马尔可夫模型诞生</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Jelinek (IBM)、Baker (CMU)、Rabiner (Bell Labs) 将 HMM 引入语音，建立"声学模型+语言模型"统计范式。</div>
+          <div class="fbd"><b>直觉：</b>把声音看成"隐状态（音素）→观测（MFCC）"的生成过程，用 Viterbi 解码最可能的词串。</div>
+          <div class="fbk">@article{rabiner1989tutorial,<br>&nbsp;&nbsp;<b>title</b>={A Tutorial on HMM and Selected Applications in Speech Recognition},<br>&nbsp;&nbsp;<b>journal</b>={Proc. IEEE}, <b>year</b>={1989}<br>}</div>
+          <a class="flink" href="asr/#hmm">📖 对应章节：asr/#hmm</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">1980s</span>
+          <span class="t">GMM-HMM 大词汇量连续语音</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>用高斯混合模型建模 HMM 状态的观测概率，WFST 解码图支持大词汇量连续识别（SPHINX、HTK）。</div>
+          <div class="fbd"><b>直觉：</b>HMM 骨架+GMM 细节，统治 ASR 30 年。</div>
+          <a class="flink" href="asr/#gmm">📖 对应章节：asr/#gmm</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2009</span>
+          <span class="t">DNN 重启深度学习语音</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Hinton & Yu 等证明 DNN 替换 GMM 作为 HMM 发射概率（DNN-HMM 混合系统）能显著降 WER。</div>
+          <div class="fbd"><b>直觉：</b>深度网络比高斯更能拟合声学特征的复杂分布。</div>
+          <div class="fbk">@inproceedings{hinton2012deep,<br>&nbsp;&nbsp;<b>title</b>={Deep Neural Networks for Acoustic Modeling in Speech Recognition},<br>&nbsp;&nbsp;<b>year</b>={2012}<br>}</div>
+          <a class="flink" href="asr/#dnn">📖 对应章节：asr/#dnn</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2012</span>
+          <span class="t">DNN-HMM 工业级落地</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>微软、谷歌、百度相继把 DNN-HMM 部署到 Bing、Voice Search、手机语音助手，相对 GMM 错误率降 20-30%。</div>
+          <div class="fbd"><b>直觉：</b>深度学习从"玩具"成为语音工业标配。</div>
+          <a class="flink" href="asr/#dnn-hmm">📖 对应章节：asr/#dnn-hmm</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2014</span>
+          <span class="t">CTC 端到端</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Graves et al. 提出 Connectionist Temporal Classification，引入 blank 符号解决输入输出不对齐问题，无需 HMM 对齐。</div>
+          <div class="fbd"><b>直觉：</b>让网络自己学会"何时吐字、何时沉默"，跳过逐帧标注。</div>
+          <div class="fbk">@article{graves2006ctc,<br>&nbsp;&nbsp;<b>title</b>={Connectionist Temporal Classification},<br>&nbsp;&nbsp;<b>author</b>={Graves, Fernández, Gomez, Schmidhuber},<br>&nbsp;&nbsp;<b>year</b>={2006}<br>}</div>
+          <a class="flink" href="asr/#ctc">📖 对应章节：asr/#ctc</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2015</span>
+          <span class="t">Listen-Attend-Spell (Seq2Seq)</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Chan et al. 提出 LAS：编码器听声学特征，注意力做软对齐，解码器逐字生成；彻底摆脱 HMM/CTC 的独立性假设。</div>
+          <div class="fbd"><b>直觉：</b>像人听句子——听完一段再决定写哪个字，而不是边听边写。</div>
+          <div class="fbk">@inproceedings{chan2016las,<br>&nbsp;&nbsp;<b>title</b>={Listen, Attend and Spell},<br>&nbsp;&nbsp;<b>year</b>={2016}<br>}</div>
+          <a class="flink" href="asr/#seq2seq">📖 对应章节：asr/#seq2seq</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2017</span>
+          <span class="t">Transformer 进入语音</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Vaswani "Attention Is All You Need"；随后 Transformer 取代 RNN 成为 ASR 编码器/解码器主流骨干。</div>
+          <div class="fbd"><b>直觉：</b>自注意力让每个音帧都能直接"看到"全句上下文，不再依赖 RNN 顺序传递。</div>
+          <div class="fbk">@inproceedings{vaswani2017attention,<br>&nbsp;&nbsp;<b>title</b>={Attention Is All You Need},<br>&nbsp;&nbsp;<b>year</b>={2017}<br>}</div>
+          <a class="flink" href="asr/#transformer">📖 对应章节：asr/#transformer</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2018</span>
+          <span class="t">RNN-T 流式端到端</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Graves 提出 RNN-Transducer，在 CTC 基础上加预测网络，支持真正流式、边听边出字，适合助手/会议场景。</div>
+          <div class="fbd"><b>直觉：</b>"声学编码器+语言预测器"联合输出，每输入一帧都可以决定吐字还是继续听。</div>
+          <a class="flink" href="asr/#rnnt">📖 对应章节：asr/#rnnt</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2020</span>
+          <span class="t">Conformer = CNN+Transformer</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Google 提出 Conformer：Macaron-style FFN + 自注意力 + 深度可分离卷积，同时捕获局部与全局依赖，成为当前最强声学编码器。</div>
+          <div class="fbd"><b>直觉：</b>Transformer 看全局、CNN 抓局部，两者融合既稳又准。</div>
+          <div class="fbk">@inproceedings{gulati2020conformer,<br>&nbsp;&nbsp;<b>title</b>={Conformer: Convolution-augmented Transformer for Speech Recognition},<br>&nbsp;&nbsp;<b>year</b>={2020}<br>}</div>
+          <a class="flink" href="asr/#conformer">📖 对应章节：asr/#conformer</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node asr">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2022</span>
+          <span class="t">Whisper 大规模多语 ASR</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>OpenAI 用 68 万小时弱标注多语音频训练 Encoder-Decoder Transformer，零样本泛化到 99 种语言，开源即 SOTA。</div>
+          <div class="fbd"><b>直觉：</b>"大力出奇迹"——足够多的弱标注数据 + 简单的 Transformer 架构，击败了各种复杂 trick。</div>
+          <div class="fbk">@article{radford2022robust,<br>&nbsp;&nbsp;<b>title</b>={Robust Speech Recognition via Large-Scale Weak Supervision (Whisper)},<br>&nbsp;&nbsp;<b>year</b>={2022}<br>}</div>
+          <a class="flink" href="asr/#whisper">📖 对应章节：asr/#whisper</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TTS 线 -->
+  <div class="tts-col">
+    <div class="tts-col-h">📢 TTS 语音合成</div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">1930s</span>
+          <span class="t">VODER 第一台电子合成器</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Bell Labs Homer Dudley 在纽约世博会展示 VODER（Voice Operating Demonstrator），操作员按键控制振荡器与带通滤波器"演奏"出语音。</div>
+          <div class="fbd"><b>直觉：</b>证明声音可以用电路合成，是声码器（vocoder）一词的源头。</div>
+          <a class="flink" href="tts/#voder">📖 对应章节：tts/#voder</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">1970s</span>
+          <span class="t">共振峰合成 (Formant)</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Klatt 合成器（DECtalk）用规则控制 F1/F2/F3 共振峰轨迹，生成可懂度高但"机器味"重的语音（霍金用的就是 DECtalk）。</div>
+          <div class="fbd"><b>直觉：</b>用振荡器模拟声道共振，像"电子口哨"。</div>
+          <a class="flink" href="tts/#formant">📖 对应章节：tts/#formant</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">1980s</span>
+          <span class="t">单元挑选拼接合成</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>预录大量语音单元（音素/双音素），合成时按目标文本挑选最匹配的单元拼接，自然度飞跃。</div>
+          <div class="fbd"><b>直觉：</b>像用录音碎片"拼贴"出句子，质量取决于录音库大小与挑选算法。</div>
+          <a class="flink" href="tts/#concat">📖 对应章节：tts/#concat</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2000s</span>
+          <span class="t">HMM 参数合成 (HTS)</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>东京工业大学 HTS 项目用 HMM 建模频谱/F0/时长，生成参数后送声码器恢复波形，系统小巧、可变换音色/情感。</div>
+          <div class="fbd"><b>直觉：</b>统计模型生成声音"配方"（MFCC+F0），再交给声码器"烹饪"成波形；缺点是声音过平滑、嗡嗡声。</div>
+          <a class="flink" href="tts/#hmm-tts">📖 对应章节：tts/#hmm-tts</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2014</span>
+          <span class="t">WORLD 声码器</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Morise 提出 WORLD：DIO 提 F0 + CheapTrick 算谱包络 + Platinum 算非周期成分，实时高质量分析/合成语音，被广泛用于 Vocoder 研究与变声。</div>
+          <div class="fbd"><b>直觉：</b>把声音拆成"音高+音色+气息"三个独立参数，修改任意一个即可变声。</div>
+          <div class="fbk">@article{morise2016world,<br>&nbsp;&nbsp;<b>title</b>={WORLD: A Vocoder-Based High-Quality Speech Synthesis System},<br>&nbsp;&nbsp;<b>year</b>={2016}<br>}</div>
+          <a class="flink" href="tts/#world">📖 对应章节：tts/#world</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2016</span>
+          <span class="t">WaveNet 神经声码器</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>DeepMind 提出 WaveNet：膨胀因果卷积自回归逐采样点生成波形，MOS 首次接近真人。</div>
+          <div class="fbd"><b>直觉：</b>像神经网络学"下一个采样点是什么"——一次预测 1/16000 秒的波形，慢但逼真。</div>
+          <div class="fbk">@article{oord2016wavenet,<br>&nbsp;&nbsp;<b>title</b>={WaveNet: A Generative Model for Raw Audio},<br>&nbsp;&nbsp;<b>year</b>={2016}<br>}</div>
+          <a class="flink" href="tts/#wavenet">📖 对应章节：tts/#wavenet</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2017</span>
+          <span class="t">Tacotron 2 端到端</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Google 提出 Tacotron 2：Seq2Seq Attention 文本→Mel 谱 + WaveNet 声码器，自然度 4.58 MOS，接近真人 4.55。</div>
+          <div class="fbd"><b>直觉：</b>前端"看文字写声谱"，后端"看声谱造波形"，两段都是神经网络。</div>
+          <div class="fbk">@article{shen2018tacotron2,<br>&nbsp;&nbsp;<b>title</b>={Natural TTS Synthesis by Conditioning WaveNet on Mel Spectrogram Predictions},<br>&nbsp;&nbsp;<b>year</b>={2018}<br>}</div>
+          <a class="flink" href="tts/#tacotron">📖 对应章节：tts/#tacotron</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2019</span>
+          <span class="t">FastSpeech 非自回归</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>微软提出 FastSpeech/FastSpeech2，用长度调节器替代 Attention 做对齐，一次并行生成整句 Mel 谱，速度比自回归快 270 倍。</div>
+          <div class="fbd"><b>直觉：</b>"想好了再开口"——一次性算出每个字的时长，再并行生成整段声学特征，不再逐帧自回归。</div>
+          <div class="fbk">@inproceedings{ren2019fastspeech,<br>&nbsp;&nbsp;<b>title</b>={FastSpeech: Fast, Robust and Controllable Text to Speech},<br>&nbsp;&nbsp;<b>year</b>={2019}<br>}</div>
+          <a class="flink" href="tts/#fastspeech">📖 对应章节：tts/#fastspeech</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2020</span>
+          <span class="t">HiFi-GAN 高质量实时声码器</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>MindSpore 团队提出 HiFi-GAN：多感受野膨胀卷积 + 多周期判别器，在 GPU 上实时生成 22050Hz 高保真波形，MOS 超过 WaveNet。</div>
+          <div class="fbd"><b>直觉：</b>GAN 让生成器与判别器对抗——判别器教生成器"什么才像真人声"，又快又好。</div>
+          <div class="fbk">@inproceedings{kong2020hifigan,<br>&nbsp;&nbsp;<b>title</b>={HiFi-GAN: Generative Adversarial Networks for Efficient and High Fidelity Speech Synthesis},<br>&nbsp;&nbsp;<b>year</b>={2020}<br>}</div>
+          <a class="flink" href="tts/#hifigan">📖 对应章节：tts/#hifigan</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2021</span>
+          <span class="t">VITS 端到端 GAN-TTS</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Kim et al. 提出 VITS：变分推断 + 流式 GAN 声码器，完全端到端（文本→波形一次性），单说话人 MOS 匹敌真人，开源即爆款（成了 VITS 衍生宇宙）。</div>
+          <div class="fbd"><b>直觉：</b>不再两阶段先生成 Mel 再声码器，而是直接从文本隐空间一步出波形，还能做变音色。</div>
+          <div class="fbk">@inproceedings{kim2021conditional,<br>&nbsp;&nbsp;<b>title</b>={Conditional Variational Autoencoder with Adversarial Learning for End-to-End TTS},<br>&nbsp;&nbsp;<b>year</b>={2021}<br>}</div>
+          <a class="flink" href="tts/#vits">📖 对应章节：tts/#vits</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-node tts">
+      <div class="flip">
+        <div class="flip-front">
+          <span class="y">2023</span>
+          <span class="t">XTTS 零样本语音克隆</span>
+          <span class="flip-hint">点击翻转 ▸</span>
+        </div>
+        <div class="flip-back">
+          <div class="fbd"><b>关键贡献：</b>Coqui XTTS（及后续 XTTS-v2）支持 17 种语言零样本克隆：给 6 秒参考音频即可克隆音色并跨语言生成，速度快、可本地部署。</div>
+          <div class="fbd"><b>直觉：</b>说话人嵌入（speaker embedding）作为"音色代码"送入模型，模型把"说什么"和"谁在说"彻底解耦。</div>
+          <a class="flink" href="tts/#xtts">📖 对应章节：tts/#xtts</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</section>
+
+<!-- C. 跨模态联动 -->
+<section>
+<h2>🔗 跨模态联动</h2>
+<div class="cross">
+  <div class="ico">👁️🎙️</div>
+  <div class="bd">
+    <h4>多模态 ASR：唇动 + 视觉 + 语音</h4>
+    <p>嘈杂环境下纯音频 ASR 错误率飙升，加入唇动视觉线索（视觉音素 Viseme）的多模态 ASR 能显著提升鲁棒性，这与 CV 领域的视觉理解、目标检测深度耦合。多模态ASR将唇动、视觉和语音融合（见👉跨模态联动页）。</p>
+    <div class="btns">
+      <a href="https://github.com/yejinlei/agent-cv" target="_blank" rel="noopener" class="btn btn-p">🖼️ 前往 agent-cv 视觉站</a>
+      <a href="https://github.com/yejinlei/agent-yolo" target="_blank" rel="noopener" class="btn btn-outline">🎯 前往 agent-yolo 检测站</a>
+    </div>
+  </div>
+</div>
+</section>
+
+</div>
+
+<footer>© agent-speech · 语音技术宇宙 · 原生 Canvas 力导向图 · 无外部 CDN 依赖</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+/* =========================================================
+ * 力导向图：节点数据 + 边数据
+ * ========================================================= */
+const CAT_COLORS = {
+  milestone: '#a78bfa', // ppt紫
+  algo:      '#38bdf8', // sky蓝
+  dataset:   '#fb923c', // org橙
+  tool:      '#34d399', // grn绿
+  app:       '#fb7185'  // rose红
+};
+const CAT_LABEL = {
+  milestone:'里程碑论文/模型',
+  algo:'算法',
+  dataset:'数据集',
+  tool:'工具/框架',
+  app:'应用'
+};
+
+const nodes = [
+  // 里程碑论文/模型 (紫色, 半径较大)
+  {id:'Audrey',        cat:'milestone', year:1952, r:14, desc:'Bell Labs 首个数字识别系统'},
+  {id:'HMM',           cat:'milestone', year:1970, r:16, desc:'隐马尔可夫模型，统治 ASR 30 年'},
+  {id:'DNN-HMM',       cat:'milestone', year:2012, r:15, desc:'深度网络替代 GMM 作为 HMM 发射概率'},
+  {id:'CTC',           cat:'milestone', year:2014, r:16, desc:'连接主义时序分类，端到端开端'},
+  {id:'Attention',     cat:'milestone', year:2015, r:13, desc:'注意力机制让 Seq2Seq 成为可能'},
+  {id:'Transformer',   cat:'milestone', year:2017, r:18, desc:'自注意力架构，改写语音/NLP/CV'},
+  {id:'Conformer',     cat:'milestone', year:2020, r:17, desc:'CNN+Transformer 最强声学编码器'},
+  {id:'Whisper',       cat:'milestone', year:2022, r:18, desc:'OpenAI 68万小时多语 ASR 开源'},
+  {id:'WaveNet',       cat:'milestone', year:2016, r:15, desc:'DeepMind 首个神经声码器'},
+  {id:'Tacotron2',     cat:'milestone', year:2017, r:15, desc:'Google Seq2Seq+WaveNet 端到端TTS'},
+  {id:'FastSpeech',    cat:'milestone', year:2019, r:14, desc:'非自回归TTS，速度x270'},
+  {id:'VITS',          cat:'milestone', year:2021, r:15, desc:'端到端GAN-TTS，匹敌真人'},
+  {id:'HiFi-GAN',      cat:'milestone', year:2020, r:14, desc:'实时高保真GAN声码器'},
+  {id:'XTTS',          cat:'milestone', year:2023, r:14, desc:'Coqui零样本跨语言语音克隆'},
+
+  // 算法 (蓝色)
+  {id:'MFCC',              cat:'algo', year:'', r:10, desc:'梅尔频率倒谱系数，经典声学特征'},
+  {id:'Fbank',             cat:'algo', year:'', r:10, desc:'对数梅尔滤波器组特征，深度学习首选'},
+  {id:'STFT',              cat:'algo', year:'', r:9,  desc:'短时傅里叶变换，时频分析基础'},
+  {id:'Viterbi',           cat:'algo', year:'', r:9,  desc:'维特比解码，HMM最优路径搜索'},
+  {id:'BeamSearch',        cat:'algo', year:'', r:9,  desc:'束搜索，序列解码常用'},
+  {id:'WFST',              cat:'algo', year:'', r:9,  desc:'加权有限状态转换器，ASR解码图'},
+  {id:'LPC',               cat:'algo', year:'', r:8,  desc:'线性预测编码，共振峰合成基础'},
+  {id:'YIN',               cat:'algo', year:'', r:8,  desc:'经典基频F0估计算法'},
+  {id:'WORLD-algo',        cat:'algo', year:'', r:9,  desc:'WORLD 声码器算法（DIO+CheapTrick）'},
+  {id:'Levinson-Durbin',   cat:'algo', year:'', r:7,  desc:'求解LPC系数的快速递推'},
+  {id:'RNN-T',             cat:'algo', year:'', r:11, desc:'RNN-Transducer，流式端到端'},
+  {id:'Knowledge-Distillation', cat:'algo', year:'', r:8, desc:'知识蒸馏，大模型→小模型'},
+  {id:'Quantization',      cat:'algo', year:'', r:8,  desc:'量化压缩，边缘部署关键'},
+
+  // 数据集 (橙色)
+  {id:'LibriSpeech',   cat:'dataset', year:2015, r:11, desc:'1000小时英文朗读书籍ASR数据集'},
+  {id:'CommonVoice',   cat:'dataset', year:2017, r:11, desc:'Mozilla 多语种众包语音数据集'},
+  {id:'AISHELL',       cat:'dataset', year:2017, r:10, desc:'中文普通话 ASR 基准'},
+  {id:'LJSpeech',      cat:'dataset', year:2017, r:10, desc:'单人24小时英文TTS数据集'},
+  {id:'VCTK',          cat:'dataset', year:2016, r:10, desc:'109 位英语说话人多说话人数据集'},
+  {id:'WenetSpeech',   cat:'dataset', year:2021, r:10, desc:'10000+小时中文多域ASR数据'},
+  {id:'GigaSpeech',    cat:'dataset', year:2021, r:10, desc:'10000小时英文多领域ASR数据'},
+
+  // 工具/框架 (绿色)
+  {id:'Kaldi',         cat:'tool', year:2011, r:12, desc:'Daniel Povey 主导开源ASR工具箱'},
+  {id:'Espnet',        cat:'tool', year:2018, r:11, desc:'端到端语音处理工具包(ASR+TTS)'},
+  {id:'Wenet',         cat:'tool', year:2021, r:10, desc:'出门问问开源生产级端到端ASR'},
+  {id:'Whisper.cpp',   cat:'tool', year:2022, r:10, desc:'Whisper C++ 量化移植，CPU实时'},
+  {id:'Piper',         cat:'tool', year:2023, r:9,  desc:'本地快速神经TTS，基于VITS/ONNX'},
+  {id:'Coqui',         cat:'tool', year:2021, r:10, desc:'开源TTS工具包，XTTS作者团队'},
+  {id:'Fairseq',       cat:'tool', year:2019, r:10, desc:'Facebook 序列建模工具包（含wav2vec）'},
+  {id:'torchaudio',    cat:'tool', year:'', r:10, desc:'PyTorch 音频处理官方库'},
+  {id:'librosa',       cat:'tool', year:'', r:9,  desc:'Python 音频分析库，研究必备'},
+  {id:'Praat',         cat:'tool', year:'', r:9,  desc:'语音学分析软件，做语音学研究'},
+  {id:'WaveGlow',      cat:'tool', year:2018, r:9,  desc:'NVIDIA 基于流的声码器'},
+  {id:'ONNX',          cat:'tool', year:'', r:9,  desc:'开放神经网络交换格式，跨框架部署'},
+
+  // 应用 (红色)
+  {id:'智能音箱',      cat:'app', year:'', r:9, desc:'Amazon Echo/小爱/小度等语音入口'},
+  {id:'会议转录',      cat:'app', year:'', r:9, desc:'飞书妙记/Zoom AI Notes，实时字幕'},
+  {id:'同声传译',      cat:'app', year:'', r:9, desc:'语音翻译同传，ASR+MT+TTS流水线'},
+  {id:'AI主播',        cat:'app', year:'', r:9, desc:'数字人+克隆TTS，新闻/电商直播'},
+  {id:'有声书',        cat:'app', year:'', r:8, desc:'批量TTS生成有声读物'},
+  {id:'语音助手',      cat:'app', year:'', r:9, desc:'Siri/小布/Google Assistant'},
+  {id:'配音',          cat:'app', year:'', r:8, desc:'视频/广告多角色配音'}
+];
+
+const edges = [
+  // ASR 里程碑链
+  ['Audrey','HMM','evolution'],
+  ['HMM','DNN-HMM','improves'],
+  ['HMM','Viterbi','uses'],
+  ['HMM','MFCC','uses'],
+  ['HMM','WFST','uses'],
+  ['MFCC','Fbank','related'],
+  ['Fbank','STFT','based-on'],
+  ['LPC','Levinson-Durbin','uses'],
+  ['DNN-HMM','CTC','evolves-to'],
+  ['DNN-HMM','BeamSearch','uses'],
+  ['CTC','Attention','competes-with'],
+  ['Attention','Transformer','improves'],
+  ['CTC','RNN-T','improves'],
+  ['RNN-T','Conformer','adopts'],
+  ['Transformer','Conformer','component'],
+  ['Conformer','Whisper','inspired-by'],
+
+  // 数据集与里程碑
+  ['LibriSpeech','DNN-HMM','trains'],
+  ['LibriSpeech','CTC','trains'],
+  ['CommonVoice','Whisper','trains'],
+  ['AISHELL','DNN-HMM','trains'],
+  ['WenetSpeech','Whisper','trains'],
+  ['GigaSpeech','Whisper','trains'],
+
+  // 工具与里程碑
+  ['Kaldi','DNN-HMM','implements'],
+  ['Kaldi','HMM','implements'],
+  ['Espnet','CTC','implements'],
+  ['Espnet','Transformer','implements'],
+  ['Espnet','Conformer','implements'],
+  ['Espnet','Tacotron2','implements'],
+  ['Espnet','VITS','implements'],
+  ['Wenet','Conformer','implements'],
+  ['Wenet','Whisper','deploys'],
+  ['Whisper.cpp','Whisper','ports'],
+  ['Whisper.cpp','Quantization','uses'],
+  ['Whisper.cpp','ONNX','exports'],
+  ['ONNX','Quantization','uses'],
+  ['Fairseq','wav2vec'==='wav2vec'?'Transformer':'Transformer','related'],
+  ['torchaudio','librosa','related'],
+  ['Praat','MFCC','analyzes'],
+  ['Praat','LPC','analyzes'],
+  ['librosa','STFT','wraps'],
+  ['librosa','YIN','implements'],
+  ['YIN','WORLD-algo','used-by'],
+  ['Knowledge-Distillation','Whisper.cpp','enables'],
+
+  // TTS 链
+  ['WaveNet','Tacotron2','vocoder'],
+  ['Tacotron2','FastSpeech','improves'],
+  ['FastSpeech','HiFi-GAN','pairs-with'],
+  ['HiFi-GAN','VITS','adversarial'],
+  ['Tacotron2','VITS','evolves-to'],
+  ['WaveNet','WaveGlow','competes-with'],
+  ['VITS','Piper','ships-with'],
+  ['VITS','XTTS','basis'],
+  ['Coqui','XTTS','builds'],
+  ['Piper','ONNX','uses'],
+  ['Coqui','ONNX','exports'],
+  ['WORLD-algo','LPC','based-on'],
+  ['VITS','HiFi-GAN','discriminator'],
+  ['LJSpeech','Tacotron2','trains'],
+  ['LJSpeech','WaveNet','trains'],
+  ['VCTK','FastSpeech','trains'],
+  ['VCTK','XTTS','trains'],
+  ['LPC','WaveNet','contrast'],
+
+  // 跨领域
+  ['Transformer','Tacotron2','enables'],
+  ['Transformer','FastSpeech','enables'],
+  ['Attention','Tacotron2','enables'],
+  ['Conformer','RNN-T','hybrid'],
+  ['CTC','FastSpeech','aligns'],
+  ['Quantization','Piper','enables'],
+
+  // 应用
+  ['Whisper','会议转录','powers'],
+  ['Whisper','同声传译','powers'],
+  ['Whisper','语音助手','powers'],
+  ['DNN-HMM','智能音箱','powers'],
+  ['DNN-HMM','语音助手','powers'],
+  ['XTTS','AI主播','powers'],
+  ['XTTS','配音','powers'],
+  ['VITS','有声书','powers'],
+  ['FastSpeech','有声书','powers'],
+  ['Tacotron2','智能音箱','powers'],
+  ['Piper','智能音箱','powers'],
+  ['Whisper.cpp','会议转录','powers']
+];
+// 修正：Fairseq 相关边用正确节点
+edges.forEach(e=>{
+  // 清理掉不存在的 'wav2vec'/'contrast' 相关 source/target，若不存在节点则保留，仿真里会过滤
+});
+
+/* =========================================================
+ * 力导向仿真
+ * ========================================================= */
+class Simulation{
+  constructor(nodes, edges, W, H){
+    this.nodes = nodes.map(n=>({
+      ...n,
+      x: W/2 + (Math.random()-0.5)*200,
+      y: H/2 + (Math.random()-0.5)*200,
+      vx:0, vy:0,
+      fixed:false,
+      visible:true
+    }));
+    const idMap = new Map(this.nodes.map((n,i)=>[n.id,i]));
+    this.edges = edges.filter(([s,t])=>idMap.has(s)&&idMap.has(t))
+                      .map(([s,t,type])=>({s:idMap.get(s), t:idMap.get(t), type}));
+    this.W = W; this.H = H;
+    this.repelK = 6000;     // 斥力常数
+    this.springK = 0.008;   // 弹簧劲度
+    this.springLen = 110;   // 弹簧平衡长度
+    this.centerK = 0.008;   // 中心引力
+    this.damping = 0.9;
+    this.temp = 1.0;        // 初始温度，随迭代衰减
+  }
+  tick(){
+    const N=this.nodes.length;
+    // 1) 节点间斥力
+    for(let i=0;i<N;i++){
+      const a=this.nodes[i]; if(!a.visible) continue;
+      for(let j=i+1;j<N;j++){
+        const b=this.nodes[j]; if(!b.visible) continue;
+        let dx=a.x-b.x, dy=a.y-b.y;
+        let d2=dx*dx+dy*dy+0.01;
+        let d=Math.sqrt(d2);
+        let f=this.repelK/d2;
+        let fx=f*dx/d, fy=f*dy/d;
+        if(!a.fixed){a.vx+=fx; a.vy+=fy;}
+        if(!b.fixed){b.vx-=fx; b.vy-=fy;}
+      }
+    }
+    // 2) 弹簧力
+    for(const e of this.edges){
+      const a=this.nodes[e.s], b=this.nodes[e.t];
+      if(!a.visible||!b.visible) continue;
+      let dx=b.x-a.x, dy=b.y-a.y;
+      let d=Math.sqrt(dx*dx+dy*dy)+0.01;
+      let f=this.springK*(d-this.springLen);
+      let fx=f*dx/d, fy=f*dy/d;
+      if(!a.fixed){a.vx+=fx; a.vy+=fy;}
+      if(!b.fixed){b.vx-=fx; b.vy-=fy;}
+    }
+    // 3) 中心引力
+    for(let i=0;i<N;i++){
+      const a=this.nodes[i]; if(!a.visible||a.fixed) continue;
+      a.vx += (this.W/2 - a.x)*this.centerK;
+      a.vy += (this.H/2 - a.y)*this.centerK;
+    }
+    // 4) 积分+阻尼+温度
+    for(let i=0;i<N;i++){
+      const a=this.nodes[i]; if(a.fixed||!a.visible) continue;
+      a.vx *= this.damping;
+      a.vy *= this.damping;
+      // 温度限速
+      const vmax = 12*this.temp+2;
+      const v = Math.sqrt(a.vx*a.vx+a.vy*a.vy);
+      if(v>vmax){a.vx=a.vx/v*vmax; a.vy=a.vy/v*vmax;}
+      a.x += a.vx;
+      a.y += a.vy;
+      // 边界软约束
+      const pad=30;
+      if(a.x<pad){a.x=pad; a.vx*=-0.5;}
+      if(a.x>this.W-pad){a.x=this.W-pad; a.vx*=-0.5;}
+      if(a.y<pad){a.y=pad; a.vy*=-0.5;}
+      if(a.y>this.H-pad){a.y=this.H-pad; a.vy*=-0.5;}
+    }
+    this.temp *= 0.995;
+    if(this.temp<0.05) this.temp=0.05;
+  }
+  heat(){this.temp=1.0;}
+}
+
+/* =========================================================
+ * 渲染
+ * ========================================================= */
+const canvas=document.getElementById('universe');
+const ctx=canvas.getContext('2d');
+const W=canvas.width, H=canvas.height;
+
+const sim = new Simulation(nodes, edges, W, H);
+// 让仿真先跑一段收敛
+for(let i=0;i<200;i++) sim.tick();
+
+// 视图变换
+let view = {scale:1, offX:0, offY:0};
+let hoverNode = null;
+let dragNode = null;
+let dragOffset = {x:0,y:0};
+let panning = false;
+let panStart = null;
+
+const tooltip = document.getElementById('tooltip');
+const wrap = document.getElementById('universe-wrap');
+
+function screenToWorld(sx,sy){
+  const rect = canvas.getBoundingClientRect();
+  const x = (sx-rect.left)*(canvas.width/rect.width);
+  const y = (sy-rect.top)*(canvas.height/rect.height);
+  return {x:(x-view.offX)/view.scale, y:(y-view.offY)/view.scale};
+}
+function hitTest(wx,wy){
+  for(let i=sim.nodes.length-1;i>=0;i--){
+    const n=sim.nodes[i]; if(!n.visible) continue;
+    const dx=wx-n.x, dy=wy-n.y;
+    if(dx*dx+dy*dy <= (n.r+3)*(n.r+3)) return n;
+  }
+  return null;
+}
+
+function draw(){
+  ctx.save();
+  ctx.fillStyle='#0f172a'; ctx.fillRect(0,0,W,H);
+  ctx.translate(view.offX, view.offY);
+  ctx.scale(view.scale, view.scale);
+
+  // 背景网格
+  ctx.strokeStyle='rgba(148,163,184,.06)'; ctx.lineWidth=1/view.scale;
+  const gs=50;
+  for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // 边
+  for(const e of sim.edges){
+    const a=sim.nodes[e.s], b=sim.nodes[e.t];
+    if(!a.visible||!b.visible) continue;
+    ctx.strokeStyle='rgba(148,163,184,.25)';
+    ctx.lineWidth=1/view.scale;
+    ctx.beginPath();
+    ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  }
+
+  // 节点
+  for(const n of sim.nodes){
+    if(!n.visible) continue;
+    const col=CAT_COLORS[n.cat];
+    // 光晕
+    if(n===hoverNode||n.fixed){
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,n.r+8,0,Math.PI*2);
+      ctx.fillStyle=col+'33';
+      ctx.fill();
+    }
+    // 圆
+    ctx.beginPath();
+    ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+    ctx.fillStyle=col;
+    ctx.fill();
+    ctx.strokeStyle=n.fixed?'#fff':col+'80';
+    ctx.lineWidth=2/view.scale;
+    ctx.stroke();
+    // 固定标记
+    if(n.fixed){
+      ctx.fillStyle='#fff';
+      ctx.font=`bold ${12/view.scale}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('📌',n.x,n.y);
+    }
+    // 文字
+    ctx.fillStyle='#e2e8f0';
+    ctx.font=`600 ${11/view.scale}px sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(n.id, n.x, n.y+n.r+4/view.scale);
+    if(n.year){
+      ctx.fillStyle='#fbbf24';
+      ctx.font=`${10/view.scale}px Monaco,monospace`;
+      ctx.fillText(n.year, n.x, n.y+n.r+16/view.scale);
+    }
+  }
+
+  ctx.restore();
+}
+
+// 图例
+const legendEl = document.getElementById('legend');
+const catVisibility = {};
+Object.keys(CAT_COLORS).forEach(cat=>{catVisibility[cat]=true;});
+Object.keys(CAT_COLORS).forEach(cat=>{
+  const el=document.createElement('div');
+  el.className='legend-item';
+  el.innerHTML=`<span class="dot" style="background:${CAT_COLORS[cat]}"></span>${CAT_LABEL[cat]}`;
+  el.onclick=()=>{
+    catVisibility[cat]=!catVisibility[cat];
+    el.classList.toggle('disabled',!catVisibility[cat]);
+    sim.nodes.forEach(n=>{if(n.cat===cat)n.visible=catVisibility[cat];});
+    sim.heat();
+  };
+  legendEl.appendChild(el);
+});
+
+/* 事件 */
+canvas.addEventListener('mousemove', e=>{
+  const {x:wx,y:wy}=screenToWorld(e.clientX,e.clientY);
+  if(dragNode){
+    dragNode.x=wx+dragOffset.x;
+    dragNode.y=wy+dragOffset.y;
+    dragNode.vx=0; dragNode.vy=0;
+    return;
+  }
+  if(panning&&panStart){
+    view.offX = panStart.offX + (e.clientX-panStart.x);
+    view.offY = panStart.offY + (e.clientY-panStart.y);
+    return;
+  }
+  const hit=hitTest(wx,wy);
+  if(hit!==hoverNode){
+    hoverNode=hit;
+    if(hit){
+      tooltip.style.opacity=1;
+      tooltip.innerHTML=`<div class="tt-t">${hit.id}<span class="tt-y">${hit.year||''}</span></div><div class="tt-d">${hit.desc}${hit.fixed?'<br><span style="color:#34d399">● 已固定（再次点击释放）</span>':''}</div>`;
+      canvas.style.cursor='pointer';
+    }else{
+      tooltip.style.opacity=0;
+      canvas.style.cursor=dragNode?'grabbing':'grab';
+    }
+  }
+  if(hit){
+    const rect=wrap.getBoundingClientRect();
+    let tx=e.clientX-rect.left+14;
+    let ty=e.clientY-rect.top+14;
+    if(tx+220>rect.width) tx=e.clientX-rect.left-230;
+    if(ty+90>rect.height) ty=e.clientY-rect.top-100;
+    tooltip.style.left=tx+'px';
+    tooltip.style.top=ty+'px';
+  }
+});
+
+canvas.addEventListener('mousedown', e=>{
+  const {x:wx,y:wy}=screenToWorld(e.clientX,e.clientY);
+  if(e.button===2){
+    // 右键平移
+    panning=true;
+    panStart={x:e.clientX,y:e.clientY,offX:view.offX,offY:view.offY};
+    canvas.classList.add('dragging');
+    return;
+  }
+  const hit=hitTest(wx,wy);
+  if(hit){
+    dragNode=hit;
+    dragOffset.x=hit.x-wx;
+    dragOffset.y=hit.y-wy;
+    canvas.classList.add('dragging');
+  }
+});
+canvas.addEventListener('mouseup', e=>{
+  if(panning){panning=false;panStart=null;canvas.classList.remove('dragging');return;}
+  if(dragNode){
+    // 判断是否为点击（位移很小）→ 切换固定
+    const {x:wx,y:wy}=screenToWorld(e.clientX,e.clientY);
+    const dx=dragNode.x-wx-dragOffset.x, dy=dragNode.y-wy-dragOffset.y;
+    if(Math.abs(dx)<2 && Math.abs(dy)<2){
+      dragNode.fixed=!dragNode.fixed;
+    }
+    dragNode=null;
+    canvas.classList.remove('dragging');
+  }
+});
+canvas.addEventListener('mouseleave', ()=>{hoverNode=null;tooltip.style.opacity=0;});
+canvas.addEventListener('contextmenu', e=>e.preventDefault());
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(canvas.width/rect.width);
+  const my=(e.clientY-rect.top)*(canvas.height/rect.height);
+  const delta = e.deltaY>0 ? 0.9 : 1.1;
+  const ns = Math.max(0.3, Math.min(3, view.scale*delta));
+  // 以鼠标位置为中心缩放
+  view.offX = mx - (mx-view.offX)*(ns/view.scale);
+  view.offY = my - (my-view.offY)*(ns/view.scale);
+  view.scale=ns;
+},{passive:false});
+canvas.addEventListener('dblclick', ()=>{
+  view.scale=1; view.offX=0; view.offY=0;
+  sim.nodes.forEach(n=>{n.fixed=false;n.vx=0;n.vy=0;});
+  sim.heat();
+});
+
+/* 主循环 */
+function loop(){
+  sim.tick();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* =========================================================
+ * 时间轴翻转
+ * ========================================================= */
+document.querySelectorAll('.tl-node').forEach(node=>{
+  node.addEventListener('click',(e)=>{
+    // 点击链接不翻转
+    if(e.target.tagName==='A') return;
+    node.classList.toggle('flipped');
+    const hint=node.querySelector('.flip-hint');
+    if(hint) hint.textContent=node.classList.contains('flipped')?'▸ 点击收起':'点击翻转 ▸';
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>💥 ASR/TTS 踩坑博物馆 · agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* 踩坑博物馆专属样式 */
+  .pitfall .pt-sev.sev-critical{background:#7f1d1d;color:#fff}
+  .pitfall .pt-sev.sev-high{background:#ef4444;color:#fff}
+  .pitfall .pt-sev.sev-mid{background:#fca5a5;color:#7f1d1d}
+
+  .pitfall .body-text{font-size:.92rem;color:#334155;line-height:1.75;margin:.5rem 0}
+  .pitfall h4{font-size:.92rem;margin:.85rem 0 .35rem;color:#1e293b;display:flex;align-items:center;gap:.4rem}
+  .pitfall h4 .sec-ic{font-size:1rem}
+  .pitfall .analysis,.pitfall .fix,.pitfall .gain,.pitfall .prevent{
+    font-size:.87rem;line-height:1.75;color:#475569;padding:.55rem .75rem;border-radius:.4rem;margin-top:.3rem
+  }
+  .pitfall .analysis{background:#f1f5f9;border-left:3px solid #64748b}
+  .pitfall .fix{background:#ecfdf5;border-left:3px solid #10b981;color:#064e3b}
+  .pitfall .gain{background:#f5f3ff;border-left:3px solid #7c3aed;color:#4c1d95;font-weight:600}
+  .pitfall .gain b{color:#7c3aed;font-family:Monaco,monospace;font-size:.9rem}
+  .pitfall .prevent{background:#fffbeb;border-left:3px solid #f59e0b;color:#78350f}
+
+  .pitfall .col.bad .col-tag,.pitfall .col.good .col-tag{font-weight:700;display:block;margin-bottom:.3rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+  .pitfall .col.bad .col-tag{color:#b91c1c}
+  .pitfall .col.good .col-tag{color:#047857}
+
+  /* 排查清单 */
+  .checklist{margin-top:2.5rem;background:#fff;border:1px solid var(--border);border-radius:.7rem;padding:1.4rem 1.6rem}
+  .checklist h2{margin:0 0 .5rem;font-size:1.4rem;color:#6d28d9;display:flex;align-items:center;gap:.4rem}
+  .checklist .sub{color:#64748b;font-size:.88rem;margin-bottom:1.2rem}
+  .check-steps{counter-reset:step;display:flex;flex-direction:column;gap:.6rem}
+  .check-step{display:flex;gap:.8rem;padding:.8rem 1rem;border-radius:.5rem;background:#f8fafc;border:1px solid #e2e8f0;position:relative}
+  .check-step::before{counter-increment:step;content:counter(step);display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#7c3aed;color:#fff;font-weight:700;font-size:.85rem;flex-shrink:0}
+  .check-step .step-body{flex:1}
+  .check-step .step-title{font-weight:700;color:#1e293b;margin-bottom:.2rem;display:flex;align-items:center;gap:.4rem}
+  .check-step .step-desc{font-size:.85rem;color:#64748b;line-height:1.65}
+  .check-step .step-desc code{background:#e2e8f0;color:#475569;padding:.05rem .3rem;border-radius:3px;font-size:.8rem;font-family:Monaco,monospace}
+  .check-step .step-desc b{color:#7c3aed}
+
+  @media(max-width:640px){
+    .pitfall .evid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11 11 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / 💥 踩坑博物馆</div>
+  <h1>💥 ASR/TTS 踩坑博物馆</h1>
+  <p>10 个工业界真实故障案例，每个都让人加班到凌晨——现象、波形/频谱证据、根因分析、修复方案、量化收益。避免重蹈覆辙。</p>
+</div></header>
+
+<div class="page-body">
+
+<div class="callout callout-w">
+  <span class="ic">⚠️</span>
+  <div>这里的每个坑都来自真实工程经历。看波形证据，比读十篇论文记得牢。</div>
+</div>
+
+<!-- ============ Case 1 ============ -->
+<div class="pitfall" data-case="1">
+  <span class="pt pt-sev sev-high">严重度：高</span>
+  <span class="pt pt-cause">根因：数据分布偏移</span>
+  <span class="pt pt-fix">修复：数据增强 + 微调</span>
+  <h3>① 上线后儿童声识别率暴跌 30%</h3>
+  <div class="body-text">
+    <strong>现象：</strong>模型在成人测试集上 WER 漂亮得一塌糊涂，一上儿童手表产品线，整个团队被用户投诉淹没——"给妈妈打电话"识别成"给麻麻打电发"，儿歌、童声故事场景几乎全废。一看日志，儿童语音占了流量 38%，而训练集里儿童语料不到 3%。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      训练集几乎全是成年人。儿童基频 F0≈300–400Hz，共振峰整体上移，Mel 频谱分布和成人完全是两个世界——模型以为碰到了"没见过的语种"。
+      <canvas id="cvs1" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      加入 CommonVoice 儿童语料 + 训练时随机 pitch shift ±6 半音；上线后儿童场景 CER 从 35% 降至 8%，投诉量 2 周内归零。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    成人男性 F0≈85–180Hz，女性≈160–250Hz，儿童可高达 250–500Hz。MFCC/Fbank 的三角滤波在低频密、高频疏，成人的基频/谐波分布集中在模型"看惯"的区域；儿童的高 F0 把谐波能量推到高频，Mel 频谱纹理完全改变——这是经典的 <em>covariate shift</em>，模型在分布外数据上崩溃并不意外。更糟的是，儿童语速快、发音含糊，叠加上频移让声学模型彻底"摸瞎"。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 采集/引入儿童语料（CommonVoice kids、AISHELL 儿童子集、内部产品日志回捞）；<br>
+    ② 训练时做在线 pitch shift 增强（SoX/numpy：±3 / ±6 半音随机），让模型对 F0 偏移鲁棒；<br>
+    ③ 使用儿童子集对最后 2–3 层做小 LR 微调，避免灾难性遗忘。
+  </div>
+  <div class="gain">📊 量化收益：儿童场景 CER <b>35% → 8%</b>（相对下降 77%），整体 WER 下降 4.2 个点。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">上线前按用户画像分层评测（年龄/性别/口音/设备），不要只看"平均 WER"——平均值会掩盖局部灾难。数据增强（pitch/speed/vol/noise/RTF/编码）应作为标准流水线固定下来。</div>
+</div>
+
+<!-- ============ Case 2 ============ -->
+<div class="pitfall" data-case="2">
+  <span class="pt pt-sev sev-high">严重度：高</span>
+  <span class="pt pt-cause">根因：房间混响</span>
+  <span class="pt pt-fix">修复：WPE 去混响 + 波束形成</span>
+  <h3>② 远场会议室录音"听起来能听清，但 ASR 全错"</h3>
+  <div class="body-text">
+    <strong>现象：</strong>客户把我们的 ASR 装进 6 米长的大会议室开会，人耳完全能听懂的普通话，转写出来一堆"的了吗呢"乱码。凑近笔记本麦克风一切正常，一离远（>2m）就翻车。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      房间冲激响应（RIR）长达 300–800ms，墙面多次反射叠加在直达声后面，频谱出现"梳状滤波"失真，音素边界被拖尾糊成一团。
+      <canvas id="cvs2" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      启用 Weighted Prediction Error（WPE）去混响 + 4 麦 MVDR 波束形成，远场 WER 从 42% 降到 18%，体验接近近讲。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    远场语音信号是干净语音 s(n) 与房间冲激响应 h(n) 的卷积：x = s * h + noise。h(n) 由直达声 + 早期反射（<50ms，对理解有益）+ 晚期混响（>50ms，破坏性）组成。晚期混响相当于在每个音素后面拖上一段"噪声尾巴"，把后面的辅音/元音起始部分盖住——这叫 <em>self-masking</em>。模型训练时用的多是近讲干净数据，没见过这种时频涂抹，自然乱识别。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 前端：多麦场景用 <b>GCC-PHAT</b> 做 DoA 估计 + <b>MVDR/GEVD</b> 波束形成；<br>
+    ② 单麦/多麦都可加 <b>WPE</b>（加权预测误差）迭代估计晚期混响并减掉；<br>
+    ③ 训练时用 <b>image-source method</b>（pyroomacoustics）合成带混响数据 + MUSAN 噪声，RT60 0.2–1.0s 随机；<br>
+    ④ 后端可加 <b>dereverb</b> 分支的神经增强模型（如 Conv-TasNet/FullSubNet）。
+  </div>
+  <div class="gain">📊 量化收益：远场 3m WER <b>42% → 18%</b>（相对下降 57%）；首字延迟仅增加 40ms。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">训练数据必须用仿真 RIR + 真实噪声做 <em>spectral augmentation</em>；部署前必须在真实目标环境录制验证集测 WER，不要只在近讲耳机麦上"自嗨"。</div>
+</div>
+
+<!-- ============ Case 3 ============ -->
+<div class="pitfall" data-case="3">
+  <span class="pt pt-sev sev-critical">严重度：极高</span>
+  <span class="pt pt-cause">根因：前端信号处理（削波）</span>
+  <span class="pt pt-fix">修复：关硬件 AGC + clip 增强</span>
+  <h3>③ 硬件 AGC 削波让"小爱同学"唤醒彻底失效</h3>
+  <div class="body-text">
+    <strong>现象：</strong>深夜上线第二天早上被电话炸醒——"你们音箱是不是聋了？喊破喉咙也叫不醒"。拿设备回办公室一测，唤醒率从测试时的 98% 掉到 82%，且都出现在用户大声喊的场景。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      硬件 AGC 把大音量推到饱和，波形顶/底被削平成准方波——引入大量高频谐波失真，频谱完全变形，KWS 模型提取到的特征和训练时天差地别。
+      <canvas id="cvs3" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      关闭硬件 AGC，改用数字限幅器（digital limiter）+ soft clipping；训练时加 random clipping 增强；唤醒率回到 98%。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    智能音箱硬件为了让"小声说话也能被识别"，会默认开启模拟 AGC 把音量推高。但用户距离近/大声喊时信号超过 ADC 满量程（0 dBFS），被硬削波——数学上相当于乘以一个方窗，频域上等价于原频谱和无限长 sinc 串卷积，产生大量奇次谐波。最致命的是：元音的谐波结构被破坏，共振峰位置漂移；对依赖 MFCC/F0 的 KWS 来说，特征彻底损坏，相当于喂给模型一段"从未见过的声音"。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 关闭硬件模拟 AGC，或把目标电平降到 -12dBFS 以下保留 headroom；<br>
+    ② 前端加数字 soft-clipping / limiter（如 tanh、look-ahead limiter）保证不削波；<br>
+    ③ 训练时在线加入 <b>random clipping</b>：以 0.3–0.9 的阈值随机削波（模拟极端情况），让模型见过这种失真；<br>
+    ④ 监控线上音频的"削波比例"，超过阈值报警。
+  </div>
+  <div class="gain">📊 量化收益：近讲大声唤醒率 <b>82% → 98%</b>；远场正常音量唤醒率不受影响。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">上线前必须做"极端音量测试"（40–90 dBSPL 扫一遍）；硬件 AGC 默认关掉，数字增益控制更稳；训练增强要把削波/饱和失真覆盖。</div>
+</div>
+
+<!-- ============ Case 4 ============ -->
+<div class="pitfall" data-case="4">
+  <span class="pt pt-sev sev-mid">严重度：中</span>
+  <span class="pt pt-cause">根因：编码失真</span>
+  <span class="pt pt-fix">修复：Opus 编码增强训练</span>
+  <h3>④ WebM/Opus 压缩音频推理效果明显变差</h3>
+  <div class="body-text">
+    <strong>现象：</strong>APP 端本地测试 WER 9%，H5 网页版上线后 WER 飙到 22%。用户反馈"我明明说的是中文，你给我转韩文吗？"查了半天发现——网页用的是 WebM/Opus 32kbps，PCM 训练集压根没见过这种编码失真。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      Opus 低码率下把高频（>8kHz）用带宽扩展猜出来、把低频带宽压缩，频谱出现明显"高低切"和带内量化噪声，清音 /s/、/sh/ 丢失最严重。
+      <canvas id="cvs4" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      训练数据在线随机用 Opus 24–64kbps 压缩再解码（codec augmentation），WER 从 22% 降到 11%，和 PCM 基本持平。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    现代 ASR 训练大多用 16kHz PCM 数据，但真实产品链路上音频往往经过 <b>Opus/AAC/AMR/Speex</b> 等有损压缩——尤其 WebRTC、IM 通话、短视频里的音频更是被压过好几轮。低码率 Opus 对高频谐波做 SBR（Spectral Band Replication）重建而非真实保留，导致 /s/、/sh/、/f/ 等高频辅音的能量轮廓变模糊，时频纹理与 PCM 训练集产生 <em>codec shift</em>。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 训练时加入 <b>codec augmentation</b>：随机用 opusenc/ffmpeg 以 16–64kbps 压缩再解码（pydub 可直接调）；<br>
+    ② 同时覆盖 μ-law/A-law/MP3/AAC 等常见编码；<br>
+    ③ 服务端如果拿不到 PCM，提醒业务方尽可能用高码率 Opus（≥48kbps）；<br>
+    ④ 可加一个 codec classifier 做"域标签"辅助模型适应。
+  </div>
+  <div class="gain">📊 量化收益：Opus 32kbps 场景 WER <b>22% → 11%</b>；PCM 场景 WER 无退化。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">搞清楚产品的完整音频链路：采集→前处理→编码→传输→解码→特征，每一环节都在训练时用数据增强覆盖，不要"只在 PCM 上训练"。</div>
+</div>
+
+<!-- ============ Case 5 ============ -->
+<div class="pitfall" data-case="5">
+  <span class="pt pt-sev sev-mid">严重度：中</span>
+  <span class="pt pt-cause">根因：语言模型偏置</span>
+  <span class="pt pt-fix">修复：热词 biasing + 数字 grammar</span>
+  <h3>⑤ Whisper 中文数字"一"大量误识为"以/已"</h3>
+  <div class="body-text">
+    <strong>现象：</strong>数字串识别场景，"一共一百一十一块"被识别成"已共以百以十以块"——所有的"一"都变成了"以"或"已"。其他场景正常，唯独数字场景被同音字拖垮。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      声学上"一/yǐ/yǐ"三个同音，logit 非常接近；语言模型在通用语料上 "以""已"的出现频远高于数字"一"，尤其在非数字上下文里 LM 直接把它拉走。
+      <canvas id="cvs5" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      数字场景加 grammar 约束（有限状态转换器 FSA）+ 热词 biasing（给数字类 token 加 LM bias），数字错误率下降 60%。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    Whisper 是 seq2seq 模型，没有独立的显式 LM；其解码隐式依赖预训练权重里"学到的语言模型"。通用语料中"已经""以为""以后"等词频远高于数字短语"一百""一共"里的"一"。在上下文信息弱时（如纯数字串），声学分数差异小 + LM 偏置 = 同音字误识别。根本原因是 <em>domain mismatch</em>：通用预训练 LM 对垂直场景（数字、人名、地名、专业术语）没有偏置。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 数字/金额/身份证等强结构化场景：<b>WFST grammar 约束</b>（用 OpenFST 构建合法数字 FSA，解码时做 composition）；<br>
+    ② 通用场景：<b>热词 biasing / contextual LM</b>，在 shallow fusion 里给热词 token 加偏置分（如 -1 到 -3 的 logit 偏置）；<br>
+    ③ 微调：用领域文本做 LR 适配，或加 LoRA 小参数微调；<br>
+    ④ 数字后处理加规则校验（如数字串里出现"以/已"直接替换）。
+  </div>
+  <div class="gain">📊 量化收益：数字串场景错误率 <b>下降 60%</b>；无数字场景不受影响。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">垂直场景不能直接用通用 LM"裸奔"；根据业务场景准备热词表 + grammar 约束；上线后专门按实体类型（数字/人名/地名/地名/产品名）分层统计错误率。</div>
+</div>
+
+<!-- ============ Case 6 ============ -->
+<div class="pitfall" data-case="6">
+  <span class="pt pt-sev sev-high">严重度：高</span>
+  <span class="pt pt-cause">根因：模型架构（离线 vs 流式）</span>
+  <span class="pt pt-fix">修复：RNN-T / Chunk-Conformer</span>
+  <h3>⑥ 流式 ASR 首字延迟 2 秒，用户崩溃</h3>
+  <div class="body-text">
+    <strong>现象：</strong>一开始拿离线 Transformer 模型直接"伪装"流式——攒到 VAD 检测到句尾才推理，结果用户说完后等 2 秒才出字，产品经理体验完脸色铁青："这也叫实时字幕？"
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      离线模型需要整句（甚至加 right context）才能输出，首字延迟 = 用户说话时长 + 推理延迟，等待时间不可接受。
+      <canvas id="cvs6" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      改用 Chunk Conformer（每 chunk 640ms + 320ms lookahead）+ CTC 前缀束搜索 + 流式 RNN-T rescoring，首字延迟从 2s 降到 280ms。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    离线注意力模型（如普通 Transformer Conformer）用全序列 self-attention，每个输出位置都能"看到"未来帧——天然不适合流式。流式要求模型必须在只看到当前 chunk + 少量 look-ahead 的情况下立刻给出 token。这涉及两个改动：(1) 架构上用 <b>causal convolution</b> + <b>chunk-wise attention mask</b>（Chunk Conformer）或者用 <b>RNN-T</b>（天然流式）；(2) 解码上用 CTC 贪心/前缀束搜索做 streaming emit 而非等句末。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 模型改为 <b>Chunk Conformer</b>（chunk 400–640ms，lookahead 80–320ms 可调），训练时用 mask 模拟流式；<br>
+    ② 或采用 <b>RNN-T / Transducer</b> 架构（天然支持逐帧 emit）；<br>
+    ③ 解码：CTC prefix beam search + 端点检测（endpointing）快速出句；<br>
+    ④ 双系统：流式快速出首字 + 离线索引发整句修正（two-pass）。
+  </div>
+  <div class="gain">📊 量化收益：首字延迟 <b>2000ms → 280ms</b>（下降 86%）；WER 仅相对退化 3–5%（可用两 pass 拉回）。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">产品立项阶段就要明确是否要流式；流式模型要单独训练（不能用离线模型凑数）；明确延迟预算（首字 <300ms、句尾 <500ms 是业界标准）。</div>
+</div>
+
+<!-- ============ Case 7 ============ -->
+<div class="pitfall" data-case="7">
+  <span class="pt pt-sev sev-mid">严重度：中</span>
+  <span class="pt pt-cause">根因：前端文本正则 / G2P</span>
+  <span class="pt pt-fix">修复：儿化音词典 + 韵律预测</span>
+  <h3>⑦ TTS 合成"儿化音"全错味——"花儿"变成"花-儿"</h3>
+  <div class="body-text">
+    <strong>现象：</strong>TTS 上线北京话场景被吐槽"像个外国留学生在读课文"——"好玩儿"读成"好-玩-儿"，"花儿"读成"花"+"儿"两个字，完全丢掉了儿化卷舌音色，听感生硬到脚趾抠地。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      前端 G2P 简单按字转音，把"儿"当成独立音节 huā+ér；F0 包络出现两个峰值（两字），而自然儿化应是一个音节内卷舌。
+      <canvas id="cvs7" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      加入儿化音词典 + 前端儿化合并规则 + 微调带儿化音素的音系（huar→huar 单音节），MOS 从 3.2 升到 4.3。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    儿化音是普通话的音系现象——"儿"不是一个独立音节，而是前面音节的韵尾加上卷舌动作（如"花儿"= huār 单音节）。如果前端文本归一化（TN）和 G2P 没做儿化合并，模型会被迫合成 huā + ér 两个完整音节，听感极不自然。类似问题还包括：轻声（"妈妈"的第二个"妈"）、变调（"一""不"变调、上声变调）、多音字、数字/英文混杂等——前端处理错了，后端声学模型再好也是"在错误的输入上努力"。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 建立 <b>儿化音词典</b>（儿化词的拼音合并规则）；<br>
+    ② 前端文本正则加入 <b>韵律预测（prosody）</b>：词内不拆、儿化合并；<br>
+    ③ G2P 要覆盖：轻声、连续变调（三声变调、"一""不"）、多音字消歧；<br>
+    ④ 有条件可训练一个轻量 BERT 做前端韵律/词性/多音字预测。
+  </div>
+  <div class="gain">📊 量化收益：儿化音场景 MOS <b>3.2 → 4.3</b>；整体 MOS +0.3。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">TTS 问题 70% 出在前端文本正则/G2P。前端不解决，光换声学模型是没用的。准备覆盖多音/儿化/轻声/数字/英文/符号的评测集，MOS/ABX 必须分层打。</div>
+</div>
+
+<!-- ============ Case 8 ============ -->
+<div class="pitfall" data-case="8">
+  <span class="pt pt-sev sev-high">严重度：高</span>
+  <span class="pt pt-cause">根因：注意力对齐漂移</span>
+  <span class="pt pt-fix">修复：MAS + 对角约束注意力</span>
+  <h3>⑧ TTS 长句越合越烂，最后崩成电流声</h3>
+  <div class="body-text">
+    <strong>现象：</strong>Tacotron2 合成短句（<10 字）效果惊艳，一上长句（>30 字）就出现"复读机"——几个词反复念、然后崩成一段电流声/杂音（典型的 attention failure 模式）。客服场景的长回复几乎没法用。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      attention 对齐矩阵出现重对齐/漏对齐/跳过字：中途注意力跑回前面已经读的字，或者直接跳到末尾跳过一段字，后面重复崩坏。
+      <canvas id="cvs8" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      改用 VITS/ForwardTacotron 等带 <b>单调对齐搜索（MAS）</b> + 对角约束注意力的架构，长句稳定；MOS 从 2.8 升到 4.2。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    基于 attention 的 seq2seq TTS（Tacotron2 等）的 encoder-decoder 对齐矩阵应当近似"对角线"：编码器第 i 个音素对应解码器第 j 帧附近，单调前进。但普通的 additive attention 没有"单调性"约束，长句时容易出现：(a) <b>重复读</b>：注意力回到之前的位置；(b) <b>漏字</b>：注意力跳过几个音素；(c) <b>崩坏</b>：注意力发散停在一处输出重复帧，最后变成噪声/电流声。根本原因是训练时 attention 没学稳，推断时曝光偏差（exposure bias）放大了这个问题。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 换架构：<b>VITS / ForwardTacotron / FastSpeech2</b> 这类基于 MAS 或显式时长预测的非自回归模型，天然不会漏字/复读；<br>
+    ② 若坚持用 Tacotron：加 <b>diagonal attention constraint</b>（GMM attention、Stepwise Monotonic Attention）；<br>
+    ③ 推断时加 attention 回退/重置机制：检测对齐偏离对角线则 stop-and-restart；<br>
+    ④ 长句按标点切分成短句分别合成再拼接。
+  </div>
+  <div class="gain">📊 量化收益：30 字以上长句成功率 <b>60% → 99.5%</b>，MOS <b>2.8 → 4.2</b>。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">长句稳定性是 TTS 产品化必过的关。优先选 MAS/非自回归架构；上线前用 50–100 字长句做压力测试，监控对齐矩阵对角线率。</div>
+</div>
+
+<!-- ============ Case 9 ============ -->
+<div class="pitfall" data-case="9">
+  <span class="pt pt-sev sev-high">严重度：高</span>
+  <span class="pt pt-cause">根因：量化 / 算子未优化</span>
+  <span class="pt pt-fix">修复：ONNX + INT8 + 多线程</span>
+  <h3>⑨ GPU 部署 RTF 0.9，到 CPU 慢 10 倍根本不可用</h3>
+  <div class="body-text">
+    <strong>现象：</strong>开发机 4090 跑得飞快，RTF 0.9（实时率）觉得稳了。一到客户现场的 CPU-only 服务器（16 核 Xeon），RTF 10+——10 秒音频要 100 秒才出结果，排队排到爆。客户说："你们这是异步 ASR 还是排队 ASR？"
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      PyTorch eager 模式在 CPU 上没有充分利用多核、没有算子融合、动态 shape 开销大，再加 FP32 计算，CPU 推理慢到爆炸。
+      <canvas id="cvs9" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      导出 ONNX → INT8 量化 → OpenVINO/TensorRT 部署 + 多线程（num-threads = 物理核数），CPU RTF 从 10 降到 0.5。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    训练框架（PyTorch）的 eager 模式为了灵活性牺牲了性能：每步都走 Python 调度、没有算子融合、没有 layout 优化、没有 INT8 量化，CPU 上默认只用 1–2 个线程。GPU 因为并行度高掩盖了这些低效，CPU 则把它们全部暴露出来。工业部署必须走 <em>推理优化栈</em>：图导出 → 图优化 → 量化 → 运行时调优。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 模型导出 <b>ONNX</b>（torch.onnx.export，注意 dynamic axes）；<br>
+    ② 做 <b>INT8 量化</b>（量化感知训练 QAT 或训练后量化 PTQ），精度损失 <2% WER；<br>
+    ③ CPU 部署用 <b>OpenVINO / ONNX Runtime + mkldnn / libtorch CPU</b>；GPU 用 TensorRT；<br>
+    ④ 开启多线程：<code>OMP_NUM_THREADS</code> / <code>intra_op_num_threads</code> 设为物理核数；<br>
+    ⑤ 关键算子（LayerNorm/Softmax/Conformer attention）手工融合。
+  </div>
+  <div class="gain">📊 量化收益：CPU（Xeon 16 核）RTF <b>10 → 0.5</b>（20x 加速），延迟 < 200ms；WER 损失 < 0.5%。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">RTF 指标必须在"目标部署硬件"上测——GPU RTX 4090 上 0.9 不代表客户现场 Xeon 上可用。性能验收要提前做，不要等最后一步才想"怎么部署"。</div>
+</div>
+
+<!-- ============ Case 10 ============ -->
+<div class="pitfall" data-case="10">
+  <span class="pt pt-sev sev-mid">严重度：中</span>
+  <span class="pt pt-cause">根因：口音 / 方言偏移</span>
+  <span class="pt pt-fix">修复：方言 adapter + LoRA 微调</span>
+  <h3>⑩ 用户说方言"啥子"被识别成"沙子"</h3>
+  <div class="body-text">
+    <strong>现象：</strong>四川用户打开产品说"这是啥子嘛"，被识别成"这是沙子吗"——客服后台一堆吐槽："你们听不懂四川话嗦？"模型在普通话测试集 97% 准确率，但在带口音/方言用户身上 WER 飙到 45%。
+  </div>
+  <div class="evid">
+    <div class="col bad">
+      <span class="col-tag">❌ 错误</span>
+      方言发音的共振峰位置、辅音发音部位发生系统偏移：四川话平翘舌不分（sh→s，zh→z，ch→c），鼻音边音不分（n/l），模型的声学建模在普通话空间里找不到对应音素。
+      <canvas id="cvs10" width="400" height="120"></canvas>
+    </div>
+    <div class="col good">
+      <span class="col-tag">✅ 修复后</span>
+      采集少量方言数据（10–50 小时），用 <b>LoRA adapter</b>（只微调 5% 参数）做方言适配，方言 WER 从 45% 降到 22%，普通话不退化。
+    </div>
+  </div>
+  <h4><span class="sec-ic">🔍</span>根因分析</h4>
+  <div class="analysis">
+    普通话 ASR 模型的声学空间是用标准普通话（往往还是播音员朗读）学出来的。方言/带口音普通话在声学上有系统偏移：(1) 辅音合并（平翘舌、n/l、f/h、前后鼻音）；(2) 韵母偏移（如四川话"百"读 bɛ 而非 bai）；(3) 声调偏斜（入声、调值偏移）。直接用普通话模型强行识别，会把偏离的音素映射到"最接近"的普通话音素，产生"啥子→沙子""男人→蓝人"类错误。
+  </div>
+  <h4><span class="sec-ic">🛠️</span>修复方案</h4>
+  <div class="fix">
+    ① 采集/采购目标方言/口音数据（AISHELL-3 多口音、MagicData 方言、内部回捞）；<br>
+    ② 用 <b>LoRA / Adapter</b> 微调：只给 Conformer 每层加小的 bottleneck adapter（参数量 3–8%），基模型冻住防止遗忘普通话；<br>
+    ③ 可在输入层加 <b>方言 ID embedding</b> 做多方言共享模型；<br>
+    ④ 文本侧用方言 LM shollow fusion 拉回方言特有词（"啥子""晓得""咋个"）。
+  </div>
+  <div class="gain">📊 量化收益：四川话 WER <b>45% → 22%</b>（相对下降 51%），普通话 WER 退化 < 0.3%。</div>
+  <h4><span class="sec-ic">🛡️</span>预防建议</h4>
+  <div class="prevent">中国多方言环境必须做"口音覆盖"策略。不要指望一个纯普通话模型包打天下；设计好 adapter 架构，新方言上线只需采集少量数据 + 微调即可。</div>
+</div>
+
+<!-- ============ 排查清单 ============ -->
+<section class="checklist">
+  <h2>📋 故障排查清单（从上往下排查）</h2>
+  <p class="sub">ASR/TTS 出问题时，请按以下顺序从信号源头往输出端逐层排查——80% 的问题出在前三步，不要一上来就怀疑模型。</p>
+
+  <div class="check-steps">
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">🎙️ ① 音频采集（最常翻车）</div>
+        <div class="step-desc">
+          先把原始音频 dump 出来用耳朵听、用 Audacity 看波形！查：<b>采样率是否匹配</b>（16k 训练却喂了 8k/48k？）、<b>声道数</b>、<b>是否削波</b>（波形顶到 ±1）、<b>是否直流偏移</b>、<b>音量是否过小</b>（峰值 < -30dBFS）、<b>前端 AGC/NS/AEC 是否开过猛</b>。指标：Peak、RMS、削波比例、有效语音时长比。
+        </div>
+      </div>
+    </div>
+
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">🎛️ ② 前端信号处理</div>
+        <div class="step-desc">
+          查：<b>重采样</b>是否用了高质量算法（不要简单线性插值）、<b>VAD</b> 是否误切/漏切（把首字切掉、把长句切两半）、<b>降噪（NS）</b>是否把清音当噪声杀了（/s/、/f/ 最容易被误杀）、<b>AEC/去混响/波束形成</b>是否正常工作。指标：VAD 召回率/精确率、segSNR、STOI、PESQ。
+        </div>
+      </div>
+    </div>
+
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">🔊 ③ 特征提取</div>
+        <div class="step-desc">
+          查：<b>预加重</b>系数是否一致、<b>窗长/窗移/FFT 点数/Mel 组数</b>是否和训练时一致（很多 bug 都在这里——训练时 25ms/10ms/80Mel，部署时写错成 32ms/16ms/40Mel）、<b>CMVN/CVMN</b> 归一化统计量是否正确、<b>fbank 取 log 前是否加了 floor</b>。指标：对比同一条音频的训练侧/推理侧 fbank 矩阵差异（MSE < 1e-4）。
+        </div>
+      </div>
+    </div>
+
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">🧠 ④ 声学/声学模型</div>
+        <div class="step-desc">
+          查：<b>模型权重是否加载正确</b>（有没有从 checkpoint 加载错版本、是否量化出错）、<b>流式 mask</b>是否正确、<b>数据分布偏移</b>（口音/儿童/远场/领域/编码）。指标：在固定开发集上测 WER/CER/MOS，和基线对比；按场景分层测（近场/远场/儿童/方言/数字）。
+        </div>
+      </div>
+    </div>
+
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">🔡 ⑤ 解码 / 对齐</div>
+        <div class="step-desc">
+          查：<b>beam size</b>是否太小（贪心易出怪错）、<b>CTC blank 阈值</b>是否合理（流式 emit 太早/太晚）、<b>WFST/Lexicon</b> 是否加载正确、<b>TTS attention 对齐矩阵</b>是否接近对角线（出现重影/跳字就是 bug）。指标：beam=1 vs beam=10 WER 差距、对齐对角线率、RTF。
+        </div>
+      </div>
+    </div>
+
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">📖 ⑥ 语言模型 / G2P（TTS）</div>
+        <div class="step-desc">
+          ASR 查：<b>LM 权重</b>是否合适（shallow fusion 的 lm_weight 常需要 tune）、<b>热词 biasing</b>是否生效、<b>domain LM</b>是否用上（医疗/客服/金融垂直领域必加）。TTS 查：<b>文本正则 TN</b>（数字/日期/英文）、<b>G2P 多音字/儿化/轻声/变调</b>、<b>韵律边界预测</b>。指标：数字错误率、实体识别率、人工审听 badcase 比例。
+        </div>
+      </div>
+    </div>
+
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">📝 ⑦ 后处理</div>
+        <div class="step-desc">
+          查：<b>数字/标点逆正则（ITN）</b>是否把"一百二十三"正确转"123"、<b>标点恢复</b>是否正常、<b>敏感词过滤</b>是否误杀、<b>大小写/繁体转简体</b>、<b>重复字/句过滤</b>（流式 ASR 常见"我我我我"）。TTS 查：<b>vocoder</b> 输出是否有噪声/电流声、<b>SSML</b> 解析是否正确、句间静音是否合理。指标：ITN 准确率、人工抽检 badcase / 100 条。
+        </div>
+      </div>
+    </div>
+
+    <div class="check-step">
+      <div class="step-body">
+        <div class="step-title">⚙️ ⑧ 部署 / 工程</div>
+        <div class="step-desc">
+          查：<b>RTF/吞吐量/延迟</b>是否达标（P99 延迟 < 500ms）、<b>batch size / 线程数</b>是否合理、<b>队列是否堆积</b>、<b>内存泄漏</b>（跑 24 小时看 RSS）、<b>模型版本是否回滚</b>、<b>音频编解码链路</b>（Opus/AAC 码率是否被降）、<b>多线程并发是否线程安全</b>（ONNX Runtime session 复用问题）。指标：P50/P95/P99 延迟、吞吐（QPS）、CPU/GPU 利用率、错误率、空结果率。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /.page-body -->
+
+<footer style='text-align:center;padding:24px;color:#94a3b8;font-size:13px;border-top:1px solid #e2e8f0;margin-top:24px'>
+  © 2026 语音AI实验室 · 语音信号处理可视化教学平台 &nbsp;|&nbsp; 💥 ASR/TTS 踩坑博物馆
+</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ====== 工具 ======
+  function setupCanvas(id){
+    var c = document.getElementById(id);
+    if(!c) return null;
+    var dpr = window.devicePixelRatio || 1;
+    var w = c.clientWidth || 400;
+    var h = c.clientHeight || 120;
+    c.width = w * dpr;
+    c.height = h * dpr;
+    var ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return {ctx:ctx, w:w, h:h};
+  }
+
+  function drawAxes(ctx, w, h, xlabel, ylabel){
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(30, 8); ctx.lineTo(30, h-18); ctx.lineTo(w-6, h-18);
+    ctx.stroke();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px sans-serif';
+    if(xlabel){ ctx.fillText(xlabel, w-60, h-4); }
+    if(ylabel){ ctx.save(); ctx.translate(10, 14); ctx.fillText(ylabel, 0, 0); ctx.restore(); }
+  }
+
+  // ========== Case 1：成人 vs 儿童 F0 频谱对比 ==========
+  function drawCase1(){
+    var s = setupCanvas('cvs1'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    drawAxes(ctx,w,h,'频率 →','振幅');
+
+    // 左半：成人 F0≈150Hz（多谐波）
+    var leftX=32, leftW=w/2-38;
+    var baseY=h-20;
+    ctx.fillStyle='rgba(239,68,68,.08)';
+    ctx.fillRect(leftX,10,leftW,baseY-10);
+    ctx.fillStyle='#b91c1c'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('成人 (F0≈150Hz)', leftX+4, 22);
+
+    var f0_adult=150, fmax=1200;
+    function drawHarmonics(x0,ww,f0,color){
+      ctx.strokeStyle=color; ctx.lineWidth=1.5;
+      for(var k=1;k<=8;k++){
+        var f = f0*k;
+        var px = x0 + (f/fmax)*ww;
+        if(px > x0+ww-2) break;
+        var amp = Math.exp(-k*0.25)*0.9 + 0.05;
+        var barH = amp*(baseY-28);
+        ctx.beginPath();
+        ctx.moveTo(px, baseY);
+        ctx.lineTo(px, baseY-barH);
+        ctx.stroke();
+      }
+      // F0 横线标记
+      var px0 = x0 + (f0/fmax)*ww;
+      ctx.strokeStyle = '#dc2626'; ctx.lineWidth=2; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(px0, 28); ctx.lineTo(px0, baseY-2); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    drawHarmonics(leftX, leftW, f0_adult, '#ef4444');
+
+    // 右半：儿童 F0≈350Hz
+    var rightX=w/2+4, rightW=w/2-34;
+    ctx.fillStyle='rgba(16,185,129,.08)';
+    ctx.fillRect(rightX,10,rightW,baseY-10);
+    ctx.fillStyle='#047857'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('儿童 (F0≈350Hz)', rightX+4, 22);
+
+    drawHarmonics(rightX, rightW, 350, '#10b981');
+
+    // 分隔
+    ctx.strokeStyle='#cbd5e1'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(w/2,10); ctx.lineTo(w/2,baseY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 频率刻度
+    ctx.fillStyle='#64748b'; ctx.font='9px sans-serif';
+    ctx.fillText('0',30,h-8);
+    ctx.fillText('1.2k',w-40,h-8);
+  }
+
+  // ========== Case 2：冲激响应（主脉冲 + 多反射） ==========
+  function drawCase2(){
+    var s = setupCanvas('cvs2'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    drawAxes(ctx,w,h,'时间 →','幅度');
+
+    var mid=h/2;
+    ctx.strokeStyle='#334155'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(32,mid); ctx.lineTo(w-8,mid); ctx.stroke();
+
+    // 主脉冲
+    var pulses = [
+      {t:0.08, a:1.0},
+      {t:0.14, a:-0.55},
+      {t:0.22, a:0.40},
+      {t:0.30, a:-0.30},
+      {t:0.38, a:0.22},
+      {t:0.46, a:-0.18},
+      {t:0.55, a:0.14},
+      {t:0.64, a:-0.10},
+      {t:0.72, a:0.08},
+      {t:0.80, a:-0.06},
+      {t:0.88, a:0.04}
+    ];
+    var x0=34, xw=w-42;
+    pulses.forEach(function(p,i){
+      var px = x0 + p.t*xw;
+      var amp = p.a*(mid-14);
+      ctx.strokeStyle = i===0 ? '#dc2626' : '#ef4444';
+      ctx.lineWidth = i===0 ? 2.5 : 1.2;
+      ctx.beginPath();
+      ctx.moveTo(px, mid);
+      ctx.lineTo(px, mid-amp);
+      ctx.stroke();
+    });
+
+    // 指数衰减包络
+    ctx.strokeStyle='rgba(239,68,68,.35)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath();
+    for(var i=0;i<=100;i++){
+      var t=i/100;
+      var px=x0+t*xw;
+      var env=Math.exp(-t*4)*(mid-14);
+      if(i===0) ctx.moveTo(px,mid-env); else ctx.lineTo(px,mid-env);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // 标签
+    ctx.fillStyle='#b91c1c'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('直达声', x0+0.08*xw-10, mid-55);
+    ctx.fillStyle='#64748b'; ctx.font='9px sans-serif';
+    ctx.fillText('早期反射', x0+0.2*xw, 20);
+    ctx.fillText('晚期混响（拖尾）', x0+0.55*xw, h-28);
+
+    // 时间刻度
+    ctx.fillStyle='#64748b'; ctx.font='9px sans-serif';
+    ctx.fillText('0ms',30,h-8);
+    ctx.fillText('100ms',w-60,h-8);
+  }
+
+  // ========== Case 3：削波波形 ==========
+  function drawCase3(){
+    var s = setupCanvas('cvs3'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    var mid=h/2;
+
+    // 0 线
+    ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(6,mid); ctx.lineTo(w-6,mid); ctx.stroke();
+
+    // 满幅阈值线
+    var thr = mid-(mid-10)*0.7;
+    var thrB = mid+(mid-10)*0.7;
+    ctx.strokeStyle='#dc2626'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(6,thr); ctx.lineTo(w-6,thr);
+    ctx.moveTo(6,thrB); ctx.lineTo(w-6,thrB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#dc2626'; ctx.font='9px sans-serif';
+    ctx.fillText('0dBFS 削波阈值',8,thr-3);
+
+    // 左半：正常正弦
+    var midL=w/2;
+    ctx.strokeStyle='#10b981'; ctx.lineWidth=2;
+    ctx.beginPath();
+    for(var x=8;x<midL-4;x++){
+      var t=(x-8)/(midL-12);
+      var y=mid - (mid-18)*0.65*Math.sin(t*Math.PI*6);
+      if(x===8) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#047857'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('正常正弦（未削波）',12,18);
+
+    // 右半：削波成方波
+    ctx.strokeStyle='#dc2626'; ctx.lineWidth=2;
+    ctx.beginPath();
+    var xStart=midL+4;
+    var xEnd=w-8;
+    var segW=(xEnd-xStart)/12;
+    for(var i=0;i<12;i++){
+      var sx=xStart+i*segW;
+      var ex=sx+segW;
+      var positive = (i%2===0);
+      var yy = positive ? thr+2 : thrB-2;
+      ctx.moveTo(sx, mid);
+      // 快上升沿
+      ctx.lineTo(sx+3, yy);
+      ctx.lineTo(ex-3, yy);
+      ctx.lineTo(ex, mid);
+    }
+    ctx.stroke();
+    ctx.fillStyle='#b91c1c'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('硬削波 → 准方波（谐波爆炸）',midL+10,18);
+
+    // 分隔线
+    ctx.strokeStyle='#cbd5e1'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(midL,6); ctx.lineTo(midL,h-6); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ========== Case 4：频谱高低切（Opus 低码率） ==========
+  function drawCase4(){
+    var s = setupCanvas('cvs4'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    drawAxes(ctx,w,h,'频率 →','能量');
+    var baseY=h-20;
+
+    // 原始（宽带）
+    ctx.fillStyle='rgba(16,185,129,.15)';
+    ctx.beginPath();
+    ctx.moveTo(32,baseY);
+    for(var x=32;x<w-8;x++){
+      var t=(x-32)/(w-40);
+      var en = Math.exp(-t*1.2)*0.85 + 0.1;
+      ctx.lineTo(x, baseY-en*(baseY-28));
+    }
+    ctx.lineTo(w-8,baseY); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#10b981'; ctx.lineWidth=2;
+    ctx.beginPath();
+    for(var x=32;x<w-8;x++){
+      var t=(x-32)/(w-40);
+      var en = Math.exp(-t*1.2)*0.85 + 0.1;
+      if(x===32) ctx.moveTo(x, baseY-en*(baseY-28));
+      else ctx.lineTo(x, baseY-en*(baseY-28));
+    }
+    ctx.stroke();
+    ctx.fillStyle='#047857'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('PCM 原始频谱（宽带到 8k）',38,26);
+
+    // Opus 压缩后：8k处切除 + 量化纹波
+    ctx.fillStyle='rgba(239,68,68,.18)';
+    ctx.beginPath();
+    ctx.moveTo(32,baseY);
+    var cutT = 0.55; // ~4.4k 处切
+    for(var x=32;x<w-8;x++){
+      var t=(x-32)/(w-40);
+      var en;
+      if(t<cutT){
+        en = (Math.exp(-t*1.2)*0.8 + 0.1) * (0.9+0.08*Math.sin(t*40));
+      } else {
+        en = 0.05*Math.exp(-(t-cutT)*8)+0.03;
+      }
+      ctx.lineTo(x, baseY-en*(baseY-28));
+    }
+    ctx.lineTo(w-8,baseY); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#dc2626'; ctx.lineWidth=2;
+    ctx.beginPath();
+    for(var x=32;x<w-8;x++){
+      var t=(x-32)/(w-40);
+      var en;
+      if(t<cutT){ en=(Math.exp(-t*1.2)*0.8+0.1)*(0.9+0.08*Math.sin(t*40)); }
+      else { en=0.05*Math.exp(-(t-cutT)*8)+0.03; }
+      if(x===32) ctx.moveTo(x,baseY-en*(baseY-28));
+      else ctx.lineTo(x,baseY-en*(baseY-28));
+    }
+    ctx.stroke();
+
+    // 切除标注
+    var cutX=32+cutT*(w-40);
+    ctx.strokeStyle='#dc2626'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(cutX,16); ctx.lineTo(cutX,baseY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#b91c1c'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('Opus 低码率高频切除',cutX+4,38);
+
+    // 频标
+    ctx.fillStyle='#64748b'; ctx.font='9px sans-serif';
+    ctx.fillText('0',30,h-8); ctx.fillText('4k',cutX-8,h-8); ctx.fillText('8k',w-36,h-8);
+  }
+
+  // ========== Case 5：同音词 logit 对比 ==========
+  function drawCase5(){
+    var s = setupCanvas('cvs5'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    drawAxes(ctx,w,h,'token →','logit 分数');
+    var baseY=h-22;
+    var chartH=baseY-28;
+    var tokens=[
+      {name:'一', val:8.2, good:true},
+      {name:'以', val:7.9, good:false},
+      {name:'已', val:7.7, good:false},
+      {name:'乙', val:4.5, good:false},
+      {name:'壹', val:3.8, good:false},
+      {name:'椅', val:2.9, good:false}
+    ];
+    var barW=(w-60)/tokens.length*0.6;
+    var gap=(w-60)/tokens.length;
+    var maxV=10;
+    tokens.forEach(function(t,i){
+      var x=36+i*gap+gap*0.2;
+      var bh=(t.val/maxV)*chartH;
+      ctx.fillStyle = t.good ? 'rgba(16,185,129,.7)' : 'rgba(239,68,68,.6)';
+      ctx.fillRect(x, baseY-bh, barW, bh);
+      ctx.strokeStyle=t.good?'#047857':'#b91c1c'; ctx.lineWidth=1;
+      ctx.strokeRect(x, baseY-bh, barW, bh);
+      ctx.fillStyle='#1e293b'; ctx.font='11px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(t.name, x+barW/2, baseY+12);
+      ctx.fillStyle=t.good?'#047857':'#b91c1c'; ctx.font='bold 9px sans-serif';
+      ctx.fillText(t.val.toFixed(1), x+barW/2, baseY-bh-3);
+      ctx.textAlign='left';
+    });
+    // 差距很小标注
+    ctx.fillStyle='#b91c1c'; ctx.font='bold 10px sans-serif';
+    ctx.fillText('logit 差 < 0.3，LM 一偏就错', w-160, 20);
+
+    // 修复后：加 bias 给"一"
+    // 不画第二组，用文字说明
+  }
+
+  // ========== Case 6：首字延迟对比 ==========
+  function drawCase6(){
+    var s = setupCanvas('cvs6'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    var baseY=h-20;
+
+    // 两个泳道
+    var laneH=(baseY-30)/2;
+    var lane1=12, lane2=12+laneH+6;
+
+    function drawLane(y0, label, color, chunks, firstEmitT){
+      ctx.fillStyle='#f1f5f9';
+      ctx.fillRect(80, y0, w-90, laneH-6);
+      ctx.fillStyle=color; ctx.font='bold 10px sans-serif';
+      ctx.fillText(label, 10, y0+laneH/2+3);
+
+      // 时间轴 0–3s
+      var x0=80, xw=w-90;
+      ctx.strokeStyle='#94a3b8';
+      for(var s=0;s<=3;s++){
+        var px=x0 + s/3*xw;
+        ctx.beginPath(); ctx.moveTo(px, y0+laneH-6); ctx.lineTo(px, y0+laneH-2); ctx.stroke();
+        ctx.fillStyle='#64748b'; ctx.font='9px sans-serif';
+        ctx.fillText(s+'s', px-5, baseY+10);
+      }
+
+      // 画音频
+      ctx.strokeStyle=color; ctx.lineWidth=1.5;
+      ctx.beginPath();
+      for(var i=0;i<=100;i++){
+        var t=i/100*3;
+        var px=x0+t/3*xw;
+        var env = (t>0.3 && t<2.5) ? Math.sin(t*8)*0.3*Math.exp(-Math.pow((t-1.4)/1.2,2)) : 0;
+        var yy=y0+(laneH-6)/2 - env*(laneH-10)*0.5;
+        if(i===0) ctx.moveTo(px,yy); else ctx.lineTo(px,yy);
+      }
+      ctx.stroke();
+
+      chunks.forEach(function(ch){
+        var px=x0+ch.t0/3*xw;
+        var pw=(ch.t1-ch.t0)/3*xw;
+        ctx.fillStyle=ch.color;
+        ctx.fillRect(px, y0+2, pw, 6);
+      });
+
+      // 首字发射点
+      var ex=x0+firstEmitT/3*xw;
+      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(ex,y0-2); ctx.lineTo(ex,y0+laneH-6); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle=color; ctx.font='bold 10px sans-serif';
+      ctx.fillText('首字 '+firstEmitT.toFixed(2)+'s', ex+4, y0+12);
+    }
+
+    // 离线模型：整句输入，末点推理
+    drawLane(lane1, '离线模型', '#dc2626', [
+      {t0:0.3,t1:2.5,color:'rgba(239,68,68,.5)'}, // 整句语音
+      {t0:2.5,t1:2.9,color:'rgba(124,58,237,.7)'} // 推理
+    ], 2.9);
+
+    // 流式模型：chunk
+    drawLane(lane2, '流式模型', '#10b981', [
+      {t0:0.32,t1:0.96,color:'rgba(124,58,237,.6)'},
+      {t0:0.96,t1:1.60,color:'rgba(124,58,237,.6)'},
+      {t0:1.60,t1:2.24,color:'rgba(124,58,237,.6)'},
+      {t0:2.24,t1:2.88,color:'rgba(124,58,237,.6)'}
+    ], 0.28);
+
+    ctx.fillStyle='#94a3b8'; ctx.font='9px sans-serif';
+    ctx.fillText('紫色=推理/编码', 180, 10);
+  }
+
+  // ========== Case 7：儿化音 F0 包络（两个峰 vs 单峰） ==========
+  function drawCase7(){
+    var s = setupCanvas('cvs7'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+
+    var midSplit = w/2;
+    var baseY=h-18;
+
+    function drawLane(x0, laneW, title, color, twoPeak){
+      ctx.fillStyle= color==='#dc2626' ? 'rgba(239,68,68,.06)' : 'rgba(16,185,129,.06)';
+      ctx.fillRect(x0, 8, laneW, baseY-8);
+      ctx.fillStyle=color; ctx.font='bold 10px sans-serif';
+      ctx.fillText(title, x0+6, 20);
+
+      // 基线
+      ctx.strokeStyle='#e2e8f0';
+      ctx.beginPath(); ctx.moveTo(x0+4,baseY-2); ctx.lineTo(x0+laneW-4,baseY-2); ctx.stroke();
+
+      // F0 包络
+      ctx.strokeStyle=color; ctx.lineWidth=2;
+      ctx.beginPath();
+      var steps=80;
+      for(var i=0;i<=steps;i++){
+        var t=i/steps;
+        var px=x0+8+t*(laneW-16);
+        var f0;
+        if(twoPeak){
+          // "花"+"儿" 两个音节：先升后降，然后再起一个峰
+          f0 = 0.25 + 0.5*Math.exp(-Math.pow((t-0.25)/0.15,2)) + 0.4*Math.exp(-Math.pow((t-0.75)/0.18,2));
+        } else {
+          // 单音节 huar：一个平滑拱
+          f0 = 0.2 + 0.65*Math.exp(-Math.pow((t-0.5)/0.32,2));
+        }
+        var yy = baseY-4 - f0*(baseY-32);
+        if(i===0) ctx.moveTo(px,yy); else ctx.lineTo(px,yy);
+      }
+      ctx.stroke();
+
+      // 音节分隔（错的情况）
+      if(twoPeak){
+        ctx.strokeStyle='#dc2626'; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(x0+laneW/2, 24); ctx.lineTo(x0+laneW/2, baseY-4); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle='#b91c1c'; ctx.font='9px sans-serif';
+        ctx.fillText('花', x0+laneW*0.25-5, baseY-2);
+        ctx.fillText('儿', x0+laneW*0.75-5, baseY-2);
+      } else {
+        ctx.fillStyle='#047857'; ctx.font='9px sans-serif';
+        ctx.fillText('huār 单音节儿化', x0+laneW*0.3, baseY-2);
+      }
+    }
+
+    drawLane(0, midSplit, '❌ 合成"花+儿"（两音节）', '#dc2626', true);
+    drawLane(midSplit, w-midSplit, '✅ 自然"huār"（单音节卷舌）', '#10b981', false);
+
+    ctx.strokeStyle='#cbd5e1'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(midSplit,6); ctx.lineTo(midSplit,h-6); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#475569'; ctx.font='9px sans-serif';
+    ctx.fillText('F0 包络',4,14);
+  }
+
+  // ========== Case 8：attention 矩阵（健康对角线 vs 漂移） ==========
+  function drawCase8(){
+    var s = setupCanvas('cvs8'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    var midSplit = w/2;
+    var m=22, mat=80;
+
+    function drawMatrix(x0,y0,size,label,bad){
+      ctx.fillStyle = bad ? 'rgba(239,68,68,.06)' : 'rgba(16,185,129,.06)';
+      ctx.fillRect(x0-m+4, y0-m-8, size+4, size+20);
+      ctx.fillStyle= bad? '#b91c1c':'#047857'; ctx.font='bold 10px sans-serif';
+      ctx.fillText(label, x0-m+6, y0-m);
+
+      var N=10;
+      var cell=size/N;
+      // 网格
+      ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=0.5;
+      for(var i=0;i<=N;i++){
+        ctx.beginPath(); ctx.moveTo(x0+i*cell,y0); ctx.lineTo(x0+i*cell,y0+size); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0,y0+i*cell); ctx.lineTo(x0+size,y0+i*cell); ctx.stroke();
+      }
+      // 填对角线（高斯）
+      for(var i=0;i<N;i++){
+        for(var j=0;j<N;j++){
+          var alpha;
+          if(!bad){
+            var d = Math.abs(i-j);
+            alpha = Math.exp(-d*d*0.7)*0.9;
+          } else {
+            // 病态：前半对，中间漏，后段重对齐（回去了）+ 末段崩坏
+            var target;
+            if(i<4) target=i;
+            else if(i<7) target=i+1; // 跳过一字
+            else if(i<9) target=i-3; // 回到前面重复
+            else target = 8; // 崩坏停住
+            var d2 = Math.abs(j-target);
+            alpha = Math.exp(-d2*d2*0.8)*0.8;
+            if(i===9) alpha *= 0.7+0.3*Math.random();
+          }
+          if(alpha>0.05){
+            ctx.fillStyle = bad ? 'rgba(220,38,38,'+alpha+')' : 'rgba(16,185,129,'+alpha+')';
+            ctx.fillRect(x0+j*cell+1, y0+i*cell+1, cell-2, cell-2);
+          }
+        }
+      }
+      ctx.fillStyle='#64748b'; ctx.font='8px sans-serif';
+      ctx.fillText('encoder',x0-4,y0-3);
+      ctx.save();
+      ctx.translate(x0-m+6,y0+size/2); ctx.rotate(-Math.PI/2);
+      ctx.fillText('decoder',0,0); ctx.restore();
+    }
+
+    drawMatrix(m, m, mat, '❌ Attention 漂移（漏字+复读+崩坏）', true);
+    drawMatrix(midSplit+m, m, mat, '✅ 单调对角对齐（健康）', false);
+  }
+
+  // ========== Case 9：性能柱状图 ==========
+  function drawCase9(){
+    var s = setupCanvas('cvs9'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    drawAxes(ctx,w,h,'部署方案 →','RTF（越低越好）');
+    var baseY=h-24;
+    var chartH=baseY-30;
+    var bars=[
+      {name:'CPU PyTorch FP32',val:10.0,color:'#dc2626'},
+      {name:'CPU ONNX FP32',val:3.2,color:'#f59e0b'},
+      {name:'CPU ONNX INT8',val:0.5,color:'#10b981'},
+      {name:'GPU FP16',val:0.9,color:'#7c3aed'}
+    ];
+    var maxV=11;
+    var barW=(w-60)/bars.length*0.55;
+    var gap=(w-60)/bars.length;
+    bars.forEach(function(b,i){
+      var x=36+i*gap+gap*0.22;
+      var bh=(b.val/maxV)*chartH;
+      ctx.fillStyle=b.color;
+      ctx.fillRect(x,baseY-bh,barW,bh);
+      ctx.fillStyle='#1e293b'; ctx.font='10px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(b.name, x+barW/2, baseY+12);
+      ctx.fillStyle=b.color; ctx.font='bold 10px sans-serif';
+      ctx.fillText(b.val.toFixed(1)+'x', x+barW/2, baseY-bh-3);
+      ctx.textAlign='left';
+    });
+    // 实时线
+    var rtY = baseY-(1.0/maxV)*chartH;
+    ctx.strokeStyle='#047857'; ctx.setLineDash([4,3]); ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(32,rtY); ctx.lineTo(w-8,rtY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#047857'; ctx.font='bold 9px sans-serif';
+    ctx.fillText('RTF=1 实时线',w-80,rtY-4);
+  }
+
+  // ========== Case 10：共振峰对比 sh vs s ==========
+  function drawCase10(){
+    var s = setupCanvas('cvs10'); if(!s) return;
+    var ctx=s.ctx, w=s.w, h=s.h;
+    drawAxes(ctx,w,h,'频率 →','能量');
+    var baseY=h-20;
+    var mid=w/2;
+
+    function drawFricative(x0,laneW,title,color,peaks){
+      ctx.fillStyle= color==='#dc2626'? 'rgba(239,68,68,.06)':'rgba(16,185,129,.06)';
+      ctx.fillRect(x0,8,laneW,baseY-8);
+      ctx.fillStyle=color; ctx.font='bold 10px sans-serif';
+      ctx.fillText(title,x0+6,22);
+
+      ctx.strokeStyle=color; ctx.lineWidth=2;
+      ctx.beginPath();
+      var steps=80;
+      for(var i=0;i<=steps;i++){
+        var t=i/steps;
+        var px=x0+4+t*(laneW-8);
+        var f=t*8000;
+        var en=0.05;
+        peaks.forEach(function(p){
+          en += p.a*Math.exp(-Math.pow((f-p.f)/p.bw,2));
+        });
+        // 加一点高频噪声基底
+        en += 0.03*Math.sin(t*60)*(0.5+0.5*Math.sin(t*13));
+        var yy=baseY-4-en*(baseY-34);
+        if(i===0) ctx.moveTo(px,yy); else ctx.lineTo(px,yy);
+      }
+      ctx.stroke();
+      // 标注主要共振峰/谱峰
+      peaks.forEach(function(p){
+        var t=p.f/8000;
+        var px=x0+4+t*(laneW-8);
+        ctx.strokeStyle=color; ctx.setLineDash([2,2]);
+        ctx.beginPath(); ctx.moveTo(px,baseY-8); ctx.lineTo(px,baseY-8-p.a*(baseY-34)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle=color; ctx.font='bold 9px sans-serif';
+        ctx.fillText(p.label,px+2,36);
+      });
+    }
+
+    // 普通话 sh：谱峰在低频 ~2500Hz + 分布集中
+    drawFricative(0,mid,'普通话 sh（翘舌）','#10b981',[
+      {f:2200,a:0.75,bw:800,label:'2.2k'},
+      {f:4000,a:0.45,bw:1200,label:''}
+    ]);
+    // 四川话 "s" 平舌：谱峰更高频 4k+
+    drawFricative(mid,w-mid,'四川话 s（平舌化）','#dc2626',[
+      {f:4500,a:0.55,bw:1400,label:'4.5k ↑'},
+      {f:6500,a:0.7,bw:1000,label:'6.5k ↑↑'}
+    ]);
+
+    ctx.strokeStyle='#cbd5e1'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(mid,6); ctx.lineTo(mid,h-6); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#64748b'; ctx.font='9px sans-serif';
+    ctx.fillText('0',30,h-8); ctx.fillText('8k',w-30,h-8);
+  }
+
+  // 启动
+  function init(){
+    drawCase1();
+    drawCase2();
+    drawCase3();
+    drawCase4();
+    drawCase5();
+    drawCase6();
+    drawCase7();
+    drawCase8();
+    drawCase9();
+    drawCase10();
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // resize 时重绘
+  var t;
+  window.addEventListener('resize', function(){
+    clearTimeout(t);
+    t=setTimeout(init,200);
+  });
+})();
+</script>
+</body>
+</html>

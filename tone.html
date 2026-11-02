@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>普通话声调练习器 | agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.aud-canvas{width:100%;max-width:100%;display:block;border-radius:12px;background:#0f172a;}
+.tone-wrap{display:grid;grid-template-columns:1fr 320px;gap:1.2rem;margin-top:1rem;}
+@media(max-width:860px){.tone-wrap{grid-template-columns:1fr;}}
+.metric{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.8rem 1rem;margin-bottom:.6rem;}
+.metric .lbl{font-size:.8rem;color:#6b7280;}
+.metric .val{font-size:1.6rem;font-weight:700;color:#1e293b;font-family:Monaco,ui-monospace,monospace;}
+.score-text{font-size:1rem;margin-top:.3rem;}
+.score-good{color:#16a34a;}
+.score-warn{color:#d97706;}
+.score-bad{color:#dc2626;}
+.tone-cards{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:1rem;}
+.tone-card{border:1px solid #e5e7eb;border-radius:10px;padding:.7rem .9rem;background:#fff;}
+.tone-card.t1{border-left:4px solid #ef4444;}
+.tone-card.t2{border-left:4px solid #f97316;}
+.tone-card.t3{border-left:4px solid #22c55e;}
+.tone-card.t4{border-left:4px solid #3b82f6;}
+.tone-card .tn{font-size:1.3rem;font-weight:700;}
+.tone-card .td{font-size:.8rem;color:#6b7280;margin-top:.2rem;}
+.tone-toolbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;}
+.tone-btn{padding:.45rem .9rem;font-size:.95rem;}
+#status{font-size:.9rem;color:#6b7280;margin-left:auto;}
+.five-svg{width:100%;max-width:520px;display:block;margin:1rem auto;background:#fff;border-radius:10px;border:1px solid #e5e7eb;}
+</style>
+</head>
+<body>
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11 11 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / <a href="lab.html">语音实验室</a> / 普通话声调练习器</div>
+  <h1>🎼 普通话声调练习器</h1>
+  <p>实时显示你的 F0 曲线，对照普通话四声（妈 mā 55 / 麻 má 35 / 马 mǎ 214 / 骂 mà 51）标准五度曲线打分，帮你练准中文声调——外国人学中文、主持人练声、方言研究都能用。</p>
+</div></header>
+
+<div class="page-body">
+
+<section>
+<div class="tone-toolbar">
+  <button id="micBtn" class="btn btn-p">🎙️ 开始录音</button>
+  <button id="stopBtn" class="btn btn-outline btn-disabled" disabled>⏹ 停止</button>
+  <span style="width:1px;height:24px;background:#e5e7eb;margin:0 .2rem"></span>
+  <button class="tone-btn btn btn-outline btn-p" data-tone="1">妈 mā</button>
+  <button class="tone-btn btn btn-outline" data-tone="2">麻 má</button>
+  <button class="tone-btn btn btn-outline" data-tone="3">马 mǎ</button>
+  <button class="tone-btn btn btn-outline" data-tone="4">骂 mà</button>
+  <button id="resetBtn" class="btn btn-ghost">🔄 重置</button>
+  <span id="status">选择一个声调，点"开始录音"后发音</span>
+</div>
+
+<div class="tone-wrap">
+  <div>
+    <canvas id="f0Canvas" class="aud-canvas" width="900" height="360" aria-label="F0基频曲线"></canvas>
+    <div id="timer" style="text-align:center;font-family:Monaco,monospace;color:#6b7280;margin-top:.4rem;font-size:.9rem">0.0 / 3.0 s</div>
+  </div>
+  <div>
+    <div class="metric"><div class="lbl">当前 F0 基频 (Hz)</div><div class="val" id="curF0">---</div></div>
+    <div class="metric"><div class="lbl">匹配分数</div>
+      <div class="val" id="curScore" style="color:#7c3aed">--</div>
+      <div class="score-text" id="feedback">请开始录音</div>
+    </div>
+    <div class="metric"><div class="lbl">参考中值 3 度 (Hz)</div><div class="val" id="centerF0" style="font-size:1.2rem">200</div></div>
+    <div class="tone-cards">
+      <div class="tone-card t1"><div class="tn">一声 55</div><div class="td">妈 mā · 高平调，保持平稳高</div></div>
+      <div class="tone-card t2"><div class="tn">二声 35</div><div class="td">麻 má · 中升调，从中到高</div></div>
+      <div class="tone-card t3"><div class="tn">三声 214</div><div class="td">马 mǎ · 降升调，先降到底再扬</div></div>
+      <div class="tone-card t4"><div class="tn">四声 51</div><div class="td">骂 mà · 高降调，从最高落到底</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>📐 普通话五度制（Chao Tone Letters）</h2>
+<p style="color:#475569;margin-bottom:.5rem">赵元任先生发明的五度标调法：把人声音高范围从低到高分为 1–5 度，用数字记录声调起点、折点、终点的音高。一声 55（高平）、二声 35（中升）、三声 214（降升）、四声 51（全降）。</p>
+<svg class="five-svg" viewBox="0 0 520 320" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景与刻度 -->
+  <rect x="0" y="0" width="520" height="320" fill="#fff"/>
+  <!-- 5 条水平参考线 -->
+  <g stroke="#e5e7eb" stroke-width="1">
+    <line x1="70" y1="50" x2="500" y2="50"/>
+    <line x1="70" y1="100" x2="500" y2="100"/>
+    <line x1="70" y1="150" x2="500" y2="150"/>
+    <line x1="70" y1="200" x2="500" y2="200"/>
+    <line x1="70" y1="250" x2="500" y2="250"/>
+  </g>
+  <!-- 纵轴 1-5 -->
+  <g font-family="sans-serif" font-size="16" font-weight="700" fill="#64748b" text-anchor="end">
+    <text x="58" y="56">5 高</text>
+    <text x="58" y="106">4</text>
+    <text x="58" y="156">3 中</text>
+    <text x="58" y="206">2</text>
+    <text x="58" y="256">1 低</text>
+  </g>
+  <!-- 纵轴 -->
+  <line x1="70" y1="45" x2="70" y2="255" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="65" y1="250" x2="500" y2="250" stroke="#94a3b8" stroke-width="1.5"/>
+  <!-- 一声 55 红 平直 -->
+  <polyline points="100,50 180,50" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+  <text x="140" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="#ef4444">55 一声 mā</text>
+  <!-- 二声 35 橙 中升 -->
+  <polyline points="210,150 290,50" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round"/>
+  <text x="250" y="40" text-anchor="middle" font-size="14" font-weight="700" fill="#f97316">35 二声 má</text>
+  <!-- 三声 214 绿 降升 -->
+  <polyline points="320,200 370,250 420,100" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="370" y="280" text-anchor="middle" font-size="14" font-weight="700" fill="#22c55e">214 三声 mǎ</text>
+  <!-- 四声 51 蓝 高降 -->
+  <polyline points="440,50 500,250" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
+  <text x="470" y="280" text-anchor="middle" font-size="14" font-weight="700" fill="#3b82f6">51 四声 mà</text>
+  <text x="260" y="305" text-anchor="middle" font-size="12" fill="#94a3b8">时间 →</text>
+</svg>
+</section>
+
+<section>
+<h2>🌏 外国人学中文声调常见错误</h2>
+<div class="callout callout-w" style="border-left-color:#ef4444"><span class="ic">🟥</span><div><b>一声（55 高平）常见错误：</b>把一声读成降调或升调，尤其在词中/词尾时不自觉下滑。英文里没有"持续高平"的习惯（英语陈述句尾会下降），导致"妈 mā"听起来像"骂 mà"。<b>纠正：</b>想象你在叫远处的人"Mā——"，保持音高稳定，像钢琴按住一个键不放。</div></div>
+<div class="callout callout-w" style="border-left-color:#f97316"><span class="ic">🟧</span><div><b>二声（35 中升）常见错误：</b>起音太高（直接从 4 度甚至 5 度开始），结果升不上去变成高平；或升幅太小、只升到 4 度，听感像平调。英语疑问句句尾的升调往往较短促，中文二声需要从中音区稳稳地扬上去。<b>纠正：</b>从自己自然中音开始，像没听清对方说话说"啊？"那样明显扬上去。</div></div>
+<div class="callout callout-tip" style="border-left-color:#22c55e"><span class="ic">🟩</span><div><b>三声（214 降升）常见错误：</b>只读了"半上"（21，低降不升），没有最后的上扬；或者把降升读成"低平"或"中升"，忽略了"先降到最低"这个关键。很多教材教的"半三声"在单字练习时反而让学习者掌握不到完整 214 曲折。<b>纠正：</b>单字练习时夸张一点——像叹气"唉——"先压到最低，再像提问那样扬起来。</div></div>
+<div class="callout callout-i" style="border-left-color:#3b82f6"><span class="ic">🟦</span><div><b>四声（51 全降）常见错误：</b>起点不够高，或者降不到底，变成"42"或"43"听起来软绵绵像二声/三声；外国人受母语非重读音节影响，容易把四声发成短降。<b>纠正：</b>像生气时干脆地喊"Mà！"——起音要顶到你最高音，然后果断往下砸，像从楼梯最上一阶一步跳到底。</div></div>
+</section>
+
+</div>
+
+<footer>© agent-speech · 声调练习器 · YIN 实时基频检测</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+const AU=window.AU;
+const canvas=document.getElementById('f0Canvas'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height;
+const sr=16000;
+const DUR=3; // seconds
+// F0 plot range
+const F0min=80,F0max=500;
+const Tmax=DUR;
+// margin
+const ML=50,MR=20,MT=20,MB=40;
+const PW=W-ML-MR,PH=H-MT-MB;
+
+function f0toY(f){
+  // linear: F0min at bottom, F0max at top
+  return MT+PH-(f-F0min)/(F0max-F0min)*PH;
+}
+function ttoX(t){
+  return ML+t/Tmax*PW;
+}
+
+// 五度参考：centerF0 = 3度；每度一个半音：f_d = center * 2^((d-3)/12)
+function degreeToF(centerF0,d){
+  return centerF0*Math.pow(2,(d-3)/12);
+}
+
+// 生成参考曲线 N 点
+function refCurve(tone,centerF0,N=300){
+  const pts=new Array(N);
+  const f1=degreeToF(centerF0,1);
+  const f2=degreeToF(centerF0,2);
+  const f3=degreeToF(centerF0,3);
+  const f4=degreeToF(centerF0,4);
+  const f5=degreeToF(centerF0,5);
+  for(let i=0;i<N;i++){
+    const t=i/(N-1);
+    let f;
+    switch(tone){
+      case 1: // 55
+        f=f5;break;
+      case 2: // 35: f3 -> f5
+        f=f3+(f5-f3)*t;break;
+      case 3: // 214: 0-0.5 f2->f1; 0.5-1 f1->f4
+        if(t<0.5)f=f2+(f1-f2)*(2*t);
+        else f=f1+(f4-f1)*(2*(t-0.5));
+        break;
+      case 4: // 51: f5->f1
+        f=f5+(f1-f5)*t;break;
+      default:f=f3;
+    }
+    pts[i]={t,f};
+  }
+  return pts;
+}
+
+// 颜色
+const toneColors={1:'#ef4444',2:'#f97316',3:'#22c55e',4:'#3b82f6'};
+
+let currentTone=1;
+let centerF0=200; // 默认中值
+let trail=[]; // {t,f0}
+let rec=false,mic=null,startT=0;
+let accum=new Float32Array(0);
+let voicedF0s=[]; // for median
+let rafId=null;
+
+document.querySelectorAll('.tone-btn').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tone-btn').forEach(x=>{x.classList.remove('btn-p');x.classList.add('btn-outline');});
+  b.classList.remove('btn-outline');b.classList.add('btn-p');
+  currentTone=parseInt(b.dataset.tone);
+  draw();
+});
+
+function draw(){
+  // background
+  ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='rgba(148,163,184,.15)';ctx.lineWidth=1;
+  ctx.fillStyle='rgba(148,163,184,.7)';ctx.font='11px sans-serif';ctx.textAlign='right';
+  for(let f=100;f<=500;f+=100){
+    const y=f0toY(f);
+    ctx.beginPath();ctx.moveTo(ML,y);ctx.lineTo(W-MR,y);ctx.stroke();
+    ctx.fillText(f+'Hz',ML-6,y+4);
+  }
+  // time grid
+  ctx.textAlign='center';
+  for(let t=0;t<=3;t+=0.5){
+    const x=ttoX(t);
+    ctx.strokeStyle=t===0?'rgba(148,163,184,.4)':'rgba(148,163,184,.15)';
+    ctx.beginPath();ctx.moveTo(x,MT);ctx.lineTo(x,H-MB);ctx.stroke();
+    ctx.fillText(t.toFixed(1)+'s',x,H-MB+16);
+  }
+  // axis labels
+  ctx.fillStyle='rgba(148,163,184,.9)';ctx.font='bold 12px sans-serif';
+  ctx.textAlign='left';ctx.fillText('F0 (Hz)',8,14);
+  ctx.textAlign='right';ctx.fillText('→ 时间',W-8,H-MB+30);
+
+  // reference curve
+  const ref=refCurve(currentTone,centerF0);
+  const color=toneColors[currentTone];
+  ctx.strokeStyle=color;ctx.lineWidth=3;ctx.setLineDash([8,6]);ctx.beginPath();
+  ref.forEach((p,i)=>{
+    const x=ttoX(p.t),y=f0toY(p.f);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  });
+  ctx.stroke();ctx.setLineDash([]);
+  // label
+  ctx.fillStyle=color;ctx.font='bold 13px sans-serif';ctx.textAlign='left';
+  const labels={1:'参考：一声 55 高平',2:'参考：二声 35 中升',3:'参考：三声 214 降升',4:'参考：四声 51 全降'};
+  ctx.fillText(labels[currentTone],ML+8,MT+18);
+
+  // real-time trail
+  if(trail.length>0){
+    // thin light line
+    ctx.strokeStyle='rgba(125,211,252,.9)';ctx.lineWidth=2.5;ctx.beginPath();
+    trail.forEach((p,i)=>{
+      const x=ttoX(p.t),y=f0toY(p.f0);
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // dots
+    ctx.fillStyle='#7dd3fc';
+    trail.forEach(p=>{
+      const x=ttoX(p.t),y=f0toY(p.f0);
+      ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();
+    });
+    // current point highlight
+    const last=trail[trail.length-1];
+    const lx=ttoX(last.t),ly=f0toY(last.f0);
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(lx,ly,5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#0ea5e9';ctx.lineWidth=2;ctx.stroke();
+  }
+
+  // 5度 reference marks on right side
+  ctx.textAlign='left';ctx.font='11px sans-serif';
+  ['1','2','3','4','5'].forEach((d,i)=>{
+    const deg=i+1;
+    const f=degreeToF(centerF0,deg);
+    const y=f0toY(f);
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillText(d+'°',W-MR+2,y+4);
+    ctx.strokeStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.moveTo(W-MR,y);ctx.lineTo(W-MR+6,y);ctx.stroke();
+  });
+}
+draw();
+
+document.getElementById('micBtn').onclick=async()=>{
+  try{
+    document.getElementById('micBtn').classList.add('btn-disabled');
+    document.getElementById('micBtn').disabled=true;
+    document.getElementById('stopBtn').classList.remove('btn-disabled');
+    document.getElementById('stopBtn').disabled=false;
+    rec=true;startT=Date.now();trail=[];accum=new Float32Array(0);voicedF0s=[];
+    document.getElementById('status').textContent='🔴 录音中…请发所选声调';
+    document.getElementById('feedback').textContent='发音中…';
+    document.getElementById('feedback').className='score-text';
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false}});
+    const ac=new AudioContext({sampleRate:sr});
+    const src=ac.createMediaStreamSource(stream);
+    const proc=ac.createScriptProcessor(1024,1,1);
+    const frameSize=1024,hop=160;
+    proc.onaudioprocess=e=>{
+      if(!rec)return;
+      const ch=e.inputBuffer.getChannelData(0);
+      const tmp=new Float32Array(accum.length+ch.length);
+      tmp.set(accum);tmp.set(ch,accum.length);accum=tmp;
+      while(accum.length>=frameSize){
+        const f=accum.subarray(0,frameSize);
+        const y=AU.yin(f,sr,0.15,70,500);
+        const elapsed=(Date.now()-startT)/1000;
+        if(y.voiced&&y.f0>70&&y.f0<500){
+          trail.push({t:Math.min(elapsed,DUR),f0:y.f0});
+          voicedF0s.push(y.f0);
+          if(voicedF0s.length>300)voicedF0s.shift();
+          // 更新 centerF0 用最近 1s（约100帧）中位数
+          const recent=voicedF0s.slice(-100);
+          const sorted=recent.slice().sort((a,b)=>a-b);
+          centerF0=sorted[Math.floor(sorted.length/2)]||200;
+          document.getElementById('centerF0').textContent=Math.round(centerF0);
+          document.getElementById('curF0').textContent=Math.round(y.f0);
+        }
+        accum=accum.subarray(hop);
+      }
+      draw();
+      const elapsed=(Date.now()-startT)/1000;
+      document.getElementById('timer').textContent=elapsed.toFixed(1)+' / 3.0 s';
+      if(elapsed>=DUR){stop();}
+    };
+    src.connect(proc);proc.connect(ac.destination);
+    mic={stream,ac,proc};
+    // 实时刷新（即使没有新帧也要显示时间轴）
+    function tick(){
+      if(!rec)return;
+      const elapsed=(Date.now()-startT)/1000;
+      document.getElementById('timer').textContent=Math.min(elapsed,DUR).toFixed(1)+' / 3.0 s';
+      draw();
+      rafId=requestAnimationFrame(tick);
+    }
+    tick();
+  }catch(err){
+    alert('麦克风访问失败：'+err.message);
+    document.getElementById('micBtn').classList.remove('btn-disabled');
+    document.getElementById('micBtn').disabled=false;
+  }
+};
+
+document.getElementById('stopBtn').onclick=stop;
+document.getElementById('resetBtn').onclick=()=>{
+  stop();trail=[];voicedF0s=[];centerF0=200;
+  document.getElementById('centerF0').textContent='200';
+  document.getElementById('curF0').textContent='---';
+  document.getElementById('curScore').textContent='--';
+  document.getElementById('curScore').style.color='#7c3aed';
+  document.getElementById('feedback').textContent='请开始录音';
+  document.getElementById('feedback').className='score-text';
+  document.getElementById('timer').textContent='0.0 / 3.0 s';
+  document.getElementById('status').textContent='已重置，选择声调后开始';
+  draw();
+};
+
+function stop(){
+  if(!rec)return;rec=false;
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  if(mic){mic.stream.getTracks().forEach(t=>t.stop());try{mic.proc.disconnect();mic.ac.close();}catch(e){}mic=null;}
+  document.getElementById('micBtn').classList.remove('btn-disabled');
+  document.getElementById('micBtn').disabled=false;
+  document.getElementById('stopBtn').classList.add('btn-disabled');
+  document.getElementById('stopBtn').disabled=true;
+  document.getElementById('status').textContent='⏹ 录音结束，评分中…';
+  // score
+  setTimeout(scoreTrial,80);
+}
+
+function scoreTrial(){
+  const scoreEl=document.getElementById('curScore');
+  const fbEl=document.getElementById('feedback');
+  if(trail.length<5){
+    scoreEl.textContent='--';scoreEl.style.color='#dc2626';
+    fbEl.textContent='❌ 未检测到有效发音，请再试一次（保持发声、离麦近一点）';
+    fbEl.className='score-text score-bad';
+    document.getElementById('status').textContent='未检测到浊音';
+    return;
+  }
+  const ref=refCurve(currentTone,centerF0);
+  // 将 trail 归一化时间到 [0,1]（按实际发音时长）
+  const tMin=trail[0].t,tMax=trail[trail.length-1].t;
+  const dur=Math.max(0.3,tMax-tMin);
+  // 重采样到 ref 长度 N
+  const N=ref.length;
+  const norm=new Array(N);
+  for(let i=0;i<N;i++){
+    const t=i/(N-1);
+    const rt=tMin+t*dur;
+    // find closest trail point by t
+    // binary search or simple nearest
+    let best=0,bd=1e9;
+    for(let j=0;j<trail.length;j++){
+      const d=Math.abs(trail[j].t-rt);
+      if(d<bd){bd=d;best=j;}
+    }
+    norm[i]=trail[best].f0;
+  }
+  // 计算半音差 (semitone diff): 12*log2(f_usr/f_ref)
+  let totalST=0,cnt=0;
+  const perPointDiff=new Array(N);
+  for(let i=0;i<N;i++){
+    const refF=ref[i].f;
+    const usrF=norm[i];
+    if(refF>0&&usrF>0){
+      const st=12*Math.log2(usrF/refF);
+      perPointDiff[i]=st;
+      totalST+=Math.abs(st);
+      cnt++;
+    }else{
+      perPointDiff[i]=0;
+    }
+  }
+  const avgST=totalST/Math.max(1,cnt);
+  // score: 0 st diff -> 100; 4 st diff -> 0
+  const score=Math.max(0,Math.min(100,Math.round(100-avgST*20)));
+  scoreEl.textContent=score;
+  let fb='',cls='';
+  if(score>=85){fb='✅ 非常标准！';cls='score-text score-good';scoreEl.style.color='#16a34a';}
+  else if(score>=65){fb='🟡 不错，再调整一下：';cls='score-text score-warn';scoreEl.style.color='#d97706';}
+  else{fb='🔴 继续加油：';cls='score-text score-bad';scoreEl.style.color='#dc2626';}
+
+  // 分声调针对性反馈
+  let hint='';
+  // 计算起始/中段/结尾的平均偏差
+  function avgSeg(a,b){
+    let s=0,c=0;
+    for(let i=Math.floor(a*N);i<Math.floor(b*N);i++){s+=perPointDiff[i];c++;}
+    return c?s/c:0;
+  }
+  const startD=avgSeg(0,0.3);
+  const midD=avgSeg(0.3,0.7);
+  const endD=avgSeg(0.7,1);
+  // 斜率（半音/秒 对归一化时间）
+  function slope(a,b){return (avgSeg(b-0.05,b)-avgSeg(a,a+0.05));}
+  switch(currentTone){
+    case 1:
+      if(Math.abs(startD)>1.5||Math.abs(endD)>1.5){
+        hint+='一声要保持平稳、像一条直线，不要上下飘。';
+      }else if(midD<-1)hint+='整体音高偏低，再抬高一点保持。';
+      else if(midD>1)hint+='整体音高偏高了点，稳住即可。';
+      else hint+='音高基本平，很好。';
+      // 检查是否下滑
+      if(endD-startD<-1.5)hint+=' 注意结尾不要往下掉。';
+      break;
+    case 2:
+      if(startD>1)hint+='二声起音太高了，从中音 3 度开始。';
+      if(endD<0)hint+='结尾再往高一点扬上去。';
+      else if(endD-startD<1.5)hint+='上升幅度不够大，明显地往上扬。';
+      if(!hint)hint+='中升调到位，不错。';
+      break;
+    case 3:
+      // 中点是否到最低
+      const minD=Math.min(...perPointDiff.filter(x=>!isNaN(x)));
+      const minIdx=perPointDiff.indexOf(minD);
+      if(minIdx<N*0.3||minIdx>N*0.7)hint+='三声需要先降到最低点（约中间位置）再上扬。';
+      if(midD>-1)hint+='降得不够低，先压到最低音。';
+      if(endD<-1)hint+=' 结尾要上扬到 4 度位置。';
+      if(!hint)hint+='降升曲折到位，很好。';
+      break;
+    case 4:
+      if(startD<-1)hint+='四声起点要高，从你最高音开始。';
+      if(endD>1)hint+='落得不够低，要降到最底 1 度。';
+      else if(startD-endD<3)hint+='下降幅度不够大、果断往下砸。';
+      if(!hint)hint+='高降调利落，很好。';
+      break;
+  }
+  fbEl.textContent=fb+' '+hint;
+  fbEl.className=cls;
+  document.getElementById('status').textContent='✅ 评分完成，可点重置再来一次';
+  draw();
+}
+</script>
+</body>
+</html>

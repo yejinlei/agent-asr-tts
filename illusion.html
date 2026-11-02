@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>听觉错觉实验室 · agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.illusion-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin:1.2rem 0}
+.illu{background:#fff;border-radius:16px;padding:1.4rem;box-shadow:0 2px 12px rgba(124,58,237,.08);border:1px solid #f3e8ff}
+.illu h3{margin:0 0 .6rem;color:#6b21a8;font-size:1.15rem;display:flex;align-items:center;gap:.5rem}
+.illu p.desc{color:#475569;font-size:.92rem;line-height:1.65;margin:.6rem 0}
+.illu .illu-btns{display:flex;flex-wrap:wrap;gap:.5rem;margin:.8rem 0}
+.illu .mouth-box{display:flex;gap:1rem;justify-content:center;margin:.8rem 0;flex-wrap:wrap}
+.illu .mouth-item{text-align:center;font-size:.8rem;color:#64748b}
+.illu .mouth-svg{width:120px;height:90px;background:#fdf4ff;border-radius:12px;padding:.5rem}
+.illu .explain{background:#faf5ff;border-left:3px solid #a855f7;padding:.7rem .9rem;border-radius:0 8px 8px 0;font-size:.88rem;color:#581c87;line-height:1.6;margin-top:.8rem}
+.illu canvas{width:100%;height:60px;border-radius:8px;margin-top:.8rem;background:#0f172a}
+.reveal-text{background:#fef3c7;border:2px dashed #f59e0b;padding:.8rem;border-radius:10px;margin:.6rem 0;text-align:center;font-size:1.05rem;font-weight:600;color:#92400e;display:none}
+.reveal-text.show{display:block}
+.ai-section{background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-radius:16px;padding:1.6rem;margin-top:2rem}
+.ai-section h2{color:#5b21b6;margin-top:0}
+.ai-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem}
+.ai-item{background:#fff;padding:1rem;border-radius:12px;border-left:4px solid #8b5cf6}
+.ai-item h4{margin:0 0 .4rem;color:#6b21a8;font-size:.95rem}
+.ai-item p{margin:0;font-size:.85rem;color:#475569;line-height:1.55}
+@media(max-width:800px){.illusion-grid{grid-template-columns:1fr}.ai-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11 11 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero" style="background:linear-gradient(135deg,#7c3aed,#a855f7)"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / <a href="lab.html">语音实验室</a> / 听觉错觉实验室</div>
+  <h1>🎭 听觉错觉实验室</h1>
+  <p>你的大脑会"脑补"声音——McGurk 效应、鸡尾酒会效应、正弦波语音、音素恢复效应……点击按钮亲自试听，发现听觉的有趣错觉。</p>
+</div></header>
+
+<div class="page-body">
+
+<div class="callout callout-i"><span class="ic">💡</span><div><b>什么是听觉错觉？</b>这些经典实验证明，"听见"≠"耳朵接收到声波"——大脑在<b>主动解读、预测、补全</b>声音，甚至会用视觉和上下文"篡改"你听到的内容。了解这些效应，才能理解为什么人类听话毫不费力，而 AI 语音识别却如此困难。</div></div>
+
+<div class="illusion-grid">
+
+<!-- 错觉1：McGurk -->
+<div class="illu">
+  <h3>🧠 错觉1：McGurk 麦格克效应</h3>
+  <p class="desc">视频里嘴型是 "ga"，但音频是 "ba"，你会听到 "da"——<b>视觉改变了你的听觉</b>。盯着嘴型仔细听！</p>
+  <div class="mouth-box">
+    <div class="mouth-item">
+      <svg class="mouth-svg" viewBox="0 0 120 90" id="mouth-ba">
+        <ellipse cx="60" cy="45" rx="30" ry="8" fill="#fca5a5" stroke="#dc2626" stroke-width="2"/>
+        <line x1="30" y1="45" x2="90" y2="45" stroke="#7f1d1d" stroke-width="2"/>
+      </svg>
+      <div>"ba" 双唇闭合</div>
+    </div>
+    <div class="mouth-item">
+      <svg class="mouth-svg" viewBox="0 0 120 90" id="mouth-ga">
+        <ellipse cx="60" cy="45" rx="18" ry="22" fill="#7f1d1d" stroke="#dc2626" stroke-width="2"/>
+        <ellipse cx="60" cy="52" rx="10" ry="10" fill="#f87171"/>
+      </svg>
+      <div>"ga" 软腭位置（张口）</div>
+    </div>
+  </div>
+  <div class="illu-btns">
+    <button class="btn btn-purple" onclick="playMcGurk(this,'ba')">🔊 只听"ba"</button>
+    <button class="btn btn-purple" onclick="playMcGurk(this,'combo')">👀🔊 看"ga"嘴 + 听"ba"</button>
+    <button class="btn btn-ghost" onclick="showMouth('ga',800)">👁 只看"ga"嘴型</button>
+  </div>
+  <p style="font-size:.85rem;color:#6b7280;margin:.4rem 0">💡 第二个按钮：播放时右侧"ga"嘴会动，<b>请盯着它看</b>，你会听到 "da" 而不是 "ba"！</p>
+  <canvas id="wave-mcgurk" width="400" height="60"></canvas>
+  <div class="explain"><b>解释：</b>大脑会自动<b>融合</b>视觉（嘴型）和听觉信息。当二者冲突时，大脑不会选边站，而是给出一个"折中"感知——视觉的软腭音 /g/ 和听觉的双唇音 /b/ 折中成了齿龈音 /d/。这就是为什么视频通话卡顿嘴型对不上会让人很难受。</div>
+</div>
+
+<!-- 错觉2：鸡尾酒会效应 -->
+<div class="illu">
+  <h3>🍸 错觉2：鸡尾酒会效应</h3>
+  <p class="desc">嘈杂酒会上，你能自动"挑出"朋友的声音——但机器 ASR 却做不到。下面同时播放两个"说话人"，试试把注意力切换到左耳/右耳。</p>
+  <div class="illu-btns">
+    <button class="btn btn-purple" onclick="playCocktail(this)">🔊 同时播放两人说话</button>
+    <button class="btn btn-ghost" onclick="stopAudio(this)">⏹ 停止</button>
+  </div>
+  <p style="font-size:.88rem;color:#374151;margin:.6rem 0">
+    🔉 <b>左耳</b>：低音男声（F0≈120Hz，节奏较慢）<br>
+    🔊 <b>右耳</b>：高音女声（F0≈220Hz，节奏较快）<br>
+    <span style="color:#6b21a8">👉 先听左耳男声，再"切换"到右耳女声——你能做到吗？</span>
+  </p>
+  <canvas id="wave-cocktail" width="400" height="60"></canvas>
+  <div class="explain"><b>解释：</b>双耳分听 + 选择性注意是人类认知的奇迹，这在 ASR/TTS 中对应<b>"盲源分离"（Blind Source Separation）</b>和<b>"鸡尾酒会问题"</b>——即使深度学习时代，多说话人混叠语音分离仍是核心难题。人类靠空间方位、基频、音色差异瞬间"锁定"目标，机器需要大量数据和专门模型（如 Conv-TasNet、SepFormer）才能勉强做到。</div>
+</div>
+
+<!-- 错觉3：正弦波语音 -->
+<div class="illu">
+  <h3>〰️ 错觉3：正弦波语音</h3>
+  <p class="desc">只用 3 段正弦波代替人声共振峰，第一遍你会以为是外星人哼鸣或科幻音效——<b>看完文字再听，瞬间就能听懂</b>。</p>
+  <div class="illu-btns">
+    <button class="btn btn-purple" onclick="playSine(this)">🔊 第一遍：先听（不要看下方文字！）</button>
+    <button class="btn btn-ghost" onclick="document.getElementById('reveal-text').classList.add('show')">📖 揭示文本</button>
+    <button class="btn btn-purple" onclick="playSine(this)">🔁 再听一次对比</button>
+  </div>
+  <div class="reveal-text" id="reveal-text">💬 "你好"——听到了吗？现在这两段哨音般的正弦波，在你大脑里已经变成了一句问候！</div>
+  <canvas id="wave-sine" width="400" height="60"></canvas>
+  <div class="explain"><b>解释：</b>正弦波语音（Sine-Wave Speech, Remez 1981）剥离了人声的所有谐波、爆破、鼻音，<b>只保留共振峰（F1/F2/F3）的频率轨迹</b>。第一次听时大脑找不到"语音模式"，只觉得是音效；一旦告诉你是"你好"，大脑立刻激活语音识别回路，把简单正弦波"脑补"成完整人声——这就是<b>自上而下（top-down）加工</b>的力量，也是为什么熟悉口音更好懂。</div>
+</div>
+
+<!-- 错觉4：音素恢复 -->
+<div class="illu">
+  <h3>🩹 错觉4：音素恢复效应</h3>
+  <p class="desc">把一句话中某个音剪掉，换成咳嗽声/白噪声，你依然能完整"听到"那个音——大脑根据上下文自动补全。</p>
+  <div class="illu-btns">
+    <button class="btn btn-purple" onclick="playPhoneme(this,'full')">🔊 完整版："科学改变世界"</button>
+    <button class="btn btn-purple" onclick="playPhoneme(this,'missing')">✂️ 缺失版：咳嗽替换"k"音</button>
+  </div>
+  <p style="font-size:.85rem;color:#6b7280;margin:.4rem 0">🤔 第二版里开头"科"的 /k/ 音被替换成了噪声——<b>你是不是依然听到了完整的"科学改变世界"？</b></p>
+  <canvas id="wave-phoneme" width="400" height="60"></canvas>
+  <div class="explain"><b>解释：</b>Warren 1970 年发现的经典效应：当一个音素被噪声替代时，听者会"听到"被掩盖的音，甚至无法说出噪声具体出现在哪个位置。大脑通过<b>上下文语义预测</b>自动补全缺失信息——这正是现代 ASR 为什么必须用<b>语言模型（LM）</b>，端到端模型里的注意力机制本质上也在做"上下文补全"。噪声鲁棒性 ASR 的核心灵感之一就来自此效应。</div>
+</div>
+
+</div>
+
+<section class="ai-section">
+  <h2>🤖 为什么 AI 也要懂听觉错觉？</h2>
+  <p style="color:#475569;line-height:1.7;margin-bottom:0">人类言语感知远非"频谱→音素→词"的简单自下而上流水线，而是<b>视觉、听觉、语义、注意力</b>多模态融合、主动预测的过程。每一个听觉错觉，都对应着 ASR/TTS 尚未完全解决的核心难题：</p>
+  <div class="ai-grid">
+    <div class="ai-item"><h4>👁️‍🗨️ 视听融合</h4><p>McGurk 效应告诉我们语音是多模态的。鲁棒 ASR 需要像人一样<b>结合唇动</b>（视听语音识别 AVSR），尤其在噪声环境下视觉信息能显著提升准确率。</p></div>
+    <div class="ai-item"><h4>🎯 选择性注意</h4><p>鸡尾酒会效应对应<b>目标说话人提取（Target Speaker Extraction）</b>——给定一段参考语音，从多人混声中"锁定"特定说话人，是会议、车载 ASR 的刚需。</p></div>
+    <div class="ai-item"><h4>🧠 自上而下预测</h4><p>正弦波语音说明大脑用<b>高层语言知识</b>重塑低层感知。现代 ASR 通过 RNN/Transformer 语言模型、Shallow Fusion 等方式引入上下文预测，本质就是模拟这种能力。</p></div>
+    <div class="ai-item"><h4>🩹 缺失信息补全</h4><p>音素恢复效应直接对应<b>噪声鲁棒 ASR</b>和<b>缺失数据技术</b>——当部分频带被噪声掩盖时，系统应能根据上下文"修复"而不是丢弃，类似人类的补全能力。</p></div>
+  </div>
+  <p style="text-align:center;color:#7c3aed;margin-top:1.2rem;font-size:.9rem">🎓 想深入了解？这些效应的经典论文：McGurk & MacDonald (1976), Cherry (1953), Remez et al. (1981), Warren (1970)。</p>
+</section>
+
+</div>
+
+<footer>© agent-speech · 听觉错觉实验室 · 所有音频使用 WebAudio API 纯前端合成，零外部文件</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+const AU=window.AU;
+const sr=16000;
+let currentSrc=null,currentCtx=null;
+function stopCurrent(){
+  try{if(currentSrc){currentSrc.stop();currentSrc=null;}}catch(e){}
+  try{if(currentCtx){currentCtx.close();currentCtx=null;}}catch(e){}
+}
+function playBuffer(x,sr,btn,originalText){
+  stopCurrent();
+  const ctx=new (window.AudioContext||window.webkitAudioContext)();
+  const b=ctx.createBuffer(1,x.length,sr);
+  b.getChannelData(0).set(x);
+  const src=ctx.createBufferSource();src.buffer=b;src.connect(ctx.destination);
+  src.start();currentSrc=src;currentCtx=ctx;
+  if(btn){btn.textContent='🔊 播放中...';btn.disabled=true;}
+  src.onended=()=>{
+    if(btn){btn.textContent=originalText;btn.disabled=false;}
+    currentSrc=null;try{ctx.close();}catch(e){}currentCtx=null;
+  };
+}
+function playBufferStereo(L,R,sr,btn,originalText){
+  stopCurrent();
+  const ctx=new (window.AudioContext||window.webkitAudioContext)();
+  const b=ctx.createBuffer(2,L.length,sr);
+  b.getChannelData(0).set(L);b.getChannelData(1).set(R);
+  const src=ctx.createBufferSource();src.buffer=b;src.connect(ctx.destination);
+  src.start();currentSrc=src;currentCtx=ctx;
+  if(btn){btn.textContent='🔊 播放中...';btn.disabled=true;}
+  src.onended=()=>{
+    if(btn){btn.textContent=originalText;btn.disabled=false;}
+    currentSrc=null;try{ctx.close();}catch(e){}currentCtx=null;
+  };
+}
+
+// ===== 共振峰合成辅助：生成一段带F0+F1+F2+F3的元音/浊音 =====
+function synthVoiced(dur,f0,f1,f2,f3,amp=0.3){
+  const n=Math.floor(sr*dur);
+  const x=new Float32Array(n);
+  const o1=AU.sine(f0,sr,dur);
+  const p1=AU.sine(f1,sr,dur,Math.random()*Math.PI*2);
+  const p2=AU.sine(f2,sr,dur,Math.random()*Math.PI*2);
+  const p3=AU.sine(f3,sr,dur,Math.random()*Math.PI*2);
+  // 包络：快速起音+指数衰减尾部
+  for(let i=0;i<n;i++){
+    let env=Math.min(1,i/(sr*0.02));
+    env*=Math.exp(-2*i/n);
+    x[i]=env*amp*(o1[i]*0.3+p1[i]*0.5+p2[i]*0.3+p3[i]*0.2);
+  }
+  return x;
+}
+function concat(arr){
+  let total=0;arr.forEach(a=>total+=a.length);
+  const x=new Float32Array(total);let off=0;
+  arr.forEach(a=>{x.set(a,off);off+=a.length;});
+  return x;
+}
+function whiteNoise(dur,amp=0.2){
+  const n=Math.floor(sr*dur);
+  const x=new Float32Array(n);
+  for(let i=0;i<n;i++)x[i]=(Math.random()*2-1)*amp;
+  return x;
+}
+function fadeInOut(x,ms=5){
+  const y=x.slice();
+  const f=Math.floor(sr*ms/1000);
+  for(let i=0;i<f;i++){y[i]*=i/f;y[y.length-1-i]*=i/f;}
+  return y;
+}
+
+// ===== 错觉1：McGurk =====
+function makeBa(){
+  // 0.05s 爆破 + 0.25s /ba/ 元音 (F1=700,F2=1200,F3=2500)
+  const burst=whiteNoise(0.05,0.35);
+  const ba=synthVoiced(0.3,120,700,1200,2500,0.35);
+  return fadeInOut(concat([burst,ba]));
+}
+function makeGa(){
+  const burst=whiteNoise(0.05,0.25);
+  const ga=synthVoiced(0.3,150,600,2000,2500,0.3);
+  return fadeInOut(concat([burst,ga]));
+}
+let mouthTimer=null;
+function showMouth(type,dur){
+  const ba=document.getElementById('mouth-ba');
+  const ga=document.getElementById('mouth-ga');
+  ba.parentElement.style.opacity=type==='ba'?'1':'0.3';
+  ga.parentElement.style.opacity=type==='ga'?'1':'0.3';
+  clearTimeout(mouthTimer);
+  mouthTimer=setTimeout(()=>{
+    ba.parentElement.style.opacity='1';
+    ga.parentElement.style.opacity='1';
+  },dur);
+}
+function animateMouth(totalDur){
+  // 循环开合几次模拟说话
+  let t=0;
+  function tick(){
+    if(t>=totalDur){showMouth('ba',0);return;}
+    showMouth('ga',200);
+    setTimeout(()=>showMouth('ba',150),200);
+    t+=400;setTimeout(tick,400);
+  }
+  tick();
+}
+function playMcGurk(btn,mode){
+  const orig=btn.textContent;
+  let audio;
+  if(mode==='ba'){
+    audio=makeBa();
+    AU.drawWave(document.getElementById('wave-mcgurk'),audio,'#a855f7','#1e1b4b');
+    playBuffer(audio,sr,btn,orig);
+  }else if(mode==='combo'){
+    audio=makeBa();
+    AU.drawWave(document.getElementById('wave-mcgurk'),audio,'#a855f7','#1e1b4b');
+    showMouth('ga',0);
+    animateMouth(audio.length/sr*1000);
+    playBuffer(audio,sr,btn,orig);
+  }
+}
+
+// ===== 错觉2：鸡尾酒会 =====
+let cocktailSrc=null,cocktailCtx=null;
+function makeSpeaker(f0Base,formants,amRate,dur=2.5){
+  // 多频正弦+调幅模拟"语流节奏"
+  const n=Math.floor(sr*dur);
+  const x=new Float32Array(n);
+  const oscs=formants.map(f=>AU.sine(f,sr,dur,Math.random()*Math.PI*2));
+  const f0=AU.sine(f0Base,sr,dur);
+  for(let i=0;i<n;i++){
+    // 音节包络：慢调制
+    const t=i/sr;
+    const env=0.4+0.6*(0.5+0.5*Math.sin(2*Math.PI*amRate*t));
+    let s=f0[i]*0.15;
+    oscs.forEach(o=>s+=o[i]*0.25);
+    x[i]=env*s*0.35;
+  }
+  // 随机加几个短暂停顿模拟言语节奏
+  for(let i=0;i<5;i++){
+    const st=Math.floor((0.2+Math.random()*(dur-0.4))*sr);
+    const en=st+Math.floor(sr*0.05);
+    for(let j=st;j<Math.min(en,n);j++)x[j]*=0.1;
+  }
+  return fadeInOut(x);
+}
+function playCocktail(btn){
+  stopAudio();
+  const orig=btn.textContent;
+  const spkA=makeSpeaker(120,[200,600,1200],2.8,3);
+  const spkB=makeSpeaker(220,[350,2300,3000],4.0,3);
+  // 简单立体声波形展示（左右平均后画）
+  const disp=new Float32Array(spkA.length);
+  for(let i=0;i<disp.length;i++)disp[i]=(spkA[i]+spkB[i])*0.5;
+  AU.drawWave(document.getElementById('wave-cocktail'),disp,'#a855f7','#1e1b4b');
+  playBufferStereo(spkA,spkB,sr,btn,orig);
+}
+function stopAudio(btn){
+  stopCurrent();
+  document.querySelectorAll('.illu-btns button').forEach(b=>{if(b.disabled){b.disabled=false;}});
+}
+
+// ===== 错觉3：正弦波语音 "你好" =====
+// "你" ni：F1≈300, F2≈2400；"好" hao：F1≈600, F2≈1000
+function playSine(btn){
+  const orig=btn.textContent;
+  const durSyll=0.35;
+  const n=Math.floor(sr*durSyll*2);
+  const x=new Float32Array(n);
+  // "你"：F1=300,F2=2400,F3=3000
+  const ni_f1=AU.sine(300,sr,durSyll);
+  const ni_f2=AU.sine(2400,sr,durSyll);
+  const ni_f3=AU.sine(3000,sr,durSyll);
+  // "好"：F1=600,F2=1000,F3=2600
+  const hao_f1=AU.sine(600,sr,durSyll);
+  const hao_f2=AU.sine(1000,sr,durSyll);
+  const hao_f3=AU.sine(2600,sr,durSyll);
+  for(let i=0;i<Math.floor(sr*durSyll);i++){
+    const env=Math.min(1,i/(sr*0.03))*Math.min(1,(Math.floor(sr*durSyll)-i)/(sr*0.05));
+    x[i]=env*0.4*(ni_f1[i]*0.6+ni_f2[i]*0.4+ni_f3[i]*0.2);
+  }
+  for(let i=0;i<Math.floor(sr*durSyll);i++){
+    const idx=i+Math.floor(sr*durSyll);
+    const env=Math.min(1,i/(sr*0.03))*Math.min(1,(Math.floor(sr*durSyll)-i)/(sr*0.05));
+    x[idx]=env*0.4*(hao_f1[i]*0.6+hao_f2[i]*0.4+hao_f3[i]*0.2);
+  }
+  const out=fadeInOut(x);
+  AU.drawWave(document.getElementById('wave-sine'),out,'#a855f7','#1e1b4b');
+  playBuffer(out,sr,btn,orig);
+}
+
+// ===== 错觉4：音素恢复 =====
+// "科学改变世界" 简化6字，每字约0.25s
+function makeSentence(missing){
+  // 每个字的(F1,F2,F3)中心值（普通话粗略）
+  const phones=[
+    {f1:500,f2:1400,f3:2500,name:'科'},
+    {f1:450,f2:1800,f3:2600,name:'学'},
+    {f1:550,f2:1200,f3:2500,name:'改'},
+    {f1:400,f2:2000,f3:2700,name:'变'},
+    {f1:500,f2:800,f3:2500,name:'世'},
+    {f1:550,f2:1000,f3:2400,name:'界'},
+  ];
+  const segs=[];
+  phones.forEach((p,idx)=>{
+    if(missing&&idx===0){
+      // 把"科"的开头0.08s替换成白噪声（模拟/k/被咳嗽掩盖）
+      const noise=whiteNoise(0.3,0.3);
+      // 前0.08s纯噪声
+      for(let i=0;i<Math.floor(sr*0.08);i++)noise[i]=(Math.random()*2-1)*0.5;
+      segs.push(fadeInOut(noise));
+    }else{
+      const burst=whiteNoise(0.03,0.2);
+      const v=synthVoiced(0.25,140+idx*10,p.f1,p.f2,p.f3,0.3);
+      segs.push(fadeInOut(concat([burst,v])));
+    }
+  });
+  return fadeInOut(concat(segs),3);
+}
+function playPhoneme(btn,mode){
+  const orig=btn.textContent;
+  const x=makeSentence(mode==='missing');
+  AU.drawWave(document.getElementById('wave-phoneme'),x,'#a855f7','#1e1b4b');
+  playBuffer(x,sr,btn,orig);
+}
+
+// 初始画布
+function initCanvas(id,sig){
+  const c=document.getElementById(id);
+  AU.drawWave(c,sig,'#a855f7','#1e1b4b');
+}
+initCanvas('wave-mcgurk',makeBa());
+initCanvas('wave-cocktail',makeSpeaker(120,[200,600,1200],2.8,1));
+initCanvas('wave-sine',(function(){
+  const n=Math.floor(sr*0.7);const x=new Float32Array(n);
+  for(let i=0;i<n;i++)x[i]=Math.sin(2*Math.PI*600*i/sr)*0.3*(0.5+0.5*Math.sin(2*Math.PI*3*i/sr));
+  return x;
+})());
+initCanvas('wave-phoneme',makeSentence(false));
+</script>
+</body>
+</html>

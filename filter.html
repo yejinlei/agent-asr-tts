@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>信号滤镜沙盒 · agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .card h3{margin:0 0 .8rem;font-size:1rem;color:#1e293b;display:flex;align-items:center;gap:.4rem}
+  .ctrl-row .status{margin-left:auto;font-size:.85rem;color:#64748b;font-family:Monaco,monospace}
+  .slider-row{display:flex;align-items:center;gap:.6rem;margin:.55rem 0;font-size:.88rem}
+  .slider-row label{min-width:110px;color:#475569}
+  .slider-row input[type=range]{flex:1}
+  .slider-row .v{min-width:62px;text-align:right;font-family:Monaco,monospace;color:#7c3aed;font-weight:600;font-size:.82rem}
+  .card select{padding:.35rem .5rem;border:1px solid var(--border);border-radius:.4rem;font-family:inherit;font-size:.85rem;background:#fff}
+  .preset-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem;padding-top:.75rem;border-top:1px dashed #e2e8f0}
+  .preset-row .btn{font-size:.82rem;padding:.45rem .8rem;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe}
+  .preset-row .btn:hover{background:#ede9fe}
+  .switch{position:relative;display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;user-select:none;font-size:.88rem}
+  .switch input{display:none}
+  .switch .track{width:42px;height:22px;background:#cbd5e1;border-radius:11px;position:relative;transition:.2s}
+  .switch .track::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .switch input:checked+.track{background:#7c3aed}
+  .switch input:checked+.track::after{left:22px}
+  .big-preset-row{display:flex;gap:.6rem;flex-wrap:wrap;margin:1rem 0}
+  .big-preset-row .btn{background:#7c3aed;color:#fff;padding:.7rem 1.1rem}
+  .big-preset-row .btn:hover{background:#6d28d9;transform:translateY(-1px)}
+  .spec-compare{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin:.8rem 0}
+  .spec-item{background:#fafafa;border:1px solid var(--border);border-radius:.5rem;padding:.6rem;text-align:center}
+  .spec-item svg{width:100%;height:110px;display:block}
+  .spec-item .cap{font-size:.82rem;color:#475569;margin-top:.3rem;font-weight:600}
+  .spec-item .desc{font-size:.75rem;color:#94a3b8;margin-top:.15rem}
+  @media(max-width:780px){.spec-compare{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11 11 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / <a href="lab.html">语音实验室</a> / 信号滤镜沙盒</div>
+  <h1>🎚️ 信号滤镜沙盒</h1>
+  <p>上传或录音 → 加滤镜（低通/高通/带通/陷波/共振峰）、加噪（白/粉/咖啡馆/风噪）、加混响 → 实时看频谱、实时听效果。直观体验：为什么电话音是 300-3400Hz？为什么 ASR 怕噪声？</p>
+</div></header>
+
+<div class="page-body">
+
+<!-- 控件行 -->
+<div class="ctrl-row">
+  <label>
+    📁 <input type="file" id="fileIn" accept=".wav,.mp3,.ogg,.m4a" style="display:none">
+    <button class="btn btn-p" id="uploadBtn">上传音频</button>
+  </label>
+  <button class="btn btn-outline" id="recBtn">🎙️ 开始录音</button>
+  <select id="testSig">
+    <option value="">🔊 生成测试信号…</option>
+    <option value="white">白噪声</option>
+    <option value="sine">1kHz 正弦波</option>
+    <option value="vowel">合成元音 /ɑ/</option>
+  </select>
+  <label class="switch">
+    <input type="checkbox" id="liveToggle">
+    <span class="track"></span>
+    <span>实时监听</span>
+  </label>
+  <button class="btn btn-outline" id="playBtn" disabled>▶ 播放</button>
+  <span class="status" id="status">等待音频输入…</span>
+</div>
+
+<!-- 主要面板 -->
+<section class="grid-2" style="margin-bottom:1rem">
+  <div class="card" style="padding:.6rem">
+    <div style="font-size:.85rem;color:#64748b;margin:.2rem .6rem .4rem">📈 处理后波形</div>
+    <canvas id="waveCanvas" class="aud-canvas" width="900" height="200"></canvas>
+  </div>
+  <div class="card" style="padding:.6rem">
+    <div style="font-size:.85rem;color:#64748b;margin:.2rem .6rem .4rem">📊 实时频谱 (0–8 kHz)</div>
+    <canvas id="specCanvas" class="aud-canvas" width="900" height="200"></canvas>
+  </div>
+</section>
+
+<!-- 四个滤波/效果模块 -->
+<section class="grid-2" style="margin-bottom:1rem">
+
+  <!-- a) 滤波器组 -->
+  <div class="card">
+    <h3>🎛️ 滤波器组（Biquad 串联）</h3>
+    <div class="slider-row">
+      <label>低通 cutoff</label>
+      <input type="range" id="lpFreq" min="100" max="8000" step="50" value="8000">
+      <span class="v" id="lpFreqV">8000 Hz</span>
+    </div>
+    <div class="slider-row">
+      <label>高通 cutoff</label>
+      <input type="range" id="hpFreq" min="0" max="2000" step="20" value="0">
+      <span class="v" id="hpFreqV">0 Hz</span>
+    </div>
+    <div class="slider-row">
+      <label>带通中心</label>
+      <input type="range" id="bpFreq" min="200" max="4000" step="50" value="1000">
+      <span class="v" id="bpFreqV">1000 Hz</span>
+    </div>
+    <div class="slider-row">
+      <label>带通 Q</label>
+      <input type="range" id="bpQ" min="0.1" max="20" step="0.1" value="1">
+      <span class="v" id="bpQV">1.0</span>
+    </div>
+    <div class="slider-row">
+      <label>陷波中心</label>
+      <input type="range" id="nFreq" min="0" max="4000" step="5" value="0">
+      <span class="v" id="nFreqV">关</span>
+    </div>
+    <div class="slider-row">
+      <label>陷波 Q</label>
+      <input type="range" id="nQ" min="0.5" max="30" step="0.5" value="10">
+      <span class="v" id="nQV">10</span>
+    </div>
+    <div class="preset-row">
+      <button class="btn" data-p="bypass">全通（不滤波）</button>
+      <button class="btn" data-p="notch50">陷波 50Hz 去电流</button>
+      <button class="btn" data-p="notch60">陷波 60Hz 去电流</button>
+    </div>
+  </div>
+
+  <!-- b) 噪声与环境 -->
+  <div class="card">
+    <h3>🌪️ 噪声与环境</h3>
+    <div class="slider-row">
+      <label>噪声类型</label>
+      <select id="noiseType">
+        <option value="none">无</option>
+        <option value="white">白噪</option>
+        <option value="pink">粉噪</option>
+        <option value="cafe">咖啡馆</option>
+        <option value="wind">风噪</option>
+        <option value="car">汽车</option>
+      </select>
+    </div>
+    <div class="slider-row">
+      <label>SNR (dB)</label>
+      <input type="range" id="snr" min="-10" max="30" step="1" value="20">
+      <span class="v" id="snrV">+20 dB</span>
+    </div>
+    <div class="preset-row">
+      <button class="btn" data-p="phone">🔌 电话音 300-3400Hz</button>
+      <button class="btn" data-p="radio">📻 收音机</button>
+      <button class="btn" data-p="hall">🏟️ 大厅混响</button>
+      <button class="btn" data-p="far">📱 远场</button>
+    </div>
+  </div>
+
+  <!-- c) 混响 -->
+  <div class="card">
+    <h3>🏟️ 卷积混响（合成 IR）</h3>
+    <div class="slider-row">
+      <label>房间大小</label>
+      <input type="range" id="revTime" min="0" max="2" step="0.05" value="0">
+      <span class="v" id="revTimeV">0.0 s</span>
+    </div>
+    <div class="slider-row">
+      <label>干湿比</label>
+      <input type="range" id="revWet" min="0" max="100" step="1" value="0">
+      <span class="v" id="revWetV">0%</span>
+    </div>
+    <div class="preset-row">
+      <button class="btn" data-p="dry">干声（无混响）</button>
+      <button class="btn" data-p="small">小房间 0.3s</button>
+      <button class="btn" data-p="medium">会议室 1.0s</button>
+      <button class="btn" data-p="large">大厅 2.0s</button>
+    </div>
+  </div>
+
+  <!-- d) 共振峰变换 -->
+  <div class="card">
+    <h3>🎭 共振峰 / 音色变换</h3>
+    <div class="slider-row">
+      <label>F1 偏移</label>
+      <input type="range" id="f1sh" min="-300" max="300" step="10" value="0">
+      <span class="v" id="f1shV">0 Hz</span>
+    </div>
+    <div class="slider-row">
+      <label>F2 偏移</label>
+      <input type="range" id="f2sh" min="-600" max="600" step="10" value="0">
+      <span class="v" id="f2shV">0 Hz</span>
+    </div>
+    <div class="preset-row">
+      <button class="btn" data-p="self">自己</button>
+      <button class="btn" data-p="male">男声（降共振峰）</button>
+      <button class="btn" data-p="female">女声（升共振峰）</button>
+      <button class="btn" data-p="child">童声（高升）</button>
+      <button class="btn" data-p="robot">机器人</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- 一键预设行 -->
+<section>
+<h2 style="font-size:1.15rem;margin-bottom:.6rem">🚀 一键场景预设</h2>
+<div class="big-preset-row">
+  <button class="btn" data-scene="studio">🎙️ 安静录音棚</button>
+  <button class="btn" data-scene="phone">🔌 模拟电话音</button>
+  <button class="btn" data-scene="far">📱 模拟远场会议</button>
+  <button class="btn" data-scene="car">🚗 模拟风噪驾驶舱</button>
+  <button class="btn" data-scene="cafe">☕ 模拟咖啡馆嘈杂</button>
+  <button class="btn" data-scene="reset">↺ 重置所有</button>
+</div>
+</section>
+
+<!-- 解释区 -->
+<section style="margin-top:1.5rem">
+<h2 style="font-size:1.2rem;margin-bottom:.4rem">🧠 从波形理解 ASR 鲁棒性</h2>
+<p style="color:#475569;font-size:.92rem;line-height:1.7;margin-bottom:.8rem">同样一句话"你好"，在不同声学场景下到达麦克风时的频谱形状完全不同。现代 ASR 必须对这些畸变"免疫"，方法就是<b style="color:#7c3aed">数据增强</b>——训练时人为把干净语音加上这些扰动，让模型见过"世面"。</p>
+
+<div class="spec-compare">
+  <div class="spec-item">
+    <svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="110" fill="#0f172a"/>
+      <!-- 干净语音：清晰谐波+共振峰 -->
+      <g stroke="#a78bfa" stroke-width="1" fill="none">
+        <path d="M10,80 Q40,20 70,50 T130,45 T190,55" stroke-width="1.8"/>
+        <path d="M10,90 Q40,55 70,70 T130,68 T190,72" opacity=".7"/>
+        <path d="M10,95 Q40,78 70,83 T130,82 T190,84" opacity=".4"/>
+      </g>
+      <!-- 共振峰峰 -->
+      <circle cx="55" cy="30" r="2" fill="#f472b6"/>
+      <circle cx="130" cy="40" r="2" fill="#f472b6"/>
+      <text x="100" y="105" fill="#94a3b8" font-size="8" text-anchor="middle">freq →</text>
+    </svg>
+    <div class="cap">✅ 干净录音棚</div>
+    <div class="desc">谐波清晰、F1/F2 峰突出，识别率 >98%</div>
+  </div>
+  <div class="spec-item">
+    <svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="110" fill="#0f172a"/>
+      <!-- 电话音：300-3400Hz 带通 -->
+      <rect x="0" y="0" width="15" height="110" fill="#7c3aed" opacity=".4"/>
+      <rect x="150" y="0" width="50" height="110" fill="#7c3aed" opacity=".4"/>
+      <text x="7" y="60" fill="#c4b5fd" font-size="7" text-anchor="middle" transform="rotate(-90,7,60)">切</text>
+      <text x="175" y="60" fill="#c4b5fd" font-size="7" text-anchor="middle" transform="rotate(-90,175,60)">切</text>
+      <g stroke="#a78bfa" stroke-width="1" fill="none">
+        <path d="M15,80 Q50,25 80,52 T130,48 T150,65" stroke-width="1.8"/>
+        <path d="M15,88 Q50,60 80,72 T130,70 T150,78" opacity=".7"/>
+      </g>
+    </svg>
+    <div class="cap">🔌 电话音 (300-3400Hz)</div>
+    <div class="desc">带通砍掉高低频，但 F1/F2 保留，仍可懂</div>
+  </div>
+  <div class="spec-item">
+    <svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="110" fill="#0f172a"/>
+      <!-- 噪声底 -->
+      <rect x="0" y="60" width="200" height="50" fill="#ef4444" opacity=".15"/>
+      <g stroke="#ef4444" stroke-width=".7" opacity=".6">
+        <path d="M0,85 L200,82"/>
+        <path d="M0,75 L200,78"/>
+        <path d="M0,95 L200,92"/>
+      </g>
+      <!-- 语音被掩盖 -->
+      <g stroke="#fca5a5" stroke-width="1" fill="none" opacity=".7">
+        <path d="M10,82 Q50,55 80,70 T130,68 T190,72"/>
+      </g>
+    </svg>
+    <div class="cap">🌪️ 加噪 (低 SNR)</div>
+    <div class="desc">噪声淹没谐波，ASR 错字率飙升</div>
+  </div>
+  <div class="spec-item">
+    <svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="110" fill="#0f172a"/>
+      <!-- 远场：高频衰减 + 混响尾巴 -->
+      <defs><linearGradient id="far" x1="0" x2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#a78bfa" stop-opacity=".1"/></linearGradient></defs>
+      <g stroke="url(#far)" stroke-width="1" fill="none">
+        <path d="M10,80 Q40,50 70,65 T130,75 T190,90" stroke-width="1.8"/>
+        <path d="M10,90 Q40,75 70,80 T130,88 T190,98" opacity=".5"/>
+      </g>
+      <!-- 混响尾 -->
+      <g stroke="#c4b5fd" stroke-width=".5" opacity=".4">
+        <path d="M30,75 Q60,85 100,92 T180,100"/>
+        <path d="M50,78 Q90,90 140,95"/>
+      </g>
+    </svg>
+    <div class="cap">📱 远场 + 混响</div>
+    <div class="desc">高频滚降 + 拖尾，峰变钝、细节糊</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-top:.8rem">
+  <div class="card" style="background:#faf5ff;border-color:#e9d5ff">
+    <h3 style="color:#6d28d9">🛠️ ASR 常用数据增强手段</h3>
+    <ul style="margin:.3rem 0 0 1.2rem;padding:0;font-size:.88rem;color:#475569;line-height:1.8">
+      <li><b style="color:#7c3aed">SpecAugment</b>：在 Mel 频谱上随机掩蔽时间块 / 频率块，强迫模型不依赖局部时间-频率片段。</li>
+      <li><b style="color:#7c3aed">MUSAN 噪声库</b>：混入真实的音乐/说话/环境噪，按不同 SNR 叠加，模拟各种嘈杂场景。</li>
+      <li><b style="color:#7c3aed">RIR 房间冲激响应</b>：用真实或合成的房间脉冲响应和语音卷积，模拟远场+混响。</li>
+      <li><b style="color:#7c3aed">速度扰动 / 音高偏移</b>：模拟不同语速与说话人基频差异。</li>
+      <li><b style="color:#7c3aed">电话编码 / 码率压缩</b>：μ律、Opus、AMR 编码后再解码，模拟电话/压缩音质。</li>
+    </ul>
+  </div>
+  <div class="card" style="background:#faf5ff;border-color:#e9d5ff">
+    <h3 style="color:#6d28d9">🎓 动手试试</h3>
+    <ul style="margin:.3rem 0 0 1.2rem;padding:0;font-size:.88rem;color:#475569;line-height:1.8">
+      <li>点"合成元音 /ɑ/"，然后开 <b>实时监听</b>，把低通从 8kHz 滑到 3.4kHz 再到 1kHz——你会听到音质从清晰→电话音→闷糊。</li>
+      <li>把噪声类型切到"白噪"，SNR 从 +20 慢慢拉到 -10——这就是 ASR 训练时最害怕的"从安静到嘈杂"。</li>
+      <li>把混响房间拉到 2.0s、干湿比 50%——再看频谱，原本锐利的共振峰变钝了，这就是远场识别难点。</li>
+      <li>用"陷波 50Hz"可以去掉录音中的电源交流声。</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+</div>
+
+<footer>© agent-speech · 信号滤镜沙盒 · WebAudio API 实时处理 · 100% 浏览器本地运行</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const statusEl=$('status');
+  const waveC=$('waveCanvas'),waveCtx=waveC.getContext('2d');
+  const specC=$('specCanvas'),specCtx=specC.getContext('2d');
+
+  let ac=null;
+  let srcNode=null;      // MediaElementSource / BufferSource / MediaStreamSource
+  let audioEl=null;      // <audio> for file upload
+  let micStream=null;
+  let bufferSrc=null;    // for generated/test signals
+  let srcBuffer=null;    // decoded AudioBuffer (file or generated)
+
+  // Filter nodes
+  let hpNode,lpNode,bpNode,notchNode;
+  // Reverb
+  let convNode,dryGain,wetGain;
+  // Noise
+  let noiseSrc=null,noiseGain=null,noiseLp=null,noiseModGain=null;
+  // Analyser
+  let analyser;
+  // master gain
+  let masterGain;
+  // Formant shift nodes (spectral tilt)
+  let tiltNode=null;
+
+  let liveOn=false;
+  let playing=false;
+  let rafId=null;
+  let noiseType='none';
+
+  function setStatus(t){statusEl.textContent=t;}
+
+  function ensureContext(){
+    if(!ac||ac.state==='closed'){
+      ac=new(window.AudioContext||window.webkitAudioContext)({sampleRate:44100});
+    }
+    if(ac.state==='suspended')ac.resume();
+    buildChain();
+  }
+
+  // Generate impulse response for reverb
+  function makeIR(durSec){
+    const sr=ac.sampleRate;
+    const len=Math.floor(sr*durSec);
+    const buf=ac.createBuffer(2,len,sr);
+    for(let ch=0;ch<2;ch++){
+      const d=buf.getChannelData(ch);
+      for(let i=0;i<len;i++){
+        d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);
+      }
+    }
+    return buf;
+  }
+
+  // Noise buffer generators
+  function makeWhiteBuffer(durSec){
+    const sr=ac.sampleRate;
+    const len=Math.floor(sr*durSec);
+    const buf=ac.createBuffer(1,len,sr);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+    return buf;
+  }
+
+  function buildChain(){
+    // Clean previous nodes except source
+    try{[hpNode,lpNode,bpNode,notchNode,tiltNode,dryGain,wetGain,convNode,noiseGain,analyser,masterGain].forEach(n=>{if(n){try{n.disconnect();}catch(e){}}});}catch(e){}
+    stopNoise();
+
+    hpNode=ac.createBiquadFilter();hpNode.type='highpass';hpNode.frequency.value=0;
+    lpNode=ac.createBiquadFilter();lpNode.type='lowpass';lpNode.frequency.value=8000;
+    bpNode=ac.createBiquadFilter();bpNode.type='bandpass';bpNode.frequency.value=1000;bpNode.Q.value=1;bpNode.gain.value=0;
+    // We wire BP in a "parallel add" way: default off. Use a separate gain path.
+    // Simpler: when bpFreq is effectively "off" (Q=0.001 special), treat as bypass.
+    notchNode=ac.createBiquadFilter();notchNode.type='notch';notchNode.frequency.value=0;notchNode.Q.value=10;
+
+    // Spectral tilt for formant shift simulation (highshelf)
+    tiltNode=ac.createBiquadFilter();tiltNode.type='highshelf';tiltNode.frequency.value=1500;tiltNode.gain.value=0;
+
+    // Reverb
+    convNode=ac.createConvolver();convNode.buffer=makeIR(parseFloat($('revTime').value)||0.001);
+    dryGain=ac.createGain();wetGain=ac.createGain();
+    updateReverbMix();
+
+    // Noise gain (we inject noise at the noiseGain injection point)
+    noiseGain=ac.createGain();noiseGain.gain.value=0;
+
+    analyser=ac.createAnalyser();analyser.fftSize=2048;analyser.smoothingTimeConstant=0.6;
+    masterGain=ac.createGain();masterGain.gain.value=liveOn?1:0;
+
+    // Main path: hp -> lp -> notch -> tilt -> [dry + wet(convolver)] -> noiseInjection -> analyser -> master -> dest
+    // Note: bp is handled specially: we insert it conditionally
+    hpNode.connect(lpNode);
+    lpNode.connect(notchNode);
+    notchNode.connect(tiltNode);
+
+    // dry/wet split
+    tiltNode.connect(dryGain);
+    tiltNode.connect(convNode);convNode.connect(wetGain);
+    dryGain.connect(noiseGain);wetGain.connect(noiseGain);
+    noiseGain.connect(analyser);
+    analyser.connect(masterGain);
+    masterGain.connect(ac.destination);
+  }
+
+  function connectSource(node){
+    if(!hpNode)buildChain();
+    node.connect(hpNode);
+  }
+
+  function disconnectSource(){
+    if(srcNode){try{srcNode.disconnect();}catch(e){}srcNode=null;}
+  }
+
+  // --- Noise generation ---
+  function stopNoise(){
+    if(noiseSrc){try{noiseSrc.stop();}catch(e){}noiseSrc.disconnect();noiseSrc=null;}
+    if(noiseLp){try{noiseLp.disconnect();}catch(e){}noiseLp=null;}
+    if(noiseModGain){try{noiseModGain.disconnect();}catch(e){}noiseModGain=null;}
+  }
+
+  function startNoise(){
+    if(!ac||noiseType==='none')return;
+    stopNoise();
+    const durSec=2; // loopable 2s
+    let nbuf;
+    if(noiseType==='white'||noiseType==='cafe'){
+      nbuf=makeWhiteBuffer(durSec);
+    }else if(noiseType==='pink'){
+      nbuf=makeWhiteBuffer(durSec);
+    }else if(noiseType==='wind'||noiseType==='car'){
+      nbuf=makeWhiteBuffer(durSec);
+    }
+    noiseSrc=ac.createBufferSource();noiseSrc.buffer=nbuf;noiseSrc.loop=true;
+    let lastNode=noiseSrc;
+
+    if(noiseType==='pink'){
+      // pink noise ~ -3dB/oct : chain of lowpasses
+      const p1=ac.createBiquadFilter();p1.type='lowpass';p1.frequency.value=4000;
+      const p2=ac.createBiquadFilter();p2.type='lowpass';p2.frequency.value=1500;p2.gain.value=-3;
+      lastNode.connect(p1);p1.connect(p2);lastNode=p2;
+    }else if(noiseType==='wind'){
+      // strong lowpass
+      noiseLp=ac.createBiquadFilter();noiseLp.type='lowpass';noiseLp.frequency.value=200;
+      lastNode.connect(noiseLp);lastNode=noiseLp;
+    }else if(noiseType==='car'){
+      // lowpass ~ 400Hz + slight peak at 100Hz (engine)
+      noiseLp=ac.createBiquadFilter();noiseLp.type='lowpass';noiseLp.frequency.value=600;
+      const peaking=ac.createBiquadFilter();peaking.type='peaking';peaking.frequency.value=120;peaking.Q.value=2;peaking.gain.value=8;
+      lastNode.connect(noiseLp);noiseLp.connect(peaking);lastNode=peaking;
+    }else if(noiseType==='cafe'){
+      // pink-ish (lowpass white) + slow amp modulation (many voices babble)
+      const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
+      lastNode.connect(lp);lastNode=lp;
+    }
+
+    // slow amplitude modulation for cafe/wind/car (simulate variation)
+    if(noiseType!=='white'){
+      noiseModGain=ac.createGain();noiseModGain.gain.value=1;
+      lastNode.connect(noiseModGain);
+      lastNode=noiseModGain;
+      // LFO
+      const lfo=ac.createOscillator();
+      const lfoGain=ac.createGain();
+      const rate=noiseType==='wind'?0.3:noiseType==='cafe'?1.5:0.5;
+      const depth=noiseType==='wind'?0.4:noiseType==='cafe'?0.3:0.15;
+      lfo.frequency.value=rate;
+      lfoGain.gain.value=depth;
+      lfo.connect(lfoGain);lfoGain.connect(noiseModGain.gain);
+      lfo.start();
+      noiseSrc._lfo=lfo;
+    }
+
+    lastNode.connect(noiseGain);
+    noiseSrc.start();
+    updateNoiseGain();
+  }
+
+  function updateNoiseGain(){
+    if(!noiseGain)return;
+    const snrDb=parseFloat($('snr').value);
+    if(noiseType==='none'){noiseGain.gain.value=0;return;}
+    // SNR = signal/noise (power). gain scaling: noiseGain = 10^(-SNR/20) relative to signal=1
+    // Assume signal is roughly at level 0.5 after filters (rough heuristic)
+    const g=Math.pow(10,-snrDb/20)*0.6;
+    noiseGain.gain.value=g;
+  }
+
+  function updateReverbMix(){
+    if(!dryGain||!wetGain)return;
+    const w=parseFloat($('revWet').value)/100;
+    wetGain.gain.value=w;
+    dryGain.gain.value=1-w;
+    // rebuild convolver if time changed
+    if(convNode&&ac){
+      const t=parseFloat($('revTime').value);
+      convNode.buffer=makeIR(Math.max(0.01,t));
+    }
+  }
+
+  // --- Sliders binding ---
+  function bindSlider(id,valId,fmt,apply){
+    const el=$(id),v=$(valId);
+    const upd=()=>{v.textContent=fmt(el.value);apply(parseFloat(el.value));};
+    el.addEventListener('input',upd);upd();
+  }
+
+  bindSlider('lpFreq','lpFreqV',v=>v>=8000?'8 kHz (全开)':v+' Hz',v=>{lpNode&&(lpNode.frequency.value=v);});
+  bindSlider('hpFreq','hpFreqV',v=>v<=0?'0 Hz (关)':v+' Hz',v=>{hpNode&&(hpNode.frequency.value=v);});
+  bindSlider('bpFreq','bpFreqV',v=>v+' Hz',v=>{if(bpNode){if(!bpNode._inserted){
+    // Insert bandpass in series: lp -> bp -> notch (rebuild wiring: lp.disconnect notch, lp->bp->notch)
+    try{lpNode.disconnect();}catch(e){}
+    lpNode.connect(bpNode);bpNode.connect(notchNode);bpNode._inserted=true;}bpNode.frequency.value=v;}});
+  bindSlider('bpQ','bpQV',v=>(+v).toFixed(1),v=>{bpNode&&(bpNode.Q.value=v);});
+  bindSlider('nFreq','nFreqV',v=>v<=0?'关':v+' Hz',v=>{notchNode&&(notchNode.frequency.value=Math.max(1,v));});
+  bindSlider('nQ','nQV',v=>(+v).toFixed(1),v=>{notchNode&&(notchNode.Q.value=v);});
+  bindSlider('revTime','revTimeV',v=>(+v).toFixed(2)+' s',()=>{updateReverbMix();});
+  bindSlider('revWet','revWetV',v=>v+'%',()=>{updateReverbMix();});
+  bindSlider('snr','snrV',v=>(v>=0?'+':'')+v+' dB',()=>{updateNoiseGain();});
+  bindSlider('f1sh','f1shV',v=>(v>=0?'+':'')+v+' Hz',applyFormantShift);
+  bindSlider('f2sh','f2shV',v=>(v>=0?'+':'')+v+' Hz',applyFormantShift);
+
+  function applyFormantShift(){
+    if(!tiltNode)return;
+    const f1=parseFloat($('f1sh').value);
+    const f2=parseFloat($('f2sh').value);
+    // Simple approximation: overall tilt + small peaking
+    // Use highshelf + low shelf to roughly shape
+    const netF2=f2; // F2 shift affects highshelf
+    tiltNode.gain.value=netF2/30; // -20..+20 dB range
+    tiltNode.frequency.value=1800;
+  }
+
+  $('noiseType').addEventListener('change',e=>{
+    noiseType=e.target.value;
+    if(liveOn||playing){startNoise();}
+    else {stopNoise();if(noiseGain)noiseGain.gain.value=0;}
+  });
+
+  // --- Presets ---
+  function setSlider(id,val){const el=$(id);el.value=val;el.dispatchEvent(new Event('input'));}
+
+  function applyFilterPreset(name){
+    switch(name){
+      case 'bypass':setSlider('lpFreq',8000);setSlider('hpFreq',0);setSlider('nFreq',0);break;
+      case 'notch50':setSlider('nFreq',50);setSlider('nQ',20);break;
+      case 'notch60':setSlider('nFreq',60);setSlider('nQ',20);break;
+    }
+  }
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>applyFilterPreset(b.dataset.p));
+
+  // --- Scene presets ---
+  function applyScene(name){
+    // reset to baseline
+    setSlider('lpFreq',8000);setSlider('hpFreq',0);setSlider('nFreq',0);
+    setSlider('bpFreq',1000);setSlider('bpQ',1);
+    setSlider('revTime',0);setSlider('revWet',0);
+    $('noiseType').value='none';$('noiseType').dispatchEvent(new Event('change'));
+    setSlider('snr',20);
+    setSlider('f1sh',0);setSlider('f2sh',0);
+    switch(name){
+      case 'studio': break;
+      case 'phone':
+        setSlider('hpFreq',300);setSlider('lpFreq',3400);setSlider('snr',25);
+        break;
+      case 'far':
+        setSlider('lpFreq',4500);setSlider('revTime',1.2);setSlider('revWet',40);setSlider('snr',15);
+        $('noiseType').value='cafe';$('noiseType').dispatchEvent(new Event('change'));
+        break;
+      case 'car':
+        setSlider('lpFreq',3000);setSlider('revTime',0.3);setSlider('revWet',15);setSlider('snr',0);
+        $('noiseType').value='wind';$('noiseType').dispatchEvent(new Event('change'));
+        break;
+      case 'cafe':
+        setSlider('snr',3);setSlider('revTime',0.5);setSlider('revWet',20);
+        $('noiseType').value='cafe';$('noiseType').dispatchEvent(new Event('change'));
+        break;
+      case 'reset': break;
+    }
+    // Preset buttons in cards
+    const presets={
+      phone:null,radio:null,hall:null,far:null,dry:null,small:null,medium:null,large:null,
+      self:null,male:null,female:null,child:null,robot:null
+    };
+    if(name==='phone'||name==='far'||name==='cafe'||name==='car')setStatus('场景已应用：'+b.textContent);
+  }
+  document.querySelectorAll('[data-scene]').forEach(b=>b.onclick=()=>applyScene(b.dataset.scene));
+
+  // Big card preset buttons (noise/reverb/formant)
+  document.querySelectorAll('.card .preset-row .btn').forEach(b=>{
+    const p=b.dataset.p;
+    if(!p)return;
+    b.addEventListener('click',()=>{
+      switch(p){
+        case 'phone':setSlider('hpFreq',300);setSlider('lpFreq',3400);break;
+        case 'radio':setSlider('lpFreq',5000);setSlider('hpFreq',200);$('noiseType').value='pink';$('noiseType').dispatchEvent(new Event('change'));setSlider('snr',18);break;
+        case 'hall':setSlider('revTime',1.6);setSlider('revWet',45);break;
+        case 'far':setSlider('lpFreq',4500);setSlider('revTime',1.2);setSlider('revWet',40);break;
+        case 'dry':setSlider('revTime',0.01);setSlider('revWet',0);break;
+        case 'small':setSlider('revTime',0.3);setSlider('revWet',20);break;
+        case 'medium':setSlider('revTime',1.0);setSlider('revWet',35);break;
+        case 'large':setSlider('revTime',2.0);setSlider('revWet',50);break;
+        case 'self':setSlider('f1sh',0);setSlider('f2sh',0);break;
+        case 'male':setSlider('f1sh',-80);setSlider('f2sh',-200);break;
+        case 'female':setSlider('f1sh',80);setSlider('f2sh',180);break;
+        case 'child':setSlider('f1sh',200);setSlider('f2sh',400);break;
+        case 'robot':setSlider('hpFreq',500);setSlider('lpFreq',2000);setSlider('f1sh',0);setSlider('f2sh',0);break;
+      }
+    });
+  });
+
+  // --- Upload ---
+  $('uploadBtn').onclick=()=>$('fileIn').click();
+  $('fileIn').onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;
+    ensureContext();
+    disconnectSource();stopPlayback();
+    setStatus('解码中…');
+    try{
+      const arr=await file.arrayBuffer();
+      srcBuffer=await ac.decodeAudioData(arr);
+      setStatus('已加载：'+file.name+' ('+srcBuffer.duration.toFixed(1)+'s)');
+      $('playBtn').disabled=false;
+      // Draw waveform of raw
+      drawWaveStatic(srcBuffer);
+    }catch(err){setStatus('解码失败：'+err.message);}
+  };
+
+  // --- Record ---
+  let recStartTime=0,recChunks=[],recSource=null,recProc=null;
+  $('recBtn').onclick=async()=>{
+    if(recSource){stopRec();return;}
+    try{
+      ensureContext();
+      disconnectSource();stopPlayback();
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      micStream=stream;
+      const ms=ac.createMediaStreamSource(stream);
+      // record raw to buffer via ScriptProcessor
+      const proc=ac.createScriptProcessor(4096,1,1);
+      recChunks=[];recStartTime=ac.currentTime;
+      proc.onaudioprocess=e=>{recChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));};
+      ms.connect(proc);proc.connect(ac.destination); // silent routing
+      // also route ms into chain if live
+      recSource=ms;recProc=proc;
+      srcNode=ms;
+      connectSource(ms);
+      updateMaster();
+      if(liveOn)startNoise();
+      $('recBtn').textContent='⏹ 停止录音';
+      $('recBtn').classList.add('btn-rose');
+      setStatus('🔴 录音中…（实时监听需打开开关）');
+    }catch(err){setStatus('麦克风失败：'+err.message);}
+  };
+  function stopRec(){
+    if(recProc){try{recProc.disconnect();recProc.onaudioprocess=null;}catch(e){}recProc=null;}
+    if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
+    // Build buffer from chunks
+    if(recChunks.length>0&&ac){
+      let total=0;recChunks.forEach(c=>total+=c.length);
+      const b=ac.createBuffer(1,total,ac.sampleRate);
+      const d=b.getChannelData(0);let off=0;
+      recChunks.forEach(c=>{d.set(c,off);off+=c.length;});
+      srcBuffer=b;
+      $('playBtn').disabled=false;
+      drawWaveStatic(b);
+      setStatus('✅ 录音完成 ('+ (total/ac.sampleRate).toFixed(1)+'s)，点播放听处理后效果');
+    }
+    disconnectSource();srcNode=null;
+    stopNoise();
+    $('recBtn').textContent='🎙️ 开始录音';
+    $('recBtn').classList.remove('btn-rose');
+    recChunks=[];recSource=null;
+    updateMaster();
+  }
+
+  // --- Test signals ---
+  $('testSig').onchange=e=>{
+    const v=e.target.value;if(!v)return;
+    ensureContext();disconnectSource();stopPlayback();
+    const sr=ac.sampleRate;const dur=3;const n=sr*dur;
+    const b=ac.createBuffer(1,n,sr);const d=b.getChannelData(0);
+    if(v==='white'){
+      for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    }else if(v==='sine'){
+      for(let i=0;i<n;i++)d[i]=Math.sin(2*Math.PI*1000*i/sr)*0.5;
+    }else if(v==='vowel'){
+      // Synthesize /ɑ/ with F0=120, F1=730, F2=1090, F3=2400 using formant synthesis
+      const f0=120;
+      for(let i=0;i<n;i++){
+        const t=i/sr;
+        const source=(Math.sin(2*Math.PI*f0*t)+0.5*Math.sin(2*Math.PI*2*f0*t)+0.25*Math.sin(2*Math.PI*3*f0*t))*0.3;
+        // crude formant via resonant biquad offline would be complex; approximate by adding damped sines
+        const y=
+          Math.exp(-t*30)*Math.sin(2*Math.PI*730*t)*0.6 +
+          Math.exp(-t*50)*Math.sin(2*Math.PI*1090*t)*0.4 +
+          Math.exp(-t*80)*Math.sin(2*Math.PI*2400*t)*0.2;
+        d[i]=source*0.5 + y*0.0;
+        // Better: glottal + damped resonator approximation per pitch period
+        const T=1/f0;const phase=(t%T)/T;
+        let glottal=phase<0.5?Math.sin(Math.PI*phase):0;
+        d[i]=glottal*0.5;
+      }
+      // Apply simple formant resonances via recursive filter (klatt-style) offline
+      const out=new Float32Array(n);
+      function reson(x,f,bw){
+        const r=Math.exp(-Math.PI*bw/sr);
+        const c=-r*r;
+        const bcoef=2*r*Math.cos(2*Math.PI*f/sr);
+        let y1=0,y2=0;
+        for(let i=0;i<n;i++){const y=x[i]+bcoef*y1+c*y2;y2=y1;y1=y;out[i]=(i===0?y:out[i]+y*0.7);}
+      }
+      // cascade
+      let tmp=d.slice();
+      [ [730,80],[1090,90],[2400,120] ].forEach(([f,bw])=>{
+        const r=Math.exp(-Math.PI*bw/sr);
+        const a=2*r*Math.cos(2*Math.PI*f/sr);
+        const c=-r*r;
+        let y1=0,y2=0;
+        for(let i=0;i<n;i++){const y=tmp[i]+a*y1+c*y2;y2=y1;y1=y;tmp[i]=y*0.5;}
+      });
+      // normalize
+      let mx=0;for(let i=0;i<n;i++)if(Math.abs(tmp[i])>mx)mx=Math.abs(tmp[i]);
+      for(let i=0;i<n;i++)d[i]=tmp[i]/(mx+1e-6)*0.5;
+    }
+    srcBuffer=b;
+    $('playBtn').disabled=false;
+    drawWaveStatic(b);
+    setStatus('已生成测试信号：'+e.target.selectedOptions[0].text);
+    $('testSig').value='';
+  };
+
+  // --- Playback (BufferSource) ---
+  function stopPlayback(){
+    if(bufferSrc){try{bufferSrc.stop();}catch(e){}try{bufferSrc.disconnect();}catch(e){}bufferSrc=null;}
+    if(audioEl){try{audioEl.pause();audioEl.currentTime=0;}catch(e){}}
+    playing=false;
+    stopNoise();
+    $('playBtn').textContent='▶ 播放';
+    updateMaster();
+  }
+
+  $('playBtn').onclick=()=>{
+    if(playing){stopPlayback();return;}
+    if(!srcBuffer){setStatus('请先上传/录音/生成信号');return;}
+    ensureContext();
+    disconnectSource();
+    bufferSrc=ac.createBufferSource();bufferSrc.buffer=srcBuffer;bufferSrc.loop=true;
+    connectSource(bufferSrc);
+    bufferSrc.start();
+    playing=true;
+    if(liveOn)startNoise();
+    $('playBtn').textContent='⏹ 停止';
+    updateMaster();
+    setStatus('▶ 正在播放（处理后）…');
+    bufferSrc.onended=()=>{if(playing){playing=false;$('playBtn').textContent='▶ 播放';stopNoise();updateMaster();}};
+  };
+
+  // --- Live toggle ---
+  $('liveToggle').onchange=e=>{
+    liveOn=e.target.checked;
+    ensureContext();
+    updateMaster();
+    if(liveOn){
+      if(!srcNode&&!playing){setStatus('请先选择一个音频源');}
+      else startNoise();
+    }else{
+      stopNoise();
+    }
+  };
+
+  function updateMaster(){
+    if(!masterGain)return;
+    const wantOn=liveOn||playing;
+    masterGain.gain.setTargetAtTime(wantOn?1:0,ac.currentTime,0.05);
+  }
+
+  // --- Visualization loop ---
+  function drawStaticClear(){
+    waveCtx.fillStyle='#0f172a';waveCtx.fillRect(0,0,waveC.width,waveC.height);
+    specCtx.fillStyle='#0f172a';specCtx.fillRect(0,0,specC.width,specC.height);
+    waveCtx.strokeStyle='rgba(255,255,255,0.15)';waveCtx.beginPath();waveCtx.moveTo(0,waveC.height/2);waveCtx.lineTo(waveC.width,waveC.height/2);waveCtx.stroke();
+    specCtx.strokeStyle='rgba(255,255,255,0.1)';specCtx.beginPath();specCtx.moveTo(0,specC.height/2);specCtx.lineTo(specC.width,specC.height/2);specCtx.stroke();
+  }
+  drawStaticClear();
+
+  function drawWaveStatic(buf){
+    const d=buf.getChannelData(0);
+    const W=waveC.width,H=waveC.height;
+    waveCtx.fillStyle='#0f172a';waveCtx.fillRect(0,0,W,H);
+    waveCtx.strokeStyle='#a78bfa';waveCtx.lineWidth=1;waveCtx.beginPath();
+    const step=Math.ceil(d.length/W);
+    for(let i=0;i<W;i++){
+      const st=i*step,en=Math.min(st+step,d.length);
+      let mx=-1,mn=1;
+      for(let j=st;j<en;j++){if(d[j]>mx)mx=d[j];if(d[j]<mn)mn=d[j];}
+      const y1=H/2-mx*H*0.45;const y2=H/2-mn*H*0.45;
+      if(i===0)waveCtx.moveTo(i,y1);else waveCtx.lineTo(i,y1);
+      waveCtx.lineTo(i,y2);
+    }
+    waveCtx.stroke();
+    waveCtx.strokeStyle='rgba(255,255,255,.15)';waveCtx.beginPath();waveCtx.moveTo(0,H/2);waveCtx.lineTo(W,H/2);waveCtx.stroke();
+  }
+
+  const tData=new Uint8Array(2048);
+  const fData=new Uint8Array(2048);
+  function tick(){
+    rafId=requestAnimationFrame(tick);
+    if(!analyser||(!liveOn&&!playing))return;
+    // Wave (time domain)
+    analyser.getByteTimeDomainData(tData);
+    const W=waveC.width,H=waveC.height;
+    waveCtx.fillStyle='rgba(15,23,42,.3)';waveCtx.fillRect(0,0,W,H);
+    waveCtx.strokeStyle='#a78bfa';waveCtx.lineWidth=1.2;waveCtx.beginPath();
+    const len=tData.length;
+    for(let i=0;i<W;i++){
+      const v=tData[Math.floor(i/W*len)]/128-1;
+      const y=H/2+v*H*0.45;
+      if(i===0)waveCtx.moveTo(i,y);else waveCtx.lineTo(i,y);
+    }
+    waveCtx.stroke();
+    waveCtx.strokeStyle='rgba(255,255,255,.15)';waveCtx.beginPath();waveCtx.moveTo(0,H/2);waveCtx.lineTo(W,H/2);waveCtx.stroke();
+
+    // Spectrum (0-8kHz)
+    analyser.getByteFrequencyData(fData);
+    const sW=specC.width,sH=specC.height;
+    specCtx.fillStyle='rgba(15,23,42,.35)';specCtx.fillRect(0,0,sW,sH);
+    const nyq=ac.sampleRate/2;
+    const maxF=8000;
+    const bins=Math.floor(fData.length*Math.min(1,maxF/nyq));
+    const bw=sW/bins;
+    // gradient bar style
+    for(let i=0;i<bins;i++){
+      const v=fData[i]/255;
+      const h=v*sH*0.9;
+      const hue=260-v*80; // purple -> pink
+      specCtx.fillStyle=`hsl(${hue},80%,${40+v*30}%)`;
+      specCtx.fillRect(i*bw,sH-h,bw-0.5,h);
+    }
+    // freq axis
+    specCtx.fillStyle='#64748b';specCtx.font='10px sans-serif';specCtx.textAlign='center';
+    [0,1,2,3,4,5,6,7,8].forEach(k=>{
+      const x=k/8*sW;
+      specCtx.fillRect(x,sH-12,1,2);
+      specCtx.fillText(k+'k',x,sH-2);
+    });
+    // Mark 300 & 3400 Hz
+    const x300=300/maxF*sW,x3400=3400/maxF*sW;
+    specCtx.fillStyle='rgba(244,114,182,.5)';
+    specCtx.fillRect(x300,0,1,sH-14);specCtx.fillRect(x3400,0,1,sH-14);
+  }
+  tick();
+
+  // Cleanup
+  window.addEventListener('beforeunload',()=>{try{if(ac)ac.close();}catch(e){}});
+})();
+</script>
+</body>
+</html>

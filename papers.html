@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📚 必读论文精读 | Agent-Speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* 紫色主题高亮 */
+.nav-links a.cur3{color:#6d28d9;background:var(--ppt-l)}
+.tab.on{color:#6d28d9;border-bottom-color:#6d28d9}
+.tab:hover{color:#6d28d9}
+.filter-bar{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center}
+.filter-bar .fb{padding:.45rem .95rem;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:.85rem;font-weight:500;cursor:pointer;font-family:inherit;color:var(--muted);transition:.15s}
+.filter-bar .fb:hover{border-color:#8b5cf6;color:#6d28d9}
+.filter-bar .fb.on{background:#6d28d9;color:#fff;border-color:#6d28d9}
+.filter-bar .fb-count{font-size:.75rem;opacity:.75;margin-left:.3rem}
+.paper-card.hide{display:none}
+.paper-card .meta{display:flex;flex-wrap:wrap;gap:.2rem;align-items:center}
+.paper-card .abstract{background:#faf5ff;border-left:3px solid #8b5cf6}
+.tab-pnl p{margin-bottom:.6rem;font-size:.9rem;color:#334155;line-height:1.75}
+.tab-pnl ul{font-size:.9rem;color:#334155;padding-left:1.2em;margin:.4rem 0}
+.tab-pnl li{margin-bottom:.3rem}
+.tab-pnl .formula-block{background:#faf5ff;border:1px solid #e9d5ff}
+.tab-pnl .formula-block .formula{font-family:"Cambria Math",Georgia,serif;font-size:1.05rem;font-style:italic;color:#4c1d95;padding:.5rem 0;letter-spacing:.02em}
+.tab-pnl .formula-block .fd{font-size:.85rem;color:#64748b;margin-top:.5rem;line-height:1.65;text-align:left}
+.tab-pnl .formula-block .fd b{color:#6d28d9;font-weight:600}
+.myth{background:#fef2f2;border-left:3px solid #ef4444;padding:.6rem .8rem;border-radius:0 .4rem .4rem 0;margin:.6rem 0;font-size:.85rem;color:#7f1d1d}
+.myth b{color:#991b1b}
+.svg-box{background:#fff;border:1px solid var(--border);border-radius:.5rem;padding:1rem;overflow-x:auto;margin:.5rem 0}
+.svg-box svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.svg-box svg .box{fill:#eff6ff;stroke:#3b82f6;stroke-width:1.5}
+.svg-box svg .box-out{fill:#fff7ed;stroke:#f97316;stroke-width:1.5}
+.svg-box svg .box-done{fill:#ecfdf5;stroke:#10b981;stroke-width:1.5}
+.svg-box svg .box-key{fill:#faf5ff;stroke:#8b5cf6;stroke-width:2}
+.svg-box svg .arrow{stroke:#64748b;stroke-width:1.5;fill:none}
+.svg-box svg .arrow-key{stroke:#8b5cf6;stroke-width:2;fill:none}
+.svg-box svg .lbl{font-size:12px;fill:#334155;font-family:inherit}
+.svg-box svg .lbl-k{font-size:12px;fill:#6d28d9;font-weight:600;font-family:inherit}
+.svg-box svg .ttl{font-size:13px;fill:#0f172a;font-weight:700;font-family:inherit}
+pre.code .cmt{color:#64748b}
+pre.code .kw{color:#c084fc}
+pre.code .fn{color:#7dd3fc}
+pre.code .str{color:#86efac}
+pre.code .num{color:#fbbf24}
+pre.code .op{color:#f472b6}
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23 2.3-.7 4.8-.7 6 0 2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero">
+  <div class="wrap">
+    <h1>📚 必读论文精读</h1>
+    <p>精选语音领域10篇里程碑论文：每篇一张卡片——问题动机→核心创新→架构图（内联SVG）→关键公式→消融实验→为什么经典→常见误区→最小手搓复现代码。</p>
+  </div>
+</header>
+
+<main class="page-body">
+
+<div class="filter-bar">
+  <span style="font-size:.85rem;color:var(--muted);font-weight:600;margin-right:.2rem">🏷️ 筛选：</span>
+  <button class="fb on" data-filter="all">全部<span class="fb-count">10</span></button>
+  <button class="fb" data-filter="asr">🎤 ASR<span class="fb-count">5</span></button>
+  <button class="fb" data-filter="tts">📢 TTS<span class="fb-count">3</span></button>
+  <button class="fb" data-filter="voc">🔊 声码器<span class="fb-count">2</span></button>
+</div>
+
+<!-- ========== Paper 1: CTC ========== -->
+<article class="paper-card tag-asr">
+<header>
+  <h3>1. Connectionist Temporal Classification: Labelling Unsegmented Sequence Data with Recurrent Neural Networks (2006)</h3>
+  <div class="meta">
+    <span class="tag tag-sky">ASR</span>
+    <span>ICML 2006</span>
+    <span>引用 ~15000+</span>
+    <span>Alex Graves et al. (IDSIA)</span>
+  </div>
+</header>
+<div class="abstract">引入 CTC 损失函数，让 RNN 无需帧级对齐标签即可端到端训练，直接从未分段序列（语音）输出标签序列（文字），是端到端 ASR 的基石。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p1-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p1-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p1-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p1-ablation">🔬 消融/结果</button>
+  <button class="tab" data-tab="p1-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p1-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p1-problem">
+  <p>在 CTC 之前，ASR 必须用 HMM 做帧级强制对齐——训练流程繁琐（GMM-HMM → DNN-HMM 级联），需要发音词典、强制对齐、分割等多步手工流水线。</p>
+  <p><b>核心矛盾：</b>输入语音帧序列长度 T 远大于输出标签序列长度 U（如 100 帧→10个字），且不知道每个字对应哪几帧。RNN 每帧输出一个字符，但没有帧级标签就无法直接做交叉熵。</p>
+  <p>CTC 引入空白符 <b>blank (∅)</b> 作为"间隔/重复"标记，把"对齐"问题转化为"对所有合法对齐路径求和"的可微分计算——前向-后向算法动态规划。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"CTC 不要求单调性、可以任意对齐"——错！CTC 天然<b>单调</b>（路径只能前进或停留），且<b>无条件依赖</b>（帧间输出独立），因此无法建模语言模型依赖，必须外接 LM 解码。</div>
+</div>
+<div class="tab-pnl" id="p1-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 280" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Input frames -->
+    <rect class="box" x="20" y="90" width="90" height="50" rx="6"/>
+    <text class="ttl" x="65" y="112" text-anchor="middle">语音帧</text>
+    <text class="lbl" x="65" y="130" text-anchor="middle">x₁...x_T (T帧)</text>
+    <!-- RNN -->
+    <rect class="box-key" x="150" y="70" width="140" height="90" rx="8"/>
+    <text class="ttl" x="220" y="100" text-anchor="middle">双向 RNN / LSTM</text>
+    <text class="lbl-k" x="220" y="120" text-anchor="middle">逐帧 softmax</text>
+    <text class="lbl" x="220" y="140" text-anchor="middle">y_t ∈ |L|+1 (含∅)</text>
+    <!-- Paths -->
+    <rect class="box" x="330" y="40" width="120" height="150" rx="6"/>
+    <text class="ttl" x="390" y="65" text-anchor="middle">所有合法路径</text>
+    <text class="lbl" x="390" y="88" text-anchor="middle">π = (π₁,...,π_T)</text>
+    <text class="lbl" x="390" y="108" text-anchor="middle">规则：同字符间需∅</text>
+    <text class="lbl" x="390" y="125" text-anchor="middle">重复字符必须被∅隔开</text>
+    <text class="lbl" x="390" y="145" text-anchor="middle">单调：只能stay或move</text>
+    <text class="lbl" x="390" y="165" text-anchor="middle">如 a∅ab∅bcc</text>
+    <!-- Forward-Backward DP -->
+    <rect class="box-key" x="490" y="90" width="130" height="50" rx="6"/>
+    <text class="ttl" x="555" y="112" text-anchor="middle">前向-后向 DP</text>
+    <text class="lbl-k" x="555" y="130" text-anchor="middle">α(t,u), β(t,u)</text>
+    <!-- Output -->
+    <rect class="box-done" x="660" y="90" width="85" height="50" rx="6"/>
+    <text class="ttl" x="702" y="112" text-anchor="middle">字符序列</text>
+    <text class="lbl" x="702" y="130" text-anchor="middle">"aab c"</text>
+    <!-- arrows -->
+    <line class="arrow" x1="110" y1="115" x2="148" y2="115"/>
+    <line class="arrow" x1="290" y1="115" x2="328" y2="115"/>
+    <line class="arrow-key" x1="450" y1="115" x2="488" y2="115"/>
+    <line class="arrow" x1="620" y1="115" x2="658" y2="115"/>
+    <!-- bottom: loss -->
+    <rect class="box-out" x="150" y="200" width="470" height="55" rx="6"/>
+    <text class="ttl" x="385" y="222" text-anchor="middle">CTC Loss = -ln p(l|x) = -ln Σ_{π∈B⁻¹(l)} p(π|x)</text>
+    <text class="lbl" x="385" y="245" text-anchor="middle">对所有映射到标签序列 l 的路径 π 求和（B 为去∅+去重映射）</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p1-formula">
+  <div class="formula-block">
+    <div class="formula">p(π | x) = ∏_{t=1}^{T} y_{t,π_t}</div>
+    <div class="fd"><b>路径概率：</b>每条对齐路径 π 的概率是各时刻 softmax 输出的乘积（条件独立假设——帧间独立）。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">p(l | x) = Σ_{π ∈ B⁻¹(l)} p(π | x)</div>
+    <div class="fd"><b>CTC 目标：</b>对所有经过 B（去空白、合并重复）之后得到标签串 l 的路径 π 求和。B⁻¹(l) 是 l 的原像集合。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">α(t,u) = (α(t-1,u) + α(t-1,u-1) + α(t-1,u-2)·I(l_u≠l_{u-2})) · y_{t,l'_u}</div>
+    <div class="fd"><b>前向递推（DP）：</b>α(t,u) 是 t 时刻到达标签序列扩展版 l'（插入∅）第 u 位的概率；三项分别对应 stay/从u-1跳/从u-2跳（字符相同则禁用第三项）。这就是 CTC 能 O(T·U) 计算的核心。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p1-ablation">
+  <p>原文在 TIMIT 音素识别任务上的关键对比：</p>
+  <table>
+    <tr><th>模型</th><th>对齐方式</th><th>PER(音素错误率)</th><th>备注</th></tr>
+    <tr><td>HMM (baseline)</td><td>强制对齐</td><td>26.9%</td><td>需要分段+词典</td></tr>
+    <tr><td>RNN + CTC</td><td>无对齐</td><td><b>24.7%</b></td><td>端到端，直接从音素标签训练</td></tr>
+    <tr><td>RNN + CTC + 字典</td><td>无对齐</td><td>21.6%</td><td>结合发音词典约束</td></tr>
+  </table>
+  <p><b>关键结论：</b>CTC 在<b>完全没有帧级标签</b>的条件下达到甚至超过了 HMM 流水线，证明端到端对齐是可行的。</p>
+</div>
+<div class="tab-pnl" id="p1-why">
+  <p><b>1. 范式革命：</b>首次证明"无需分段/对齐"就能训练序列到序列模型，直接催生了端到端 ASR（之后的 LAS、RNN-T、Conformer 都共享同一目标变量定义）。</p>
+  <p><b>2. 可微分对齐：</b>前向-后向 DP 让"对所有对齐求和"变得可计算、可微分、可 GPU 加速，这是工程可落地的关键。</p>
+  <p><b>3. 影响力扩散：</b>CTC 被广泛应用到 OCR、手写识别、手势识别、语音活动检测等所有"输入比输出长、且天然单调对齐"的任务。</p>
+  <div class="myth"><b>⚠️ 常见误区 1：</b>"CTC 不能建模输出间依赖所以过时了"——错！2020年后的 CTC + Self-Attention（Conformer-CTC、Wav2Vec2-CTC）依然是工业主流，它并行计算快、流式部署友好，且 beam search + LM 能有效弥补条件独立假设。</div>
+  <div class="myth"><b>⚠️ 常见误区 2：</b>"blank 就是静音"——错！blank 仅表示"此处不输出新字符"，它可以覆盖发音段、重复字符内部，并不等同于物理静音。</div>
+</div>
+<div class="tab-pnl" id="p1-code">
+<pre class="code"><span class="cmt"># 极简 CTC 前向算法（NumPy）</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">ctc_forward</span>(y, labels, blank=<span class="num">0</span>):
+    <span class="str">"""y: (T, C) 每帧 softmax 概率；labels: 标签序列（不含 blank）"""</span>
+    T, C = y.shape
+    L = <span class="fn">len</span>(labels)
+    <span class="cmt"># 扩展序列：在每个标签前后插入 blank</span>
+    z = [blank]
+    <span class="kw">for</span> l <span class="kw">in</span> labels:
+        z.<span class="fn">extend</span>([l, blank])
+    S = <span class="fn">len</span>(z)  <span class="cmt"># = 2L+1</span>
+    α = np.zeros((T, S))
+    α[<span class="num">0</span>, <span class="num">0</span>] = y[<span class="num">0</span>, z[<span class="num">0</span>]]  <span class="cmt"># 起点：blank</span>
+    α[<span class="num">0</span>, <span class="num">1</span>] = y[<span class="num">0</span>, z[<span class="num">1</span>]]  <span class="cmt"># 或第一个标签</span>
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, T):
+        <span class="kw">for</span> s <span class="kw">in</span> <span class="fn">range</span>(S):
+            p = α[t-<span class="num">1</span>, s] + α[t-<span class="num">1</span>, s-<span class="num">1</span>]
+            <span class="kw">if</span> s >= <span class="num">2</span> <span class="kw">and</span> z[s] != blank <span class="kw">and</span> z[s] != z[s-<span class="num">2</span>]:
+                p = p + α[t-<span class="num">1</span>, s-<span class="num">2</span>]
+            α[t, s] = p * y[t, z[s]]
+    <span class="kw">return</span> -np.<span class="fn">log</span>(α[T-<span class="num">1</span>, S-<span class="num">1</span>] + α[T-<span class="num">1</span>, S-<span class="num">2</span>])
+
+<span class="cmt"># 测试：两帧两类 + blank，标签为[1]</span>
+y = np.array([[<span class="num">0.6</span>,<span class="num">0.4</span>],[<span class="num">0.6</span>,<span class="num">0.4</span>]])
+<span class="fn">print</span>(<span class="str">"CTC loss ="</span>, <span class="fn">ctc_forward</span>(y, [<span class="num">1</span>]))  <span class="cmt"># ~ -ln(0.4*0.6 + 0.6*0.4 + 0.4*0.4)</span>
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 2: Transformer ========== -->
+<article class="paper-card tag-asr tag-tts">
+<header>
+  <h3>2. Attention Is All You Need (2017)</h3>
+  <div class="meta">
+    <span class="tag tag-sky">ASR</span><span class="tag tag-org">TTS</span>
+    <span>NeurIPS 2017</span>
+    <span>引用 ~120000+</span>
+    <span>Vaswani et al. (Google Brain / Google Research / UToronto)</span>
+  </div>
+</header>
+<div class="abstract">彻底抛弃 RNN/CNN，仅用自注意力机制 + 前馈网络构建序列到序列模型，实现并行训练与长程依赖建模，是 GPT/BERT/Whisper/FastSpeech 等所有后续语音/语言大模型的骨架。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p2-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p2-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p2-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p2-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p2-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p2-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p2-problem">
+  <p>RNN（LSTM/GRU）序列计算必须串行——第 t 步依赖 t-1 步的隐藏状态，无法并行，长序列梯度消失，训练慢；CNN 虽可并行但捕获长程依赖需要堆叠很多层，路径长度 O(n/k)。</p>
+  <p><b>核心创新：</b>用"缩放点积注意力"让任意两个位置直接交互（路径长度 O(1)），用"多头注意力"让模型在不同子空间学习不同关系；用"位置编码"注入顺序信息（因为纯注意力是置换不变的）。</p>
+  <p>在语音领域，Transformer 直接催生了 Conformer、Whisper、FastSpeech 等——没有 Transformer 就没有今天的大模型语音。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"Transformer 就是 Self-Attention"——不完整。Transformer = Multi-Head Self/Cross Attention + Position-wise FFN（两层MLP + GELU） + Residual + LayerNorm + Positional Encoding。<b>FFN 参数量通常占 2/3</b>，去掉它注意力只是 token 混合器。</div>
+</div>
+<div class="tab-pnl" id="p2-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 420" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Encoder -->
+    <rect x="20" y="20" width="230" height="380" rx="10" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="135" y="45" text-anchor="middle" fill="#0369a1">Encoder ×N=6</text>
+    <rect class="box" x="45" y="60" width="180" height="38" rx="5"/>
+    <text class="lbl" x="135" y="84" text-anchor="middle">Inputs (x₁..x_n) + PE</text>
+    <rect class="box-key" x="45" y="115" width="180" height="45" rx="5"/>
+    <text class="ttl" x="135" y="135" text-anchor="middle">Multi-Head</text>
+    <text class="lbl-k" x="135" y="153" text-anchor="middle">Self-Attention</text>
+    <text class="lbl" x="135" y="195" text-anchor="middle" fill="#64748b">Add &amp; Norm</text>
+    <rect class="box-key" x="45" y="210" width="180" height="45" rx="5"/>
+    <text class="ttl" x="135" y="230" text-anchor="middle">Feed Forward</text>
+    <text class="lbl-k" x="135" y="248" text-anchor="middle">FFN (Linear+GELU+Linear)</text>
+    <text class="lbl" x="135" y="287" text-anchor="middle" fill="#64748b">Add &amp; Norm</text>
+    <rect class="box-done" x="45" y="305" width="180" height="40" rx="5"/>
+    <text class="lbl" x="135" y="330" text-anchor="middle">Encoder Output</text>
+    <text class="lbl" x="135" y="360" text-anchor="middle" fill="#64748b">↑ 重复 N 层</text>
+    <!-- line arrows -->
+    <line class="arrow" x1="135" y1="98" x2="135" y2="115" marker-end="url(#pa2)"/>
+    <line class="arrow" x1="135" y1="160" x2="135" y2="210" marker-end="url(#pa2)"/>
+    <line class="arrow" x1="135" y1="255" x2="135" y2="305" marker-end="url(#pa2)"/>
+    <!-- Decoder -->
+    <rect x="330" y="20" width="230" height="380" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="445" y="45" text-anchor="middle" fill="#c2410c">Decoder ×N=6</text>
+    <rect class="box" x="355" y="60" width="180" height="38" rx="5"/>
+    <text class="lbl" x="445" y="84" text-anchor="middle">Outputs (shifted right) + PE</text>
+    <rect class="box-key" x="355" y="115" width="180" height="45" rx="5"/>
+    <text class="ttl" x="445" y="135" text-anchor="middle">Masked Multi-Head</text>
+    <text class="lbl-k" x="445" y="153" text-anchor="middle">Self-Attention（因果掩码）</text>
+    <text class="lbl" x="445" y="195" text-anchor="middle" fill="#64748b">Add &amp; Norm</text>
+    <rect class="box-key" x="355" y="210" width="180" height="50" rx="5"/>
+    <text class="ttl" x="445" y="230" text-anchor="middle">Multi-Head</text>
+    <text class="lbl-k" x="445" y="248" text-anchor="middle">Cross-Attention（Q来自decoder，KV来自encoder）</text>
+    <text class="lbl" x="445" y="290" text-anchor="middle" fill="#64748b">Add &amp; Norm</text>
+    <rect class="box-key" x="355" y="305" width="180" height="40" rx="5"/>
+    <text class="lbl-k" x="445" y="330" text-anchor="middle">FFN + Add&amp;Norm</text>
+    <!-- arrow -->
+    <line class="arrow" x1="445" y1="98" x2="445" y2="115" marker-end="url(#pa2)"/>
+    <line class="arrow" x1="445" y1="160" x2="445" y2="210" marker-end="url(#pa2)"/>
+    <line class="arrow" x1="445" y1="260" x2="445" y2="305" marker-end="url(#pa2)"/>
+    <!-- cross attention arrow from encoder -->
+    <path class="arrow-key" d="M225,325 C270,325 270,235 355,235" fill="none" marker-end="url(#pap2)"/>
+    <text class="lbl-k" x="290" y="345" text-anchor="middle">K, V</text>
+    <!-- Output -->
+    <rect class="box-done" x="610" y="140" width="130" height="60" rx="6"/>
+    <text class="ttl" x="675" y="165" text-anchor="middle">Linear</text>
+    <text class="ttl" x="675" y="185" text-anchor="middle">Softmax</text>
+    <line class="arrow" x1="560" y1="325" x2="610" y2="170" marker-end="url(#pa2)"/>
+    <rect class="box-out" x="610" y="230" width="130" height="45" rx="6"/>
+    <text class="ttl" x="675" y="250" text-anchor="middle">Output Probs</text>
+    <text class="lbl" x="675" y="267" text-anchor="middle">p(y_t | y_&lt;t, x)</text>
+    <line class="arrow" x1="675" y1="200" x2="675" y2="230" marker-end="url(#pa2)"/>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p2-formula">
+  <div class="formula-block">
+    <div class="formula">Attention(Q,K,V) = softmax( QKᵀ / √d_k ) · V</div>
+    <div class="fd"><b>缩放点积注意力：</b>Q(query)/K(key)/V(value) 分别是投影后的矩阵；除以 √d_k 是为了防止点积值过大导致 softmax 进入饱和区、梯度消失。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">MultiHead(Q,K,V) = Concat(head₁,...,head_h) W^O，head_i = Attention(Q W_i^Q, K W_i^K, V W_i^V)</div>
+    <div class="fd"><b>多头注意力：</b>并行做 h 次（原文 h=8）注意力，每次投影到 d_k=d_v=d_model/h=64 维，让模型关注不同子空间的关系（语法/语义/位置等）。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">PE(pos,2i) = sin(pos/10000^{2i/d})，PE(pos,2i+1) = cos(pos/10000^{2i/d})</div>
+    <div class="fd"><b>正/余弦位置编码：</b>用不同频率的正弦函数给每个位置注入唯一编码，使模型能推断相对位置（sin(pos+k) 可由 sin(pos) 和 cos(pos) 线性表示）。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p2-ablation">
+  <p>原文 WMT14 英→德翻译任务关键消融：</p>
+  <table>
+    <tr><th>变化项</th><th>BLEU</th><th>结论</th></tr>
+    <tr><td>单头 (h=1)</td><td>24.9</td><td>多头显著更优</td></tr>
+    <tr><td>头数过多 (h=32, d_k=16)</td><td>25.5</td><td>d_k太小反而退化</td></tr>
+    <tr><td>去掉 √d_k 缩放</td><td>变差</td><td>缩放是必要的，防止点积过大</td></tr>
+    <tr><td>学习位置编码 vs 正弦</td><td>+0.1</td><td>正弦几乎不逊于学习式，且能外推</td></tr>
+    <tr><td>减少 key/value 维度 d_k</td><td>下降 ~0.5-1</td><td>d_k=64 (h=8) 最佳</td></tr>
+    <tr><td><b>Full Transformer (base)</b></td><td><b>27.3</b></td><td>当时新 SOTA，训练成本仅前代 1/4</td></tr>
+  </table>
+</div>
+<div class="tab-pnl" id="p2-why">
+  <p><b>1. 统一架构：</b>编码器-解码器都是完全相同的模块堆叠，简单、规整、易扩展，成为"深度学习新的通用积木"。</p>
+  <p><b>2. 完美适配硬件：</b>整句输入矩阵乘法一次算完，训练时 O(1) 序列步（对比 RNN 的 O(n) 串行），充分利用 GPU/TPU 并行——这是它能在工业界铺开的决定性因素。</p>
+  <p><b>3. 可缩放性（Scaling Law）：</b>参数量/数据量增加，性能可预测地提升——这直接催生 BERT、GPT、T5、Whisper、ViT、Swin、Conformer 等几乎所有大模型。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"Self-Attention 复杂度 O(n²) 所以语音上没用"——错。语音下采样（卷积前端 + stride）后序列长度降到数百，O(n²) 完全可接受；Conformer、Whisper、Hubert 都是用 Transformer encoder + Conv 下采样打天下。</div>
+</div>
+<div class="tab-pnl" id="p2-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn.functional <span class="kw">as</span> F, math
+
+<span class="kw">def</span> <span class="fn">scaled_dot_product_attention</span>(Q, K, V, mask=<span class="kw">None</span>):
+    <span class="str">"""Q,K,V: (B, h, n, d_k);  mask: (n,n) 因果掩码用"""</span>
+    d_k = Q.size(-<span class="num">1</span>)
+    scores = Q @ K.transpose(-<span class="num">2</span>, -<span class="num">1</span>) / math.<span class="fn">sqrt</span>(d_k)
+    <span class="kw">if</span> mask <span class="kw">is not None</span>:
+        scores = scores.<span class="fn">masked_fill</span>(mask == <span class="num">0</span>, <span class="num">-1e9</span>)
+    attn = F.<span class="fn">softmax</span>(scores, dim=-<span class="num">1</span>)
+    <span class="kw">return</span> attn @ V
+
+<span class="kw">class</span> <span class="fn">MultiHeadAttention</span>(torch.nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_model=<span class="num">512</span>, n_heads=<span class="num">8</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.n_heads = n_heads; self.d_k = d_model // n_heads
+        self.Wq = torch.nn.<span class="fn">Linear</span>(d_model, d_model)
+        self.Wk = torch.nn.<span class="fn">Linear</span>(d_model, d_model)
+        self.Wv = torch.nn.<span class="fn">Linear</span>(d_model, d_model)
+        self.Wo = torch.nn.<span class="fn">Linear</span>(d_model, d_model)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, q, k, v, mask=<span class="kw">None</span>):
+        B, n, _ = q.shape
+        <span class="kw">def</span> <span class="fn">proj</span>(W, x): <span class="kw">return</span> W(x).<span class="fn">view</span>(B,-<span class="num">1</span>,self.n_heads,self.d_k).<span class="fn">transpose</span>(<span class="num">1</span>,<span class="num">2</span>)
+        out = <span class="fn">scaled_dot_product_attention</span>(<span class="fn">proj</span>(self.Wq,q),<span class="fn">proj</span>(self.Wk,k),<span class="fn">proj</span>(self.Wv,v),mask)
+        <span class="kw">return</span> self.Wo(out.<span class="fn">transpose</span>(<span class="num">1</span>,<span class="num">2</span>).<span class="fn">contiguous</span>().<span class="fn">view</span>(B,n,-<span class="num">1</span>))
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 3: LAS ========== -->
+<article class="paper-card tag-asr">
+<header>
+  <h3>3. Listen, Attend and Spell (2015)</h3>
+  <div class="meta">
+    <span class="tag tag-sky">ASR</span>
+    <span>ICASSP 2016 (arXiv 2015)</span>
+    <span>引用 ~7500+</span>
+    <span>William Chan et al. (CMU / Google Brain)</span>
+  </div>
+</header>
+<div class="abstract">首个真正"端到端"的 ASR 模型：用金字塔 BiLSTM（Listener）压缩声学特征，用 Attention-based LSTM（Speller）逐字符输出，无需 HMM/词典/对齐，真正实现"听一听再拼出来"。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p3-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p3-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p3-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p3-ablation">🔬 消融/结果</button>
+  <button class="tab" data-tab="p3-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p3-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p3-problem">
+  <p>CTC 虽然无需分段，但有条件独立假设（输出间无直接依赖），且训练-推理解码不一致（需要外接 LM）；传统 Attention Seq2Seq（Bahdanau 2014）在语音上直接用会遇到 T 过长（数百帧）导致注意力分散、训练不稳。</p>
+  <p><b>核心创新：</b></p>
+  <ul>
+    <li><b>Listener（金字塔 BiLSTM）：</b>通过时间维度拼接降采样（每层把时间减半），把 1000 帧压到 100 个高级声学表示（h 向量），既压缩冗余又缓解长序列注意力。</li>
+    <li><b>Speller（2层LSTM + Attention）：</b>每步生成一个字符时，用 decoder 状态作为 query 去 listener 输出上做注意力加权，得到上下文向量再预测字符。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区：</b>"LAS 就是 Seq2Seq"——关键在<b>金字塔结构</b>：pBiLSTM 把时间分辨率逐层降低，这是语音特有的设计（类似后来 Conformer 的 stride 卷积）；朴素 Seq2Seq 不做下采样在长语音上会崩。</div>
+</div>
+<div class="tab-pnl" id="p3-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 290" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Input -->
+    <rect class="box" x="10" y="100" width="80" height="50" rx="5"/>
+    <text class="ttl" x="50" y="120" text-anchor="middle">滤波器组</text>
+    <text class="lbl" x="50" y="138" text-anchor="middle">x (T帧fbank)</text>
+    <!-- Listener pyramid -->
+    <rect class="box-key" x="110" y="60" width="120" height="40" rx="5"/>
+    <text class="lbl-k" x="170" y="78" text-anchor="middle">BiLSTM ×N₁</text>
+    <text class="lbl" x="170" y="93" text-anchor="middle">(T, 2d)</text>
+    <rect class="box-key" x="110" y="110" width="120" height="40" rx="5"/>
+    <text class="lbl-k" x="170" y="128" text-anchor="middle">pBiLSTM 1</text>
+    <text class="lbl" x="170" y="143" text-anchor="middle">↓ concat (T/2)</text>
+    <rect class="box-key" x="110" y="160" width="120" height="40" rx="5"/>
+    <text class="lbl-k" x="170" y="178" text-anchor="middle">pBiLSTM 2</text>
+    <text class="lbl" x="170" y="193" text-anchor="middle">↓ concat (T/4)</text>
+    <line class="arrow" x1="90" y1="125" x2="108" y2="125" marker-end="url(#pa3)"/>
+    <line class="arrow" x1="170" y1="100" x2="170" y2="110" marker-end="url(#pa3)"/>
+    <line class="arrow" x1="170" y1="150" x2="170" y2="160" marker-end="url(#pa3)"/>
+    <!-- h output -->
+    <rect class="box-done" x="260" y="115" width="100" height="50" rx="5"/>
+    <text class="ttl" x="310" y="135" text-anchor="middle">h = (h₁..h_U)</text>
+    <text class="lbl" x="310" y="153" text-anchor="middle">U≈T/8 高级声学</text>
+    <line class="arrow" x1="230" y1="140" x2="258" y2="140" marker-end="url(#pa3)"/>
+    <!-- Attention -->
+    <rect class="box-key" x="400" y="110" width="130" height="60" rx="6"/>
+    <text class="ttl" x="465" y="132" text-anchor="middle">Content Attention</text>
+    <text class="lbl-k" x="465" y="150" text-anchor="middle">α_t = softmax(score(s_t, h))</text>
+    <text class="lbl-k" x="465" y="165" text-anchor="middle">c_t = Σ α_{t,u} h_u</text>
+    <path class="arrow-key" d="M360,140 C380,80 380,110 398,130" fill="none" marker-end="url(#pap3)"/>
+    <text class="lbl-k" x="380" y="90" text-anchor="middle">h (key/value)</text>
+    <!-- Speller LSTM -->
+    <rect class="box-out" x="570" y="50" width="170" height="90" rx="6"/>
+    <text class="ttl" x="655" y="73" text-anchor="middle">Speller (2层LSTM)</text>
+    <text class="lbl" x="655" y="93" text-anchor="middle">s_t = LSTM([y_{t-1}; c_t], s_{t-1})</text>
+    <text class="lbl" x="655" y="110" text-anchor="middle">query = s_t</text>
+    <text class="lbl" x="655" y="128" text-anchor="middle">输出 y_t ~ char softmax</text>
+    <path class="arrow-key" d="M530,140 L568,100" fill="none" marker-end="url(#pap3)"/>
+    <text class="lbl-k" x="545" y="170" text-anchor="middle">c_t</text>
+    <!-- output characters -->
+    <rect class="box-done" x="570" y="180" width="170" height="40" rx="5"/>
+    <text class="lbl" x="655" y="205" text-anchor="middle">"H E L L O &lt;eos&gt;"</text>
+    <line class="arrow" x1="655" y1="140" x2="655" y2="180" marker-end="url(#pa3)"/>
+    <!-- label bottom -->
+    <text class="ttl" x="170" y="250" text-anchor="middle" fill="#0369a1">🎧 LISTEN（编码+下采样）</text>
+    <text class="ttl" x="465" y="250" text-anchor="middle" fill="#6d28d9">🔍 ATTEND（对齐）</text>
+    <text class="ttl" x="655" y="250" text-anchor="middle" fill="#c2410c">✍️ SPELL（解码）</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p3-formula">
+  <div class="formula-block">
+    <div class="formula">h = Listen(x)  （金字塔BiLSTM）</div>
+    <div class="fd"><b>Listener：</b>每层 pBiLSTM 把时间相邻两个输出拼接，h_i^l = BiLSTM([h_{2i}^{l-1}; h_{2i+1}^{l-1}])，时间分辨率逐层减半。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">e_{t,u} = ⟨W s_t, V h_u⟩（或MLP score），α_t = softmax(e_t)，c_t = Σ_u α_{t,u} h_u</div>
+    <div class="fd"><b>Attention：</b>用 decoder 状态 s_t 作为 query 对所有 encoder 输出 h_u 打分得到注意力分布 α_t，加权求和得到上下文向量 c_t。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">P(y|x) = ∏_t P(y_t | s_t, c_t, y_{&lt;t})，其中 s_t = LSTMCell([emb(y_{t-1}); c_t], s_{t-1})</div>
+    <div class="fd"><b>Speller：</b>自回归生成——每步以"上一个字符的 embedding + 当前上下文向量"为输入，输出字符分布；天然建模输出间依赖。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p3-ablation">
+  <p>原文 Google Voice Search 任务（无词典/无LM端到端）关键结果：</p>
+  <table>
+    <tr><th>模型</th><th>WER</th><th>备注</th></tr>
+    <tr><td>CLDNN HMM (生产baseline)</td><td>8.8%</td><td>词典+对齐+LM+HMM</td></tr>
+    <tr><td>LAS（单层BiLSTM，无金字塔）</td><td>14.1%</td><td>长序列注意力不稳</td></tr>
+    <tr><td>LAS（金字塔pBiLSTM）</td><td>10.3%</td><td>下采样关键</td></tr>
+    <tr><td>LAS + LM 重打分</td><td><b>6.7%</b></td><td>首次超越 HMM 流水线</td></tr>
+  </table>
+  <p><b>关键消融：</b>金字塔降采样 + 多层 Speller + Attention 是性能关键；不加 pBiLSTM 的朴素 attention 在长语音上 WER 急剧恶化。</p>
+</div>
+<div class="tab-pnl" id="p3-why">
+  <p><b>1. 语音领域首个 Seq2Seq SOTA：</b>证明 Attention-based Encoder-Decoder 可以在 ASR 上真的"听懂并拼出来"，催生了后来的 Espnet、Transformer-ASR 等。</p>
+  <p><b>2. 引入下采样思想：</b>金字塔 BiLSTM 把"先压时间、再做注意力"的工程范式带入 ASR，被后续所有模型沿用（Conformer 的 stride conv、Whisper 的 conv 前端都是这个思路）。</p>
+  <p><b>3. 训练方式启发 RNN-T：</b>LAS 与 CTC 的融合（attention+ctc joint training）成为后来 Espnet/WeNet 训练标配。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"LAS 不能流式"——原版确实不能（soft attention 需要全序列），但后来的 MoChA（Monotonic Chunkwise Attention）、Triggered Attention 等变体通过单调/分块注意力实现了流式推理，工业上仍大量使用。</div>
+</div>
+<div class="tab-pnl" id="p3-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="fn">ContentAttention</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_enc, d_dec):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.W = nn.<span class="fn">Linear</span>(d_dec, d_dec); self.V = nn.<span class="fn">Linear</span>(d_enc, d_dec)
+        self.w = nn.<span class="fn">Parameter</span>(torch.<span class="fn">randn</span>(d_dec))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, s_t, h):
+        <span class="cmt"># s_t: (B, d_dec);  h: (B, U, d_enc)</span>
+        e = torch.<span class="fn">tanh</span>(self.W(s_t).<span class="fn">unsqueeze</span>(<span class="num">1</span>) + self.V(h)) <span class="cmt"># (B,U,d)</span>
+        attn = F.<span class="fn">softmax</span>(e @ self.w, dim=-<span class="num">1</span>)              <span class="cmt"># (B,U)</span>
+        c = (attn.<span class="fn">unsqueeze</span>(-<span class="num">1</span>) * h).<span class="fn">sum</span>(<span class="num">1</span>)                 <span class="cmt"># (B,d_enc)</span>
+        <span class="kw">return</span> c, attn
+
+<span class="kw">class</span> <span class="fn">SpellerStep</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, v_size, d_emb=<span class="num">256</span>, d_h=<span class="num">512</span>, d_enc=<span class="num">512</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.emb = nn.<span class="fn">Embedding</span>(v_size, d_emb)
+        self.lstm = nn.<span class="fn">LSTMCell</span>(d_emb + d_enc, d_h)
+        self.attn = <span class="fn">ContentAttention</span>(d_enc, d_h)
+        self.out = nn.<span class="fn">Linear</span>(d_h, v_size)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, y_prev, s_prev, h):
+        s, c = self.lstm(torch.<span class="fn">cat</span>([self.emb(y_prev), s_prev[<span class="num">0</span>]],-<span class="num">1</span>), s_prev)
+        ctx, _ = self.attn(s, h)
+        logits = self.out(s)
+        <span class="kw">return</span> logits, (s, c)
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 4: Conformer ========== -->
+<article class="paper-card tag-asr">
+<header>
+  <h3>4. Conformer: Convolution-augmented Transformer for Speech Recognition (2020)</h3>
+  <div class="meta">
+    <span class="tag tag-sky">ASR</span>
+    <span>Interspeech 2020</span>
+    <span>引用 ~5500+</span>
+    <span>Anmol Gulati et al. (Google)</span>
+  </div>
+</header>
+<div class="abstract">把 Self-Attention（全局建模）和 Depthwise Separable Convolution（局部特征提取）、FFN（通道混合）用 Macaron 结构组合，成为语音识别事实标准编码器。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p4-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p4-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p4-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p4-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p4-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p4-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p4-problem">
+  <p>Transformer 擅长全局依赖但局部相关性建模弱（每位置全连接太"疏"）；CNN 擅长局部平移不变但长程依赖要堆很多层。语音信号同时需要：① 局部形态（共振峰、音素过渡）② 全局依赖（跨词/长句指代、说话人特征）。</p>
+  <p><b>核心创新：Macaron 结构 + Conv Module</b></p>
+  <ul>
+    <li>每个 Conformer block：FFN（半个残差）→ MHSA → Conv Module → FFN（半个残差）→ LayerNorm。两个 FFN 各乘 0.5（"马卡龙"，像夹心饼干）。</li>
+    <li><b>Conv Module：</b>Pointwise Conv（升维4倍）→ GLU 门控 → Depthwise Conv（kernel=15~32，因果/非因果）→ Swish → Pointwise Conv（降维）+ BN。专门提取局部声学模式。</li>
+    <li>MHSA 前加相对位置编码（Transducer-XL 风格），更好建模时序。</li>
+    <li>前端用 stride=2 的 conv 把时间下采样 4 倍。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区：</b>"Conformer = CNN + Transformer 拼一下"——不是。关键是<b>顺序</b>：FFN→Attn→Conv→FFN 半残差；Macaron 0.5 系数、Conv 模块里的 GLU 门控+depthwise 都是必要组件。随意调换顺序效果明显下降。</div>
+</div>
+<div class="tab-pnl" id="p4-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 350" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Input -->
+    <rect class="box" x="20" y="30" width="110" height="40" rx="5"/>
+    <text class="lbl" x="75" y="55" text-anchor="middle">fbank 80维 + 速度扰动</text>
+    <!-- Conv subsampling -->
+    <rect class="box" x="160" y="30" width="130" height="40" rx="5"/>
+    <text class="ttl" x="225" y="48" text-anchor="middle">Conv2d Subsampling</text>
+    <text class="lbl" x="225" y="63" text-anchor="middle">stride=2×2, T/4</text>
+    <line class="arrow" x1="130" y1="50" x2="158" y2="50" marker-end="url(#pa4)"/>
+    <!-- Linear+dropout -->
+    <rect class="box" x="310" y="30" width="100" height="40" rx="5"/>
+    <text class="lbl" x="360" y="55" text-anchor="middle">Linear + Dropout</text>
+    <line class="arrow" x1="290" y1="50" x2="308" y2="50" marker-end="url(#pa4)"/>
+    <!-- Conformer block ×N -->
+    <rect x="20" y="100" width="720" height="230" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="380" y="125" text-anchor="middle" fill="#6d28d9">Conformer Block × N=12/17 (Macaron 结构)</text>
+    <!-- FFN1 half -->
+    <rect class="box-key" x="40" y="145" width="160" height="50" rx="5"/>
+    <text class="lbl-k" x="120" y="165" text-anchor="middle">Feed Forward ①</text>
+    <text class="lbl" x="120" y="182" text-anchor="middle">× ½ residual</text>
+    <!-- MHSA -->
+    <rect class="box-key" x="220" y="145" width="160" height="50" rx="5"/>
+    <text class="lbl-k" x="300" y="165" text-anchor="middle">Multi-Head Self-Attn</text>
+    <text class="lbl" x="300" y="182" text-anchor="middle">+ 相对位置编码 + ½res</text>
+    <!-- Conv -->
+    <rect class="box-key" x="400" y="145" width="160" height="50" rx="5"/>
+    <text class="lbl-k" x="480" y="165" text-anchor="middle">Conv Module</text>
+    <text class="lbl" x="480" y="182" text-anchor="middle">PW→GLU→DW(k=15/31)→PW</text>
+    <!-- FFN2 half -->
+    <rect class="box-key" x="580" y="145" width="150" height="50" rx="5"/>
+    <text class="lbl-k" x="655" y="165" text-anchor="middle">Feed Forward ②</text>
+    <text class="lbl" x="655" y="182" text-anchor="middle">× ½ residual</text>
+    <!-- arrows between modules -->
+    <line class="arrow-key" x1="200" y1="170" x2="218" y2="170" marker-end="url(#pap4)"/>
+    <line class="arrow-key" x1="380" y1="170" x2="398" y2="170" marker-end="url(#pap4)"/>
+    <line class="arrow-key" x1="560" y1="170" x2="578" y2="170" marker-end="url(#pap4)"/>
+    <!-- from input to block -->
+    <line class="arrow" x1="360" y1="70" x2="120" y2="145" marker-end="url(#pa4)"/>
+    <!-- LN -->
+    <rect class="box" x="280" y="220" width="200" height="40" rx="5"/>
+    <text class="ttl" x="380" y="245" text-anchor="middle">Final LayerNorm → Output</text>
+    <line class="arrow" x1="380" y1="195" x2="380" y2="220" marker-end="url(#pa4)"/>
+    <!-- formula note -->
+    <text class="lbl" x="380" y="290" text-anchor="middle">x' = x + ½ FFN(x)</text>
+    <text class="lbl" x="380" y="308" text-anchor="middle">x'' = x' + MHSA(x')</text>
+    <text class="lbl" x="380" y="326" text-anchor="middle">x''' = x'' + Conv(x''),  y = LN(x''' + ½ FFN(x'''))</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p4-formula">
+  <div class="formula-block">
+    <div class="formula">ConvModule(x) = x + PW·Swish·DW·GLU·PW(x)</div>
+    <div class="fd"><b>卷积模块：</b>第一层 Pointwise Conv 把通道升 2×，GLU 激活（门控）压回 1×，然后 Depthwise Conv（大 kernel 15~32）抓局部模式，Swish，再 PW 压回。带 BN 和 dropout。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">x_{i+1} = x_i + ½ FFN(x_i)      （Macaron 半残差）</div>
+    <div class="fd"><b>Macaron 结构：</b>原始 Transformer 一个 block 只有一个 FFN；Conformer 在 MHSA 前后各放一个 FFN，且都用 0.5 残差权重。作者从 FNet/Macaron Net 引入，让"通道混合"和"空间混合"平衡。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">MHSA 中加入相对位置偏置 a_{ij} = (x_i W^Q)(x_j W^K + r_{i-j})^T / √d</div>
+    <div class="fd"><b>相对位置编码：</b>相对位置项 r_{i-j} 只依赖位置差而非绝对位置，对语音时序（说话速率变化）更鲁棒。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p4-ablation">
+  <p>原文 LibriSpeech test-other WER（非流式 Conformer L，~120M 参数）：</p>
+  <table>
+    <tr><th>配置</th><th>test-clean</th><th>test-other</th><th>结论</th></tr>
+    <tr><td>Transformer baseline</td><td>3.1%</td><td>7.7%</td><td>起点</td></tr>
+    <tr><td>+ Macaron FFN (½)</td><td>2.8%</td><td>6.7%</td><td>半残差 FFN 显著 +1.0</td></tr>
+    <tr><td>+ Conv Module</td><td>2.5%</td><td>5.7%</td><td>局部卷积再 +1.0</td></tr>
+    <tr><td>+ 相对位置编码</td><td>2.4%</td><td>5.4%</td><td>+0.3</td></tr>
+    <tr><td><b>Full Conformer (L)</b></td><td><b>2.1%</b></td><td><b>4.3%</b></td><td>当时 SOTA（无外部LM）</td></tr>
+  </table>
+  <p><b>关键消融结论：</b>Conv module 的 kernel size 31 比 15 略好；但 macaron 结构贡献最大；三个模块缺一不可，顺序调换会掉 0.2-0.3 WER。</p>
+</div>
+<div class="tab-pnl" id="p4-why">
+  <p><b>1. 统一"局部+全局"：</b>DWConv（局部n-gram）+ MHSA（全局依赖）+ FFN（通道混合）——这是对语音信号"分层时间结构"最贴切的归纳偏置，比纯 Transformer 或纯 CNN 都准。</p>
+  <p><b>2. 工业落地标准：</b>此后几乎所有商用 ASR（WeNet、FunASR、AssemblyAI、Meta MMS、Google USM、Whisper 的继任者）都用 Conformer 作为 encoder 骨架。</p>
+  <p><b>3. 流式友好：</b>因果 Conv + chunk attention 可直接做流式（Emformer、Chunk Conformer），兼顾准确率与延迟。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"Conformer 已经被 Whisper 取代了"——错。Whisper 用的是<b>纯 Transformer encoder-decoder</b>，不是 Conformer；但大量后来工作（Faster-Whisper encoder 重参数化、SenseVoice、Paraformer）都是 Conformer 变种，Whisper 强在数据规模而非 encoder 结构。</div>
+</div>
+<div class="tab-pnl" id="p4-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="fn">ConvModule</span>(nn.Module):
+    <span class="str">"""Conformer Conv Module：PW→GLU→Depthwise→BN→Swish→PW"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d, kernel_size=<span class="num">31</span>, exp=<span class="num">2</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.pw1 = nn.<span class="fn">Conv1d</span>(d, d*exp, <span class="num">1</span>)
+        self.pw1_gate = nn.<span class="fn">Conv1d</span>(d, d*exp, <span class="num">1</span>)
+        <span class="cmt"># depthwise：groups=通道数</span>
+        self.dw = nn.<span class="fn">Conv1d</span>(d*exp, d*exp, kernel_size,
+                         padding=(kernel_size-<span class="num">1</span>)//<span class="num">2</span>, groups=d*exp)
+        self.bn = nn.<span class="fn">BatchNorm1d</span>(d*exp)
+        self.pw2 = nn.<span class="fn">Conv1d</span>(d*exp, d, <span class="num">1</span>)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="cmt"># x: (B,T,d)</span>
+        y = x.<span class="fn">transpose</span>(<span class="num">1</span>,<span class="num">2</span>)
+        y = F.<span class="fn">silu</span>(self.bn(self.dw(F.<span class="fn">glu</span>(torch.<span class="fn">cat</span>(
+            [self.pw1(y), self.pw1_gate(y)],<span class="num">1</span>), dim=<span class="num">1</span>))))
+        <span class="kw">return</span> x + self.pw2(y).<span class="fn">transpose</span>(<span class="num">1</span>,<span class="num">2</span>)
+
+<span class="kw">class</span> <span class="fn">FFNMacaron</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d, mult=<span class="num">4</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.net = nn.<span class="fn">Sequential</span>(
+            nn.<span class="fn">Linear</span>(d,d*mult), nn.<span class="fn">SiLU</span>(), nn.<span class="fn">Dropout</span>(<span class="num">0.1</span>),
+            nn.<span class="fn">Linear</span>(d*mult,d), nn.<span class="fn">Dropout</span>(<span class="num">0.1</span>))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x): <span class="kw">return</span> <span class="num">0.5</span> * self.net(x)  <span class="cmt"># ½ 系数</span>
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 5: Whisper ========== -->
+<article class="paper-card tag-asr">
+<header>
+  <h3>5. Robust Speech Recognition via Large-Scale Weak Supervision (2022)</h3>
+  <div class="meta">
+    <span class="tag tag-sky">ASR</span>
+    <span>ICML 2023 (arXiv 2022)</span>
+    <span>引用 ~12000+</span>
+    <span>Alec Radford et al. (OpenAI)</span>
+  </div>
+</header>
+<div class="abstract">用 68万小时弱标注互联网音频训练一个大规模 Transformer Encoder-Decoder，统一多语言 ASR + 翻译 + 语言识别 + 时间戳，零样本迁移到多数 benchmark 即接近或超过监督 SOTA。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p5-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p5-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p5-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p5-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p5-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p5-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p5-problem">
+  <p>主流 ASR 模型都在"干净标注数据集"（LibriSpeech/Fisher）上训练，遇到口音、噪声、行业术语、混响就崩；多语言模型需要按语言分开训/调；开源 SOTA 部署繁琐。</p>
+  <p><b>核心思路：用规模换鲁棒性。</b></p>
+  <ul>
+    <li>收集 680k 小时互联网音频（弱标注来自自动生成/字幕），其中 117k 小时非英语、125k 小时 X→En 翻译对。</li>
+    <li>极简单的架构：2层 stride-2 Conv 前端下采样 → Transformer Encoder → Transformer Decoder 自回归生成特殊 tokens（&lt;|lang|&gt;, &lt;|transcribe|&gt;, &lt;|notimestamps|&gt;...）+ 文字。</li>
+    <li>统一任务格式：所有任务都变成"给定音频 prompt + 特殊token → 生成文本"，无需任务特定 head。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区 1：</b>"Whisper 是 Conformer"——错，它是<b>纯 Transformer encoder-decoder</b>，没有 Conv Module；强是因为<b>数据</b>，不是结构创新。</div>
+  <div class="myth"><b>⚠️ 常见误区 2：</b>"Whisper 开源了训练代码/数据"——只开源了<b>模型权重和推理代码</b>，数据过滤流水线未开源，训练超参未完全披露（这也是 "weak supervision" 论文能成为工业标杆的特殊案例）。</div>
+</div>
+<div class="tab-pnl" id="p5-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 340" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- audio -->
+    <rect class="box" x="20" y="100" width="90" height="60" rx="5"/>
+    <text class="ttl" x="65" y="125" text-anchor="middle">波形 30s</text>
+    <text class="lbl" x="65" y="143" text-anchor="middle">16k mono</text>
+    <text class="lbl" x="65" y="155" text-anchor="middle">零填充到 30s</text>
+    <!-- fbank -->
+    <rect class="box" x="130" y="100" width="90" height="60" rx="5"/>
+    <text class="ttl" x="175" y="125" text-anchor="middle">Log-Mel 80</text>
+    <text class="lbl" x="175" y="143" text-anchor="middle">25ms窗/10ms移</text>
+    <text class="lbl" x="175" y="155" text-anchor="middle">→ 3000 帧</text>
+    <line class="arrow" x1="110" y1="130" x2="128" y2="130" marker-end="url(#pa5)"/>
+    <!-- Conv front -->
+    <rect class="box" x="240" y="100" width="100" height="60" rx="5"/>
+    <text class="ttl" x="290" y="122" text-anchor="middle">Conv 前端 ×2</text>
+    <text class="lbl" x="290" y="140" text-anchor="middle">3×3, stride=2</text>
+    <text class="lbl" x="290" y="155" text-anchor="middle">→ 750 帧, d=512/1280</text>
+    <line class="arrow" x1="220" y1="130" x2="238" y2="130" marker-end="url(#pa5)"/>
+    <!-- Encoder -->
+    <rect class="box-key" x="360" y="30" width="160" height="200" rx="8"/>
+    <text class="ttl" x="440" y="55" text-anchor="middle">Transformer Encoder</text>
+    <text class="lbl-k" x="440" y="78" text-anchor="middle">Pre-LN</text>
+    <text class="lbl" x="440" y="96" text-anchor="middle">+ sinusoidal PE</text>
+    <text class="lbl" x="440" y="114" text-anchor="middle">+ GELU FFN(4×)</text>
+    <text class="lbl" x="440" y="132" text-anchor="middle">32层(medium)/</text>
+    <text class="lbl" x="440" y="148" text-anchor="middle">32层(large-v2/v3)</text>
+    <text class="lbl-k" x="440" y="170" text-anchor="middle">输出: 750×d</text>
+    <text class="lbl" x="440" y="190" text-anchor="middle">音频记忆 K,V</text>
+    <text class="lbl" x="440" y="208" text-anchor="middle">（cross-attn 用）</text>
+    <line class="arrow" x1="340" y1="130" x2="358" y2="130" marker-end="url(#pa5)"/>
+    <!-- Decoder -->
+    <rect class="box-out" x="550" y="30" width="190" height="200" rx="8"/>
+    <text class="ttl" x="645" y="55" text-anchor="middle">Transformer Decoder</text>
+    <text class="lbl" x="645" y="75" text-anchor="middle">• 自回归 char/BPE</text>
+    <text class="lbl" x="645" y="93" text-anchor="middle">• 因果 masked self-attn</text>
+    <text class="lbl-k" x="645" y="115" text-anchor="middle">• Cross-attn to Encoder</text>
+    <text class="lbl" x="645" y="135" text-anchor="middle">Prompt tokens 序列：</text>
+    <text class="lbl" x="645" y="152" text-anchor="middle">&lt;|startoftranscript|&gt;</text>
+    <text class="lbl" x="645" y="167" text-anchor="middle">&lt;|zh|&gt; &lt;|transcribe|&gt;</text>
+    <text class="lbl" x="645" y="182" text-anchor="middle">&lt;|notimestamps|&gt;</text>
+    <text class="lbl" x="645" y="200" text-anchor="middle">→ 文字 + &lt;|endoftext|&gt;</text>
+    <path class="arrow-key" d="M520,130 L548,130" fill="none" marker-end="url(#pap5)"/>
+    <!-- output -->
+    <rect class="box-done" x="550" y="250" width="190" height="55" rx="6"/>
+    <text class="ttl" x="645" y="273" text-anchor="middle">输出文本</text>
+    <text class="lbl" x="645" y="290" text-anchor="middle">"今天天气不错。"</text>
+    <line class="arrow" x1="645" y1="230" x2="645" y2="250" marker-end="url(#pa5)"/>
+    <!-- bottom note -->
+    <text class="lbl" x="380" y="290">680k小时 · 多语言/翻译/带时间戳 · 零样本</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p5-formula">
+  <div class="formula-block">
+    <div class="formula">L = -Σ_t log P(y_t | y_{&lt;t}, &lt;|lang|&gt;, &lt;|task|&gt;, &lt;|ts|&gt;, x)</div>
+    <div class="fd"><b>训练目标：</b>标准 SFT 自回归交叉熵。任务token（语言/转写还是翻译/是否输出时间戳）当作 prompt 前缀拼进 decoder 输入，模型通过条件生成完成不同任务——不新增任何 task-specific head。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">前端: h₀ = Conv1D(GELU(Conv1D(log_mel)))  （两次 stride=2 共 ×4 下采样）</div>
+    <div class="fd"><b>特征前端：</b>两层 1D 卷积（kernel=3, stride=2, filter=512/1280），将 3000 帧 80 维 mel 直接压到 750 帧 d 维 hidden state，无手工 pooling 或 pyramid，简单粗暴但有效。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">Decoder token 表含特殊控制符：&lt;|lang|&gt; ×99、&lt;|transcribe|&gt;、&lt;|translate|&gt;、&lt;|notimestamps|&gt;、&lt;|0.00|&gt;..&lt;|30.00|&gt;</div>
+    <div class="fd"><b>统一 token 化：</b>语言、任务、时间戳都用 BPE 里的特殊 token 表达——多语言识别、翻译、分段时间戳都靠这些 token 在生成时切换，真正"一个模型搞定所有语音任务"。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p5-ablation">
+  <p>关键消融（来自论文 Figure 5/6）：</p>
+  <table>
+    <tr><th>模型规模</th><th>参数量</th><th>En WER (平均)</th><th>多语言 WER</th><th>训练耗时</th></tr>
+    <tr><td>tiny</td><td>39M</td><td>~13%</td><td>差</td><td>极快</td></tr>
+    <tr><td>base</td><td>74M</td><td>~10%</td><td>一般</td><td>快</td></tr>
+    <tr><td>small</td><td>244M</td><td>~7%</td><td>可用</td><td>中</td></tr>
+    <tr><td>medium</td><td>769M</td><td>~5%</td><td>较好</td><td>慢</td></tr>
+    <tr><td><b>large-v2</b></td><td><b>1550M</b></td><td><b>~4%</b></td><td><b>最好</b></td><td>很慢</td></tr>
+  </table>
+  <p><b>关键发现：</b></p>
+  <ul>
+    <li>数据从 10k → 680k 小时，<b>WER 随 log(数据量) 近似线性下降</b>（Scaling Law 在语音上同样成立）。</li>
+    <li>弱标签噪声大但规模大 → 比"干净小数据集"更鲁棒（零样本到分布外数据集优势巨大）。</li>
+    <li>多语言联合训练反而提升英语识别（迁移学习）。</li>
+  </ul>
+</div>
+<div class="tab-pnl" id="p5-why">
+  <p><b>1. 语音大模型时代的 BERT 时刻：</b>证明"弱监督大规模预训练"在语音上和文本/视觉一样 work，直接改变了整个 ASR 研究范式——从此所有人都在堆数据、堆模型规模。</p>
+  <p><b>2. 工程级开源典范：</b>一个 pip install 就能用，支持 99 种语言、五大任务、CPU/GPU 都能跑，把 ASR 从"要懂 Kaldi/ESPnet 才能部署"变成"几行 Python 调 API"。</p>
+  <p><b>3. 统一任务接口：</b>prompt tokens 范式启发后续的 Qwen-Audio、SALMONN、Gemini-Audio 等多模态音频模型。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"Whisper 不做时间对齐所以不能做字幕"——错。训练时包含时间戳 token（&lt;|0.00|&gt; 等），开启 &lt;|timestamps|&gt; 会在生成中插入精确时间戳，比 WebRTC VAD 分段还准。只是默认 &lt;|notimestamps|&gt; 关闭了该能力。</div>
+</div>
+<div class="tab-pnl" id="p5-code">
+<pre class="code"><span class="cmt"># 极简 Whisper 风格 "prompt + 自回归" 推理逻辑（伪代码）</span>
+<span class="kw">import</span> torch
+
+<span class="kw">def</span> <span class="fn">whisper_decode</span>(mel, encoder, decoder, tokenizer,
+                  lang=<span class="str">"zh"</span>, task=<span class="str">"transcribe"</span>, timestamps=<span class="kw">False</span>):
+    <span class="str">"""mel: (1,80,3000); 模拟 30s log-mel"""</span>
+    enc_out = encoder(mel)  <span class="cmt"># (1,750,d)</span>
+    <span class="cmt"># 构造 prompt 前缀</span>
+    sot = tokenizer.<span class="fn">encode</span>(<span class="str">"&lt;|startoftranscript|&gt;"</span>)
+    toks = sot + [tokenizer.<span class="fn">lang_to_id</span>(lang),
+                  tokenizer.<span class="fn">token_to_id</span>(<span class="str">f"&lt;|{task}|&gt;"</span>),
+                  tokenizer.<span class="fn">token_to_id</span>(
+                      <span class="str">"&lt;|timestamps|&gt;"</span> <span class="kw">if</span> timestamps <span class="kw">else</span> <span class="str">"&lt;|notimestamps|&gt;"</span>)]
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="num">448</span>):
+        logits = decoder(torch.<span class="fn">tensor</span>([toks]), enc_out)[:, -<span class="num">1</span>]
+        nxt = logits.<span class="fn">argmax</span>(-<span class="num">1</span>).<span class="fn">item</span>()
+        <span class="kw">if</span> nxt == tokenizer.<span class="fn">eot</span>: <span class="kw">break</span>
+        toks.<span class="fn">append</span>(nxt)
+    <span class="kw">return</span> tokenizer.<span class="fn">decode</span>(toks[<span class="fn">len</span>(sot)+<span class="num">2</span>+<span class="num">1</span>:])
+
+<span class="cmt"># 一个 Conv 前端实现</span>
+<span class="kw">class</span> <span class="fn">AudioFront</span>(torch.nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d=<span class="num">512</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.c1 = torch.nn.<span class="fn">Conv1d</span>(<span class="num">80</span>, d, <span class="num">3</span>, <span class="num">2</span>, <span class="num">1</span>)
+        self.c2 = torch.nn.<span class="fn">Conv1d</span>(d, d, <span class="num">3</span>, <span class="num">2</span>, <span class="num">1</span>)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">return</span> torch.<span class="fn">gelu</span>(self.c2(torch.<span class="fn">gelu</span>(self.c1(x)))).<span class="fn">transpose</span>(<span class="num">1</span>,<span class="num">2</span>)
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 6: WaveNet ========== -->
+<article class="paper-card tag-voc">
+<header>
+  <h3>6. WaveNet: A Generative Model for Raw Audio (2016)</h3>
+  <div class="meta">
+    <span class="tag tag-grn">声码器</span>
+    <span>SSW 2016 (arXiv 2016)</span>
+    <span>引用 ~10000+</span>
+    <span>Aäron van den Oord et al. (DeepMind / Google)</span>
+  </div>
+</header>
+<div class="abstract">首个能生成接近人类自然度语音的神经音频生成模型：用扩张因果卷积（dilated causal conv）直接建模原始波形 16kHz 样本点的自回归分布，证明神经网络可以合成高质量语音/音乐。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p6-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p6-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p6-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p6-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p6-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p6-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p6-problem">
+  <p>在 WaveNet 之前，语音合成要么是"拼接式"（录大量语料拼接），要么是基于信号处理的声码器（STRAIGHT/Griffin-Lim + 简单参数模型）——无法产生自然波形，声音机械。而 16kHz 波形每秒 16000 个点，直接用 RNN 自回归会太慢、LSTM 长程记忆也抓不住长结构。</p>
+  <p><b>核心创新：</b></p>
+  <ul>
+    <li><b>因果卷积（Causal Conv）：</b>t 时刻只看 t 及之前的点，保证自回归不泄露未来。</li>
+    <li><b>扩张卷积（Dilated Conv）：</b>卷积核间隔按 2 的幂次扩张（1,2,4,8,...,512），堆叠几层感受野即可指数级扩大到上千点（几十毫秒），无需很深也无需 RNN。</li>
+    <li><b>门控激活 + 残差 + skip：</b>类 LSTM 门控，每一层都加一条 skip 连接到最终输出，类似 PixelCNN。</li>
+    <li><b>μ-law 压扩 256 类 Softmax：</b>把 16-bit 样本 μ-law 压缩到 256 个 bin 做分类，比 MSE 回归稳定得多。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区：</b>"WaveNet 是 TTS 模型"——错！WaveNet <b>是声码器/音频生成模型</b>，本身不知道说什么内容，必须条件在语言学特征/梅尔谱（Tacotron2 将其作为 vocoder）；原版 WaveNet 直接自回归 16kHz 点，<b>极慢（比实时慢 10-100 倍）</b>，无法实时部署。</div>
+</div>
+<div class="tab-pnl" id="p6-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 320" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Input -->
+    <rect class="box" x="20" y="130" width="100" height="50" rx="5"/>
+    <text class="ttl" x="70" y="150" text-anchor="middle">之前波形点</text>
+    <text class="lbl" x="70" y="168" text-anchor="middle">x₁,...,x_{t-1}</text>
+    <!-- mu-law -->
+    <rect class="box" x="140" y="130" width="90" height="50" rx="5"/>
+    <text class="ttl" x="185" y="150" text-anchor="middle">μ-law + 嵌入</text>
+    <text class="lbl" x="185" y="168" text-anchor="middle">→256 dim emb</text>
+    <line class="arrow" x1="120" y1="155" x2="138" y2="155" marker-end="url(#pa6)"/>
+    <!-- Dilated causal stack -->
+    <rect x="250" y="30" width="300" height="260" rx="10" fill="#faf5ff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="400" y="55" text-anchor="middle" fill="#6d28d9">扩张因果卷积栈（k层）</text>
+    <!-- layers -->
+    <rect class="box-key" x="270" y="70" width="260" height="40" rx="5"/>
+    <text class="lbl-k" x="400" y="95" text-anchor="middle">Dilated Causal Conv, d=1  → tanh</text>
+    <rect class="box-key" x="270" y="120" width="260" height="40" rx="5"/>
+    <text class="lbl-k" x="400" y="145" text-anchor="middle">Dilated Causal Conv, d=2  → sigmoid (gate)</text>
+    <rect class="box-key" x="270" y="170" width="260" height="40" rx="5"/>
+    <text class="lbl-k" x="400" y="195" text-anchor="middle">Dilated Causal Conv, d=4  → ⊙ 门控</text>
+    <rect class="box-key" x="270" y="220" width="260" height="40" rx="5"/>
+    <text class="lbl-k" x="400" y="245" text-anchor="middle">Dilated Causal Conv, d=8,16,...,512  + Residual + Skip</text>
+    <!-- condition -->
+    <rect class="box-out" x="140" y="40" width="90" height="55" rx="5"/>
+    <text class="ttl" x="185" y="63" text-anchor="middle">条件输入 h</text>
+    <text class="lbl" x="185" y="80" text-anchor="middle">(linguistic /</text>
+    <text class="lbl" x="185" y="93" text-anchor="middle">mel spectrogram)</text>
+    <path class="arrow-key" d="M230,70 L268,90" fill="none" marker-end="url(#pap6)"/>
+    <text class="lbl-k" x="245" y="70" fill="#6d28d9">1×1 注入每层</text>
+    <line class="arrow" x1="230" y1="155" x2="268" y2="155" marker-end="url(#pa6)"/>
+    <!-- output -->
+    <rect class="box-done" x="580" y="120" width="160" height="80" rx="6"/>
+    <text class="ttl" x="660" y="145" text-anchor="middle">ReLU → 1×1 → ReLU</text>
+    <text class="ttl" x="660" y="165" text-anchor="middle">→ 1×1 → Softmax 256</text>
+    <text class="lbl" x="660" y="188" text-anchor="middle">P(x_t | x_&lt;t, h)</text>
+    <line class="arrow" x1="550" y1="155" x2="578" y2="155" marker-end="url(#pa6)"/>
+    <!-- receptive field visual -->
+    <text class="lbl" x="400" y="285" text-anchor="middle" fill="#64748b">感受野 = 1 + 2·(k-1)·Σdilation  → 仅30层即可覆盖 ~16k 样本(1s)</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p6-formula">
+  <div class="formula-block">
+    <div class="formula">p(x) = ∏_{t=1}^{T} p(x_t | x₁,...,x_{t-1}, h)</div>
+    <div class="fd"><b>自回归因子分解：</b>对每个波形点 x_t，用之前所有点 + 条件 h（如语言学/梅尔谱）预测 256 类概率。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">z = tanh(W_{f,k} * x) ⊙ σ(W_{g,k} * x + V_{g,k}^T h)</div>
+    <div class="fd"><b>门控激活单元（Gated Activation）：</b>每一层 dilated causal conv 分两路——filter（tanh）和 gate（sigmoid），逐元素相乘；<b>条件 h 通过 1×1 映射后加到 gate 支路</b>，实现全局条件控制（说什么、谁在说）。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">F(x_t) = sign(x_t) · ln(1+μ|x_t|) / ln(1+μ),  μ=255</div>
+    <div class="fd"><b>μ-law 压扩：</b>把 16-bit 波形非线性压到 [-1,1] 后量化为 256 个整数，相当于对小幅值（低幅辅音/环境声）分配更多 bin——用 256 类分类就近似建模连续分布，比直接 Gaussian/MSE 稳定得多。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p6-ablation">
+  <p>原文中文 Mandarin TTS / 英文 TTS 主观 MOS 分对比：</p>
+  <table>
+    <tr><th>模型</th><th>英文 MOS</th><th>中文 MOS</th><th>备注</th></tr>
+    <tr><td>人类录音</td><td>4.61</td><td>4.21</td><td>天花板</td></tr>
+    <tr><td>拼接式 TTS（当时最好）</td><td>4.01</td><td>3.67</td><td>-</td></tr>
+    <tr><td>HMM 参数式</td><td>3.67</td><td>-</td><td>机械</td></tr>
+    <tr><td>WaveNet 无条件</td><td>-</td><td>-</td><td>只会 babble</td></tr>
+    <tr><td>WaveNet + 语言学条件</td><td>4.21</td><td>4.08</td><td>首次接近人类</td></tr>
+    <tr><td><b>WaveNet + 额外韵律</b></td><td><b>4.53</b></td><td>-</td><td>当时最佳</td></tr>
+  </table>
+  <p><b>关键消融：</b>门控激活比 ReLU 高 ~0.2 MOS；μ-law 256-softmax 比线性回归显著好；dilation 栈深度 1→4→10→30 层，感受野越大 MOS 越高，但到 30 层后趋于饱和。</p>
+</div>
+<div class="tab-pnl" id="p6-why">
+  <p><b>1. 首次证明神经网络可以合成"接近真人"语音：</b>MOS 首次达到与真人录音差距 &lt;0.1，推翻了"NN 只能做粗合成"的成见。</p>
+  <p><b>2. Dilated Causal Conv 成为时序生成标准：</b>直接启发 ByteNet、WaveRNN、Parallel WaveNet、HiFi-GAN、甚至后来的 Stable Diffusion UNet 里的时序模块。</p>
+  <p><b>3. 开创神经声码器时代：</b>之后 Tacotron2/WaveGlow/HiFi-GAN/BigVGAN 所有现代 TTS 的"波形后端"都直接建立在 WaveNet 的思想之上。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"WaveNet 被 Parallel WaveNet/WaveGlow 取代了所以已死"——不，它是<b>所有神经声码器的老师</b>。Parallel WaveNet / WaveFlow / WaveGrad 都是用 IAF/扩散把 WaveNet 的知识蒸馏到并行模型；HiFi-GAN 的 MRF 多感受野模块本质也是 dilated conv stack。</div>
+</div>
+<div class="tab-pnl" id="p6-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="fn">CausalDilatedConv</span>(nn.Module):
+    <span class="str">"""WaveNet 单层：causal + dilated + gated + 1×1 残差/skip"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cin, cout, dilation):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.dil = dilation; r = dilation
+        <span class="cmt"># left pad r 保证因果，kernel=2</span>
+        self.conv_f = nn.<span class="fn">Conv1d</span>(cin, cout, <span class="num">2</span>, padding=r, dilation=r)
+        self.conv_g = nn.<span class="fn">Conv1d</span>(cin, cout, <span class="num">2</span>, padding=r, dilation=r)
+        self.conv_cond = nn.<span class="fn">Conv1d</span>(cin, cout, <span class="num">1</span>)  <span class="cmt"># 条件 h</span>
+        self.res_proj  = nn.<span class="fn">Conv1d</span>(cout, cin, <span class="num">1</span>)
+        self.skip_proj = nn.<span class="fn">Conv1d</span>(cout, cin, <span class="num">1</span>)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x, h):
+        <span class="cmt"># x: (B,C,T); 因果：裁剪掉右侧 padding 导致的"未来"值</span>
+        f = self.conv_f(x)[:, :, :-self.dil]
+        g = self.conv_g(x)[:, :, :-self.dil] + self.conv_cond(h)[:, :, :x.size(-<span class="num">1</span>)]
+        z = torch.<span class="fn">tanh</span>(f) * torch.<span class="fn">sigmoid</span>(g)
+        res  = self.res_proj(z) + x[:, :, :z.size(-<span class="num">1</span>)]
+        skip = self.skip_proj(z)
+        <span class="kw">return</span> res, skip
+
+<span class="cmt"># 堆叠 dilation = 1,2,4,...,512 三层重复</span>
+dilations = [<span class="num">2</span>**i <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">10</span>)] * <span class="num">3</span>  <span class="cmt"># 30层</span>
+<span class="fn">print</span>(<span class="str">"感受野 ≈"</span>, <span class="num">1</span> + <span class="num">2</span>*<span class="fn">sum</span>(dilations), <span class="str">"样本点 ≈"</span>, (<span class="num">1</span>+<span class="num">2</span>*<span class="fn">sum</span>(dilations))/<span class="num">16000</span>, <span class="str">"秒"</span>)
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 7: Tacotron 2 ========== -->
+<article class="paper-card tag-tts">
+<header>
+  <h3>7. Natural TTS Synthesis by Conditioning WaveNet on Mel Spectrogram Predictions (2017)</h3>
+  <div class="meta">
+    <span class="tag tag-org">TTS</span>
+    <span>ICASSP 2018 (arXiv 2017)</span>
+    <span>引用 ~9000+</span>
+    <span>Jonathan Shen et al. (Google)</span>
+  </div>
+</header>
+<div class="abstract">把"字符→梅尔谱"的 Seq2Seq 注意力模型和"梅尔谱→波形"的 WaveNet 声码器串联，首次实现 MOS 4.53、与真人录音差距 0.02 的端到端 TTS，确立现代 TTS"前端+声码器"两阶段范式。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p7-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p7-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p7-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p7-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p7-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p7-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p7-problem">
+  <p>Tacotron 1 用 CBHG + Grffin-Lim 重建波形，Griffin-Lim 相位估计带来"金属质感"和伪影；原始 WaveNet 需要语言学特征（音素/时长/F0）作为条件输入，要单独训练时长/F0模型，流水线长。</p>
+  <p><b>核心洞察：</b></p>
+  <ul>
+    <li><b>梅尔谱作为中介表示</b>：梅尔谱是音频的紧凑时频表示，丢掉相位但保留全部感知相关信息；用梅尔谱而不是语言学特征条件 WaveNet，既简化流程又提高自然度。</li>
+    <li><b>Location-Sensitive Attention：</b>在 Bahdanau attention 基础上加入<b>累积注意力权重</b>作为额外特征——强制注意力"向前移动不回头"，解决语音合成中常见的丢字/重复/坍缩问题。</li>
+    <li>Encoder 用 3层卷积 + BiLSTM 处理字符；Decoder 是 2层LSTM 自回归逐帧生成 mel；Post-net（5层卷积）预测残差补偿频谱细节。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区：</b>"Tacotron2 的创新是用 WaveNet"——错。真正关键是<b>梅尔谱作为中间表征 + Location-Sensitive Attention + Post-net 残差预测</b>，把"梅尔谱生成"做稳定了；WaveNet 只是后端声码器，后来都换成更快的 WaveGlow/HiFi-GAN。</div>
+</div>
+<div class="tab-pnl" id="p7-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 330" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Text -->
+    <rect class="box" x="10" y="130" width="90" height="50" rx="5"/>
+    <text class="ttl" x="55" y="150" text-anchor="middle">字符序列</text>
+    <text class="lbl" x="55" y="168" text-anchor="middle">"Hello..."</text>
+    <!-- Encoder -->
+    <rect class="box-key" x="120" y="80" width="150" height="150" rx="8"/>
+    <text class="ttl" x="195" y="105" text-anchor="middle">Encoder</text>
+    <text class="lbl" x="195" y="125" text-anchor="middle">Char Embedding</text>
+    <text class="lbl" x="195" y="142" text-anchor="middle">→ Conv1D ×3 (k=5)</text>
+    <text class="lbl" x="195" y="159" text-anchor="middle">→ BN + ReLU</text>
+    <text class="lbl-k" x="195" y="178" text-anchor="middle">→ BiLSTM ×1</text>
+    <text class="lbl" x="195" y="200" text-anchor="middle">→ Encoder memory</text>
+    <text class="lbl" x="195" y="218" text-anchor="middle">h (N_chars, d=512)</text>
+    <line class="arrow" x1="100" y1="155" x2="118" y2="155" marker-end="url(#pa7)"/>
+    <!-- Attention -->
+    <rect class="box-key" x="310" y="130" width="120" height="55" rx="5"/>
+    <text class="ttl" x="370" y="150" text-anchor="middle">Location-Sensitive</text>
+    <text class="lbl-k" x="370" y="168" text-anchor="middle">Attention</text>
+    <text class="lbl" x="370" y="180" text-anchor="middle" font-size="10">累积对齐作卷积特征</text>
+    <line class="arrow" x1="270" y1="155" x2="308" y2="155" marker-end="url(#pa7)"/>
+    <!-- Decoder -->
+    <rect class="box-out" x="460" y="40" width="170" height="240" rx="8"/>
+    <text class="ttl" x="545" y="65" text-anchor="middle">Decoder (自回归)</text>
+    <text class="lbl" x="545" y="85" text-anchor="middle">Pre-Net (2层FC, dropout)</text>
+    <text class="lbl-k" x="545" y="105" text-anchor="middle">→ 2层 LSTM (1024)</text>
+    <text class="lbl" x="545" y="125" text-anchor="middle">→ Attention → Concat</text>
+    <text class="lbl" x="545" y="143" text-anchor="middle">→ Linear → mel frame</text>
+    <text class="lbl" x="545" y="163" text-anchor="middle">(80维 × r=2~3 帧/步)</text>
+    <text class="lbl" x="545" y="185" text-anchor="middle">Stop Token prediction</text>
+    <text class="lbl" x="545" y="205" text-anchor="middle">───────────────</text>
+    <text class="lbl-k" x="545" y="225" text-anchor="middle">Post-Net (5层Conv)</text>
+    <text class="lbl" x="545" y="245" text-anchor="middle">残差修正 mel</text>
+    <text class="lbl" x="545" y="265" text-anchor="middle">→ 最终 Mel (T_frames, 80)</text>
+    <path class="arrow-key" d="M430,158 L458,158" fill="none" marker-end="url(#pap7)"/>
+    <!-- WaveNet vocoder -->
+    <rect class="box-done" x="660" y="100" width="95" height="110" rx="6"/>
+    <text class="ttl" x="707" y="125" text-anchor="middle">WaveNet</text>
+    <text class="lbl" x="707" y="145" text-anchor="middle">vocoder</text>
+    <text class="lbl" x="707" y="165" text-anchor="middle">(mel→波形)</text>
+    <text class="lbl" x="707" y="200" text-anchor="middle">24kHz 波形</text>
+    <path class="arrow" d="M630,200 L658,160" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#pa7)"/>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p7-formula">
+  <div class="formula-block">
+    <div class="formula">e_{i,j} = wᵀ tanh(W s_i + V h_j + U f_{i,j} + b)</div>
+    <div class="fd"><b>Location-Sensitive Attention 能量：</b>在标准加性注意力基础上增加 <b>U f_{i,j}</b> 项，其中 f_{i,j} 是之前累积注意力权重 Σ_{k&lt;i} α_{k,j} 经过卷积后的位置特征。这让当前对齐位置受历史对齐位置影响——强制"单调向前"，防止注意力回跳导致重复/漏字。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">y_final = y_linear + PostNet(y_linear)  （残差学习）</div>
+    <div class="fd"><b>Post-Net 残差：</b>decoder 先预测一个粗 mel（y_linear），再用 5 层卷积（含 tanh 最后一层线性）预测<b>残差</b>加到粗 mel 上，专门修正频谱细节（尤其是高频谐波），MOS 提升约 0.1。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">损失 = MEL_MSE(y_linear, y*) + MEL_MSE(y_final, y*) + BCE(stop_tokens)</div>
+    <div class="fd"><b>联合损失：</b>同时监督粗 mel 和最终 mel；stop token 是二分类，告诉 decoder 什么时候停止生成（避免死循环或早停）。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p7-ablation">
+  <p>英文 TTS MOS 对比（24kHz，内部美式英语评测）：</p>
+  <table>
+    <tr><th>系统</th><th>MOS</th><th>与真人差距</th></tr>
+    <tr><td>真人录音</td><td>4.58 ± 0.04</td><td>0</td></tr>
+    <tr><td>Tacotron 1 + Griffin-Lim</td><td>4.00 ± 0.05</td><td>-0.58</td></tr>
+    <tr><td>Tacotron2 + Griffin-Lim</td><td>4.27 ± 0.05</td><td>-0.31</td></tr>
+    <tr><td>Tacotron2 + WaveNet</td><td><b>4.53 ± 0.05</b></td><td><b>-0.05</b></td></tr>
+    <tr><td>Parametric TTS (LSTM+WaveNet)</td><td>4.03</td><td>-0.55</td></tr>
+  </table>
+  <p><b>关键消融：</b></p>
+  <ul>
+    <li>WaveNet 作为声码器比 Griffin-Lim 提高 ~0.25 MOS；</li>
+    <li>Location-sensitive attention 相比普通 Bahdanau：<b>丢字率从 5.5% 降到 1.2%</b>，长句稳定性大幅提升；</li>
+    <li>Post-net 残差预测提高 ~0.1 MOS。</li>
+  </ul>
+</div>
+<div class="tab-pnl" id="p7-why">
+  <p><b>1. 定义现代 TTS 标准范式：</b>"文本前端（字符/音素 encoder）→ 自回归 mel 生成（Seq2Seq+Attn）→ 神经声码器（WaveNet/HiFi-GAN）"——FastSpeech2/VITS 等后续所有 TTS 都沿用这个拆解。</p>
+  <p><b>2. 确立"梅尔谱作为中间表征"：</b>比直接生成波形稳定，比语言学特征通用，梅尔谱成为 TTS 领域的"通用语"。</p>
+  <p><b>3. Location-sensitive attention 成为 TTS attention 标配：</b>后续几乎所有自回归 TTS 都使用位置敏感/单调/动态卷积注意力来解决对齐稳定性。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"Tacotron2 不需要音素输入所以抛弃了语言学"——错。直接字符输入在英语这种拼音文字上可行，但中文/日文直接字符输入效果差，工业系统仍然用音素 + BERT prosody 前端；且 r=2~3 的帧步长减少解码步数是关键 trick。</div>
+</div>
+<div class="tab-pnl" id="p7-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="fn">as F</span>
+
+<span class="kw">class</span> <span class="fn">LocationSensitiveAttention</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d_enc=<span class="num">512</span>, d_dec=<span class="num">1024</span>, d_att=<span class="num">128</span>, n_filters=<span class="num">32</span>, k=<span class="num">31</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.W = nn.<span class="fn">Linear</span>(d_dec, d_att)
+        self.V = nn.<span class="fn">Linear</span>(d_enc, d_att)
+        self.F = nn.<span class="fn">Conv1d</span>(<span class="num">2</span>, n_filters, k, padding=(k-<span class="num">1</span>)//<span class="num">2</span>, bias=<span class="kw">False</span>)
+        self.U = nn.<span class="fn">Linear</span>(n_filters, d_att, bias=<span class="kw">False</span>)
+        self.v = nn.<span class="fn">Parameter</span>(torch.<span class="fn">randn</span>(d_att))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, s_prev, h, alpha_prev, alpha_cum):
+        <span class="cmt"># s_prev: (B,d_dec); h: (B,N,d_enc); alpha: (B,N)</span>
+        f = self.F(torch.<span class="fn">stack</span>([alpha_prev, alpha_cum],<span class="num">1</span>)).<span class="fn">transpose</span>(<span class="num">1</span>,<span class="num">2</span>)
+        e = torch.<span class="fn">tanh</span>(self.W(s_prev).<span class="fn">unsqueeze</span>(<span class="num">1</span>) + self.V(h) + self.U(f))
+        e = e @ self.v
+        alpha = F.<span class="fn">softmax</span>(e, dim=-<span class="num">1</span>)
+        ctx = (alpha.<span class="fn">unsqueeze</span>(-<span class="num">1</span>) * h).<span class="fn">sum</span>(<span class="num">1</span>)
+        <span class="kw">return</span> ctx, alpha
+
+<span class="cmt"># Post-Net：5 层 Conv1D + BN + tanh，最后一层线性</span>
+<span class="kw">class</span> <span class="fn">PostNet</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, mel_dim=<span class="num">80</span>, d=<span class="num">512</span>, k=<span class="num">5</span>, n=<span class="num">5</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        layers = []
+        c_in = mel_dim
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n-<span class="num">1</span>):
+            layers += [nn.<span class="fn">Conv1d</span>(c_in,d,k,padding=(k-<span class="num">1</span>)//<span class="num">2</span>), nn.<span class="fn">BatchNorm1d</span>(d), nn.<span class="fn">Tanh</span>(), nn.<span class="fn">Dropout</span>(<span class="num">0.5</span>)]
+            c_in = d
+        layers += [nn.<span class="fn">Conv1d</span>(d,mel_dim,k,padding=(k-<span class="num">1</span>)//<span class="num">2</span>), nn.<span class="fn">BatchNorm1d</span>(mel_dim), nn.<span class="fn">Dropout</span>(<span class="num">0.5</span>)]
+        self.net = nn.<span class="fn">Sequential</span>(*layers)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, mel): <span class="kw">return</span> self.net(mel)
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 8: FastSpeech 2 ========== -->
+<article class="paper-card tag-tts">
+<header>
+  <h3>8. FastSpeech 2: Fast and High-Quality End-to-End Text to Speech (2020)</h3>
+  <div class="meta">
+    <span class="tag tag-org">TTS</span>
+    <span>ICLR 2021 (arXiv 2020)</span>
+    <span>引用 ~3500+</span>
+    <span>Yi Ren et al. (Microsoft Research)</span>
+  </div>
+</header>
+<div class="abstract">抛弃自回归 attention，用基于时长预测的"前馈 Transformer"非自回归并行生成梅尔谱，同时显式预测 pitch/energy 方差信息，做到比 Tacotron2 快 200倍训练、100倍推理，质量不降反升。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p8-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p8-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p8-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p8-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p8-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p8-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p8-problem">
+  <p>FastSpeech 1 用"自回归教师模型的注意力对齐"做时长，存在 teacher-student 知识蒸馏误差（信息瓶颈），且只调节长度、没有韵律方差（pitch/energy），合成语音略"平"；Tacotron2 自回归逐帧生成慢（不能并行）、容易出现漏字/重复/attention 坍缩。</p>
+  <p><b>FastSpeech 2 核心改进：</b></p>
+  <ul>
+    <li><b>抛弃 teacher distillation：</b>直接用 Montreal Force Alignment (MFA) 得到音素-帧的真实对齐时长，避免蒸馏损失。</li>
+    <li><b>显式方差建模：</b>除了时长（duration），还用独立预测器预测 pitch（F0 连续值，连续值小波分解或直接量化）和 energy（梅尔谱帧能量），把韵律信息直接条件到 encoder 输出。</li>
+    <li><b>纯前馈 Transformer（FFT block）：</b>和 Transformer 类似但 self-attention 后是 2 层 1D Conv（而非 Linear FFN），更适合时序；encoder 与 decoder 之间通过"长度规整（Length Regulator）"把音素序列按预测时长 expand 成帧级序列。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区：</b>"FastSpeech 2 不需要对齐"——错！它的前提是<b>用 MFA 预先做强制对齐</b>得到 duration ground truth；相比 Tacotron2 自动学对齐，FastSpeech 是把对齐外置到数据预处理阶段，换取训练/推理稳定和并行速度。</div>
+</div>
+<div class="tab-pnl" id="p8-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 380" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Phoneme -->
+    <rect class="box" x="10" y="160" width="85" height="50" rx="5"/>
+    <text class="ttl" x="52" y="180" text-anchor="middle">音素序列</text>
+    <text class="lbl" x="52" y="198" text-anchor="middle">p₁ p₂ ... p_N</text>
+    <!-- Encoder -->
+    <rect class="box-key" x="115" y="120" width="140" height="130" rx="8"/>
+    <text class="ttl" x="185" y="145" text-anchor="middle">Phoneme Embedding</text>
+    <text class="ttl" x="185" y="165" text-anchor="middle">+ Pos Enc</text>
+    <text class="lbl-k" x="185" y="188" text-anchor="middle">FFT Block ×4</text>
+    <text class="lbl" x="185" y="208" text-anchor="middle">(Self-Attn + Conv1D×2)</text>
+    <text class="lbl" x="185" y="228" text-anchor="middle">音素级 hidden (N, d)</text>
+    <line class="arrow" x1="95" y1="185" x2="113" y2="185" marker-end="url(#pa8)"/>
+    <!-- Variance adaptor -->
+    <rect x="285" y="30" width="220" height="310" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="395" y="55" text-anchor="middle" fill="#c2410c">Variance Adaptor</text>
+    <!-- duration -->
+    <rect class="box-out" x="305" y="70" width="90" height="50" rx="5"/>
+    <text class="lbl-k" x="350" y="90" text-anchor="middle">Duration</text>
+    <text class="lbl" x="350" y="107" text-anchor="middle">Predictor</text>
+    <!-- pitch -->
+    <rect class="box-out" x="305" y="140" width="90" height="50" rx="5"/>
+    <text class="lbl-k" x="350" y="160" text-anchor="middle">Pitch</text>
+    <text class="lbl" x="350" y="177" text-anchor="middle">Predictor (F0)</text>
+    <!-- energy -->
+    <rect class="box-out" x="305" y="210" width="90" height="50" rx="5"/>
+    <text class="lbl-k" x="350" y="230" text-anchor="middle">Energy</text>
+    <text class="lbl" x="350" y="247" text-anchor="middle">Predictor</text>
+    <!-- LR -->
+    <rect class="box-key" x="415" y="130" width="80" height="100" rx="5"/>
+    <text class="ttl" x="455" y="155" text-anchor="middle">Length</text>
+    <text class="ttl" x="455" y="175" text-anchor="middle">Regulator</text>
+    <text class="lbl" x="455" y="195" text-anchor="middle">按 duration</text>
+    <text class="lbl" x="455" y="210" text-anchor="middle">expand →</text>
+    <text class="lbl" x="455" y="224" text-anchor="middle">(T, d)</text>
+    <!-- arrows -->
+    <path class="arrow-key" d="M255,185 L303,95" fill="none" marker-end="url(#pap8)"/>
+    <text class="lbl-k" x="275" y="130" font-size="11">对齐时长(MFA)</text>
+    <line class="arrow" x1="350" y1="120" x2="350" y2="140" marker-end="url(#pa8)"/>
+    <line class="arrow" x1="350" y1="190" x2="350" y2="210" marker-end="url(#pa8)"/>
+    <path class="arrow" d="M395,95 L415,140" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#pa8)"/>
+    <path class="arrow" d="M395,235 L415,220" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#pa8)"/>
+    <path class="arrow-key" d="M395,165 L413,165" fill="none" marker-end="url(#pap8)"/>
+    <!-- add pitch/energy into hidden after LR? Actually pitch/energy added after LR at frame level -->
+    <!-- Decoder -->
+    <rect class="box-key" x="535" y="120" width="110" height="130" rx="8"/>
+    <text class="ttl" x="590" y="145" text-anchor="middle">Mel Decoder</text>
+    <text class="lbl-k" x="590" y="165" text-anchor="middle">FFT Block ×4</text>
+    <text class="lbl" x="590" y="185" text-anchor="middle">(Self-Attn+Conv)</text>
+    <text class="lbl" x="590" y="205" text-anchor="middle">帧级 hidden (T, d)</text>
+    <text class="lbl" x="590" y="228" text-anchor="middle">→ Linear → mel (T,80)</text>
+    <line class="arrow" x1="495" y1="180" x2="533" y2="180" marker-end="url(#pa8)"/>
+    <!-- Output -->
+    <rect class="box-done" x="670" y="145" width="80" height="75" rx="5"/>
+    <text class="ttl" x="710" y="170" text-anchor="middle">Mel Spec</text>
+    <text class="lbl" x="710" y="188" text-anchor="middle">(T, 80)</text>
+    <text class="lbl" x="710" y="205" text-anchor="middle">→HiFi-GAN</text>
+    <line class="arrow" x1="645" y1="185" x2="668" y2="185" marker-end="url(#pa8)"/>
+    <!-- note -->
+    <text class="lbl" x="395" y="300" text-anchor="middle" fill="#64748b">所有 variance predictor: Conv1D×2 + Linear，输出对数域 L1 损失</text>
+    <text class="lbl" x="395" y="320" text-anchor="middle" fill="#64748b">pitch 用连续值（或 CWT），duration/pitch/energy 都在训练时用 GT，推理时用预测值</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p8-formula">
+  <div class="formula-block">
+    <div class="formula">H_phoneme = Encoder(phoneme_embed + PE)</div>
+    <div class="fd"><b>音素编码：</b>4 层 FFT Block（self-attn + 2层 Conv1D + 残差+LN），输出每个音素的语义表示。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">d̂ = DurationPredictor(H_phoneme)，   H_dur = LR(H_phoneme, d̂)</div>
+    <div class="fd"><b>长度规整：</b>Duration Predictor 预测每个音素持续多少帧（对数域 MSE 训练），Length Regulator 把第 i 个音素的 hidden 复制 d_i 份展开到帧级。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">L = λ_mel · ||M - M̂|| + λ_dur · ||log d - log d̂||₁ + λ_pitch · ||p - p̂||₁ + λ_energy · ||e - ê||₁</div>
+    <div class="fd"><b>多任务损失：</b>mel L2 + duration L1（对数域）+ pitch L1（连续 F0 或量化 CE）+ energy L1。推理时所有 variance predictor 自包含，完全并行生成整段 mel，无自回归循环。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p8-ablation">
+  <p>LJSpeech 数据集上的关键消融与对比（MOS / 推理速度）：</p>
+  <table>
+    <tr><th>模型</th><th>MOS</th><th>推理速度 (RTF)</th><th>训练步数</th></tr>
+    <tr><td>GT (录音)</td><td>4.30</td><td>-</td><td>-</td></tr>
+    <tr><td>Tacotron2 (自回归)</td><td>4.14</td><td>~0.05 (慢)</td><td>多</td></tr>
+    <tr><td>FastSpeech 1 (蒸馏)</td><td>3.94</td><td>~0.002 (快 50×)</td><td>需要教师</td></tr>
+    <tr><td>FastSpeech 2 无 pitch/energy</td><td>4.11</td><td>~0.001 (快)</td><td>少</td></tr>
+    <tr><td>FastSpeech 2 + pitch</td><td>4.21</td><td>~0.001</td><td>少</td></tr>
+    <tr><td><b>FastSpeech 2 (full)</b></td><td><b>4.26</b></td><td><b>~0.0008 (快 100×+)</b></td><td>无需教师</td></tr>
+  </table>
+  <p><b>关键结论：</b>Duration 解决长度，pitch 是韵律最关键的因素（+0.1 MOS），energy 补充能量维度让音色更饱满；pitch 用<b>连续值回归</b>比量化成 bin 做分类更好（避免 pitch 被量化成"阶梯"导致机械感）。</p>
+</div>
+<div class="tab-pnl" id="p8-why">
+  <p><b>1. 非自回归 TTS 成为工业主流：</b>FastSpeech 2 证明了"非自回归 + 显式韵律预测"不仅更快，而且比自回归更稳定（不坍缩/不重复/不跳字），成为工业部署 TTS 首选。</p>
+  <p><b>2. 显式方差建模思想：</b>将 duration/pitch/energy 等语音学可解释变量解耦，后续 FastPitch、DiffSinger、RAD-TTS、NaturalSpeech 都沿用这套思路。</p>
+  <p><b>3. Length Regulator 范式：</b>"音素级编码→时长预测→展开到帧级→帧级解码"是后来所有并行 TTS 的经典范式，简单可解释且可控（<b>直接缩放 d 就能调节语速</b>）。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"FastSpeech 2 完全端到端不需要外部工具"——实际上需要<b>MFA 做强制对齐</b>获得训练用的 duration 标签；pitch 的提取用 PYIN/YIN 等传统 DSP。真正端到端不需要对齐的是 VITS（用 MAS 单调对齐搜索在线学习）。</div>
+</div>
+<div class="tab-pnl" id="p8-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn
+
+<span class="kw">class</span> <span class="fn">VariancePredictor</span>(nn.Module):
+    <span class="str">"""Duration / Pitch / Energy Predictor：同一个架构"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, d=<span class="num">256</span>, d_inner=<span class="num">256</span>, k=<span class="num">3</span>, n=<span class="num">2</span>, dropout=<span class="num">0.5</span>):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        layers = []
+        c_in = d
+        <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(n):
+            layers += [nn.<span class="fn">Conv1d</span>(c_in,d_inner,k,padding=(k-<span class="num">1</span>)//<span class="num">2</span>),
+                       nn.<span class="fn">ReLU</span>(), nn.<span class="fn">LayerNorm</span>(d_inner), nn.<span class="fn">Dropout</span>(dropout)]
+            c_in = d_inner
+        layers += [nn.<span class="fn">Linear</span>(d_inner,<span class="num">1</span>)]
+        self.net = nn.<span class="fn">Sequential</span>(*layers)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="cmt"># x: (B, T, d) -> (B, T)</span>
+        <span class="kw">return</span> self.net(x.<span class="fn">transpose</span>(<span class="num">1</span>,<span class="num">2</span>)).<span class="fn">squeeze</span>(-<span class="num">1</span>)
+
+<span class="kw">def</span> <span class="fn">length_regulate</span>(h, dur):
+    <span class="str">"""h: (B,N,d); dur: (B,N) 每个phoneme持续帧数（整数）→ (B,T,d)"""</span>
+    out = []
+    <span class="kw">for</span> b <span class="kw">in</span> <span class="fn">range</span>(h.size(<span class="num">0</span>)):
+        segs = [h[b,i:i+<span class="num">1</span>].<span class="fn">expand</span>(<span class="fn">int</span>(dur[b,i]),-<span class="num">1</span>) <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(h.size(<span class="num">1</span>)) <span class="kw">if</span> dur[b,i]><span class="num">0</span>]
+        out.<span class="fn">append</span>(torch.<span class="fn">cat</span>(segs,<span class="num">0</span>))
+    <span class="kw">return</span> torch.<span class="fn">nn.utils.rnn.pad_sequence</span>(out, batch_first=<span class="kw">True</span>)
+
+<span class="cmt"># h_dur = length_regulate(h_phoneme, d_pred.exp().round().long())</span>
+<span class="cmt"># h_dur += pitch_emb(pitch_pred).unsqueeze(1) + energy_emb(energy_pred).unsqueeze(1)</span>
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 9: HiFi-GAN ========== -->
+<article class="paper-card tag-voc">
+<header>
+  <h3>9. HiFi-GAN: Generative Adversarial Networks for Efficient and High Fidelity Speech Synthesis (2020)</h3>
+  <div class="meta">
+    <span class="tag tag-grn">声码器</span>
+    <span>NeurIPS 2020</span>
+    <span>引用 ~4000+</span>
+    <span>Jungil Kong et al. (Kakao Enterprise)</span>
+  </div>
+</header>
+<div class="abstract">用 GAN 训练一个全卷积生成器（含多感受野融合 MRF 模块）+ 多周期/多尺度判别器（MPD+MSD），在 22kHz/44kHz 上生成音质超越 WaveNet 且能实时生成（GPU 上比实时快 100倍+），成为当前开源 TTS 标配声码器。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p9-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p9-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p9-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p9-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p9-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p9-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p9-problem">
+  <p>WaveNet 自回归太慢（不能实时）；Parallel WaveNet / WaveGlow 基于流（flow）需要教师模型蒸馏，训练复杂；MelGAN 虽然快但音质有明显伪影（发电机容量不足、判别器太弱）。</p>
+  <p><b>核心创新：</b></p>
+  <ul>
+    <li><b>生成器 G：</b>转置卷积上采样（与 hop_length 匹配把 mel 上采样回采样率）+ <b>多感受野融合模块（MRF）</b>——每个 MRF 里并行多个不同 kernel / dilation 组合的残差 dilated conv block，输出相加融合多周期特征。</li>
+    <li><b>多周期判别器（MPD）：</b>一组子判别器，各自只看波形的间隔为 [2,3,5,7,11] 的子采样，从而专门捕捉不同周期的谐波结构——这是 HiFi-GAN 音质飞跃的关键。</li>
+    <li><b>多尺度判别器（MSD）：</b>在原始波形、×½、×¼ 三个尺度上做判别，抓全局+局部。</li>
+    <li><b>损失组合：</b>GAN 损失 + Mel-Spectrogram 损失（频域 L1）+ Feature Matching 损失（判别器中间特征匹配），三管齐下。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区：</b>"HiFi-GAN 就是个 GAN，把 mel 上采样成波形"——不，真正灵魂在 <b>MPD（多周期判别器）</b>：它让生成器必须把每个基音周期的谐波都还原好，否则在对应的子采样周期上会被判别器识破。没有 MPD，纯 MSD/MelGAN 都会在浊音段产生发闷/金属音。</div>
+</div>
+<div class="tab-pnl" id="p9-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 340" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- Mel input -->
+    <rect class="box" x="10" y="130" width="90" height="60" rx="5"/>
+    <text class="ttl" x="55" y="150" text-anchor="middle">Mel Spec</text>
+    <text class="lbl" x="55" y="168" text-anchor="middle">(T, 80)</text>
+    <text class="lbl" x="55" y="182" text-anchor="middle">hop=256@22k</text>
+    <!-- Generator -->
+    <rect x="120" y="40" width="320" height="250" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="280" y="65" text-anchor="middle" fill="#047857">Generator G</text>
+    <!-- Conv pre -->
+    <rect class="box" x="140" y="80" width="100" height="36" rx="5"/>
+    <text class="lbl" x="190" y="103" text-anchor="middle">Conv1d 7→d</text>
+    <line class="arrow" x1="100" y1="160" x2="140" y2="100" marker-end="url(#pa9)"/>
+    <!-- Ups + MRF -->
+    <rect class="box-key" x="260" y="80" width="160" height="45" rx="5"/>
+    <text class="ttl" x="340" y="100" text-anchor="middle">TransConv 上采样 ×k</text>
+    <text class="lbl-k" x="340" y="117" text-anchor="middle">[8,8,2,2] 共 ×256</text>
+    <line class="arrow" x1="240" y1="98" x2="258" y2="98" marker-end="url(#pa9)"/>
+    <!-- MRF -->
+    <rect class="box-key" x="140" y="140" width="280" height="90" rx="5"/>
+    <text class="ttl" x="280" y="160" text-anchor="middle">MRF (Multi-Receptive Field Fusion)</text>
+    <text class="lbl-k" x="280" y="180" text-anchor="middle">ResBlock(k₁,dil₁) ⊕ ResBlock(k₂,dil₂) ⊕ ResBlock(k₃,dil₃)</text>
+    <text class="lbl" x="280" y="200" text-anchor="middle">每个ResBlock: dilated conv 栈残差</text>
+    <text class="lbl" x="280" y="218" text-anchor="middle">不同 kernel/dilation 并行，输出相加</text>
+    <line class="arrow" x1="340" y1="125" x2="340" y2="140" marker-end="url(#pa9)"/>
+    <text class="lbl-k" x="355" y="133" font-size="11">每个 upsample 后接一个 MRF</text>
+    <!-- Conv post -->
+    <rect class="box" x="140" y="245" width="280" height="35" rx="5"/>
+    <text class="lbl" x="280" y="267" text-anchor="middle">Conv1d 7→1 + tanh → 波形</text>
+    <line class="arrow" x1="280" y1="230" x2="280" y2="245" marker-end="url(#pa9)"/>
+    <!-- waveform output -->
+    <rect class="box-done" x="460" y="145" width="90" height="50" rx="5"/>
+    <text class="ttl" x="505" y="165" text-anchor="middle">波形</text>
+    <text class="lbl" x="505" y="182" text-anchor="middle">22/24/44 kHz</text>
+    <line class="arrow" x1="420" y1="180" x2="458" y2="170" marker-end="url(#pa9)"/>
+    <!-- Discriminators -->
+    <rect x="570" y="30" width="180" height="130" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="660" y="55" text-anchor="middle" fill="#991b1b">MPD（多周期判别器）</text>
+    <text class="lbl" x="660" y="75" text-anchor="middle">子判别器×5：p∈{2,3,5,7,11}</text>
+    <text class="lbl" x="660" y="93" text-anchor="middle">每个只看 1/p 子采样波形</text>
+    <text class="lbl-k" x="660" y="112" text-anchor="middle">→ 专门抓谐波周期伪影</text>
+    <text class="lbl" x="660" y="132" text-anchor="middle">2D Conv 看周期结构</text>
+    <path class="arrow" d="M550,175 C560,140 570,120 580,100" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#pa9)"/>
+    <rect x="570" y="185" width="180" height="100" rx="8" fill="#fff7ed" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="660" y="210" text-anchor="middle" fill="#c2410c">MSD（多尺度判别器）</text>
+    <text class="lbl" x="660" y="228" text-anchor="middle">波形 / ×½平均 / ×¼平均</text>
+    <text class="lbl" x="660" y="246" text-anchor="middle">分组Conv，判断真假</text>
+    <text class="lbl" x="660" y="264" text-anchor="middle">→ 全局相位/局部瞬态</text>
+    <path class="arrow" d="M550,190 L568,220" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#pa9)"/>
+    <!-- Loss note -->
+    <text class="lbl" x="280" y="305" text-anchor="middle" fill="#047857">L_G = λ_adv L_adv + λ_mel L_mel + λ_fm L_fm</text>
+    <text class="lbl" x="280" y="322" text-anchor="middle" fill="#047857">L_D = 对真实/生成波形在 MPD+MSD 上的 hinge 对抗损失</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p9-formula">
+  <div class="formula-block">
+    <div class="formula">G: mel (T,80) → wave (T·hop,), 通过 k 次 ConvTranspose1d(stride=k_i) 逐级上采样 + MRF 细化</div>
+    <div class="fd"><b>Generator 上采样策略：</b>上采样倍数乘积等于 hop_length（如 22050Hz, hop=256 → [8,8,2,2] 乘积 256），把时间长度恰好扩到波形长度，不需要额外插值。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">MRF(x) = Σ_k ResBlock_k(x)，ResBlock 内是多 dilation 卷积分支残差加和</div>
+    <div class="fd"><b>多感受野融合：</b>k 个 ResBlock 并行，每个 block 内部有 dilations=[1,3,5]（或 [1,3]）的 dilated conv 残差栈，覆盖不同时间跨度，最后相加——让每个时间点同时看到短/中/长上下文。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">L_G = Σ_{D∈{MPD,MSD}} [ (1-λ_fm) L_adv(G;D) + λ_fm L_fm(G;D) ] + λ_mel ||φ(real) - φ(fake)||₁</div>
+    <div class="fd"><b>组合损失：</b>对抗损失（哄过判别器）+ Feature Matching（匹配GT和假波形在判别器各层中间特征的L1，稳定训练）+ Mel-spectrogram L1 损失（φ 是 mel 变换，从频域保证声学相似度）。训练完 G 即可扔掉判别器，前向全卷积实时。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p9-ablation">
+  <p>LJSpeech 22kHz MOS / MUSHRA 对比：</p>
+  <table>
+    <tr><th>模型</th><th>MOS</th><th>实时速度 (RTF V100)</th></tr>
+    <tr><td>GT</td><td>4.51</td><td>-</td></tr>
+    <tr><td>WaveNet (AR)</td><td>4.12</td><td>慢 (~0.02)</td></tr>
+    <tr><td>WaveGlow (flow)</td><td>4.20</td><td>快 (~0.03)</td></tr>
+    <tr><td>MelGAN</td><td>3.91</td><td>很快 (~0.003)</td></tr>
+    <tr><td>HiFi-GAN (V1) 无 MPD</td><td>3.95</td><td>快</td></tr>
+    <tr><td>HiFi-GAN (V1) 无 MRF</td><td>4.05</td><td>快</td></tr>
+    <tr><td><b>HiFi-GAN V1</b></td><td><b>4.36</b></td><td><b>~0.001 (比实时快 100×)</b></td></tr>
+    <tr><td>HiFi-GAN V3 (轻量)</td><td>4.27</td><td>CPU 上实时</td></tr>
+  </table>
+  <p><b>关键消融：</b>MPD（多周期判别）贡献约 +0.4 MOS（最关键）；MRF 贡献 +0.3；Mel loss + FM loss 让训练稳定，去掉任一会 mode collapse 或伪影明显。</p>
+</div>
+<div class="tab-pnl" id="p9-why">
+  <p><b>1. 首个"高保真+实时"兼得的神经声码器：</b>音质超过 WaveNet/WaveGlow，速度比 MelGAN 还快，直接把神经声码器从"论文里好看"推到"工业落地"。</p>
+  <p><b>2. 开源 + 高质量官方权重：</b>作者开源了 LJSpeech/LibriTTS/VCTK/通用版等多权重，社区迅速基于它推出多语言/多说话人版本，是 ESPnet / NVIDIA / Coqui / Bert-VITS2 等几乎所有开源 TTS 的默认声码器。</p>
+  <p><b>3. MPD 设计被广泛沿用：</b>UnivNet、BigVGAN、SAN 等后序 GAN 声码器都保留了多周期子判别器思想（或其变体如多分辨率判别器）。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"HiFi-GAN V1 一定比 V2/V3 好"——V1/2/3 是不同容量配置：V1(80M参数, 高质量) / V2（MRF kernel/dil 较小，快）/ V3（更小、CPU 实时）；CPU/端侧部署选 V3/V2 更合适。此外通用版（UNIVERSAL_V1）能对未见 mel 分布直接泛化，但对训练域内专用模型稍差。</div>
+</div>
+<div class="tab-pnl" id="p9-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="fn">ResBlock</span>(nn.Module):
+    <span class="str">"""MRF 子 ResBlock：多层 dilated conv 残差"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, ch, k=<span class="num">3</span>, dilations=(<span class="num">1</span>,<span class="num">3</span>,<span class="num">5</span>)):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.convs = nn.<span class="fn">ModuleList</span>()
+        self.convs_gate = nn.<span class="fn">ModuleList</span>()
+        <span class="kw">for</span> d <span class="kw">in</span> dilations:
+            p = (k-<span class="num">1</span>)//<span class="num">2</span> * d
+            self.convs.<span class="fn">append</span>(nn.<span class="fn">Conv1d</span>(ch,ch,k,<span class="num">1</span>,p,dilation=d))
+            self.convs_gate.<span class="fn">append</span>(nn.<span class="fn">Conv1d</span>(ch,ch,k,<span class="num">1</span>,p,dilation=d))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">for</span> c, g <span class="kw">in</span> <span class="fn">zip</span>(self.convs, self.convs_gate):
+            r = torch.<span class="fn">tanh</span>(c(x)) * torch.<span class="fn">sigmoid</span>(g(x))  <span class="cmt"># gated</span>
+            x = x + r
+        <span class="kw">return</span> x
+
+<span class="kw">class</span> <span class="fn">MRF</span>(nn.Module):
+    <span class="str">"""多感受野融合：多个 ResBlock 输出相加"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, ch,
+                 kernels=(<span class="num">3</span>,<span class="num">7</span>,<span class="num">11</span>),
+                 dils=((<span class="num">1</span>,<span class="num">3</span>,<span class="num">5</span>),(<span class="num">1</span>,<span class="num">3</span>,<span class="num">5</span>),(<span class="num">1</span>,<span class="num">3</span>,<span class="num">5</span>))):
+        <span class="fn">super</span>().<span class="fn">__init__</span>()
+        self.blocks = nn.<span class="fn">ModuleList</span>([<span class="fn">ResBlock</span>(ch,k,d) <span class="kw">for</span> k,d <span class="kw">in</span> <span class="fn">zip</span>(kernels,dils)])
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">return</span> <span class="fn">sum</span>(b(x) <span class="kw">for</span> b <span class="kw">in</span> self.blocks) / <span class="fn">len</span>(self.blocks)
+
+<span class="cmt"># Generator 每级: ConvTranspose1d(stride=up_i) -> LeakyReLU -> MRF(ch)</span>
+<span class="cmt"># ups = [8,8,2,2] (hop=256);  ch 每级减半 (512→256→128→64→32)</span>
+</pre>
+</div>
+</article>
+
+<!-- ========== Paper 10: VITS ========== -->
+<article class="paper-card tag-tts">
+<header>
+  <h3>10. VITS: Conditional Variational Autoencoder with Adversarial Learning for End-to-End Text-to-Speech (2021)</h3>
+  <div class="meta">
+    <span class="tag tag-org">TTS</span>
+    <span>ICML 2021</span>
+    <span>引用 ~3000+</span>
+    <span>Jaehyeon Kim et al. (Kakao Enterprise)</span>
+  </div>
+</header>
+<div class="abstract">把"文本→mel"和"mel→波形"两阶段合并为一个 VAE + GAN + Flow 的端到端模型，用单调对齐搜索（MAS）在线学对齐，直接从文本到波形单阶段训练，生成质量在单说话人/多说话人上达到两阶段流水线水平。</div>
+<div class="tabs" role="tablist">
+  <button class="tab on" data-tab="p10-problem">❓ 问题动机</button>
+  <button class="tab" data-tab="p10-arch">🏗️ 架构图</button>
+  <button class="tab" data-tab="p10-formula">📐 关键公式</button>
+  <button class="tab" data-tab="p10-ablation">🔬 消融实验</button>
+  <button class="tab" data-tab="p10-why">💡 为什么经典</button>
+  <button class="tab" data-tab="p10-code">💻 手搓代码</button>
+</div>
+<div class="tab-pnl on" id="p10-problem">
+  <p>两阶段 TTS（Tacotron2/FS2 + HiFi-GAN）有两个问题：①两阶段分开训练，mel 是信息有损的中间表示（丢弃相位、过度平滑），声码器只能"猜"丢失信息；②FastSpeech2 需要外部对齐（MFA），Tacotron2 的 attention 在长句/少资源语言不稳。</p>
+  <p><b>VITS 核心创新：完全端到端 + VAE + MAS</b></p>
+  <ul>
+    <li><b>Posterior Encoder：</b>训练时从真实 mel 编码出 latent z（类似 VAE 后验）。</li>
+    <li><b>Text Encoder + Normalizing Flow（Residual Coupling Blocks）：</b>预测 z 的先验分布——但先验在"音素级序列"上，而 z 是"帧级"。通过 MAS（Monotonic Alignment Search，单调对齐全局最优搜索）在两者之间找最优硬对齐。</li>
+    <li><b>Decoder：</b>就是 HiFi-GAN 生成器（MRF + transconv upsample），直接从 z 出波形，而不是从 mel。</li>
+    <li><b>判别器：</b>复用 HiFi-GAN 的 MPD+MSD，加对抗损失让波形真实。</li>
+    <li>损失 = VAE ELBO（重构 + KL）+ GAN 损失 + Feature Matching。</li>
+  </ul>
+  <div class="myth"><b>⚠️ 常见误区：</b>"VITS 完全不需要对齐"——它用 <b>MAS（Monotonic Alignment Search）</b>在线搜索最佳单调对齐，但 MAS 假设<b>单调对齐</b>且是 Viterbi 搜索；比起 MFA 独立预处理，VITS 把对齐整合进训练循环，但不是"无对齐"。</div>
+</div>
+<div class="tab-pnl" id="p10-arch">
+  <div class="svg-box">
+  <svg viewBox="0 0 760 370" width="760" xmlns="http://www.w3.org/2000/svg"><defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#64748b"/></marker>
+    <marker id="arrow-p" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+  </defs>
+    
+    <!-- text -->
+    <rect class="box" x="10" y="30" width="90" height="50" rx="5"/>
+    <text class="ttl" x="55" y="50" text-anchor="middle">文本/音素</text>
+    <text class="lbl" x="55" y="68" text-anchor="middle">c₁..c_N</text>
+    <!-- Text Encoder -->
+    <rect class="box-key" x="120" y="20" width="140" height="70" rx="8"/>
+    <text class="ttl" x="190" y="42" text-anchor="middle">Text Encoder</text>
+    <text class="lbl-k" x="190" y="62" text-anchor="middle">Transformer/Conformer</text>
+    <text class="lbl" x="190" y="78" text-anchor="middle">→ 音素级 μ_prior, σ_prior</text>
+    <line class="arrow" x1="100" y1="55" x2="118" y2="55" marker-end="url(#pa10)"/>
+    <!-- Flow -->
+    <rect class="box-key" x="280" y="20" width="110" height="70" rx="8"/>
+    <text class="ttl" x="335" y="42" text-anchor="middle">Normalizing Flow</text>
+    <text class="lbl-k" x="335" y="60" text-anchor="middle">Residual Coupling</text>
+    <text class="lbl" x="335" y="78" text-anchor="middle">× 若干层</text>
+    <line class="arrow" x1="260" y1="55" x2="278" y2="55" marker-end="url(#pa10)"/>
+    <!-- MAS -->
+    <rect class="box-out" x="270" y="120" width="130" height="50" rx="6"/>
+    <text class="ttl" x="335" y="140" text-anchor="middle">MAS（单调对齐搜索）</text>
+    <text class="lbl" x="335" y="158" text-anchor="middle">DP 找单调硬对齐 A</text>
+    <!-- Posterior encoder -->
+    <rect class="box-key" x="10" y="200" width="140" height="80" rx="8"/>
+    <text class="ttl" x="80" y="222" text-anchor="middle">Posterior Encoder</text>
+    <text class="lbl" x="80" y="240" text-anchor="middle">输入: 真实 linear/mel</text>
+    <text class="lbl-k" x="80" y="260" text-anchor="middle">→ μ_post, σ_post</text>
+    <text class="lbl" x="80" y="275" text-anchor="middle">z ~ N(μ_post, σ_post)</text>
+    <!-- z latent -->
+    <rect class="box-done" x="420" y="120" width="100" height="50" rx="5"/>
+    <text class="ttl" x="470" y="140" text-anchor="middle">Latent z</text>
+    <text class="lbl" x="470" y="158" text-anchor="middle">帧级 (T, C)</text>
+    <!-- arrows -->
+    <path class="arrow-key" d="M390,55 L410,90 L420,120" fill="none" marker-end="url(#pap10)"/>
+    <text class="lbl-k" x="410" y="80" font-size="11">先验分布</text>
+    <path class="arrow-key" d="M335,90 L335,120" fill="none" marker-end="url(#pap10)"/>
+    <path class="arrow-key" d="M335,170 L420,170 L420,145" fill="none" marker-end="url(#pap10)"/>
+    <text class="lbl-k" x="385" y="185" font-size="11">用对齐 A 把音素级 prior 扩展到帧级</text>
+    <line class="arrow-key" x1="150" y1="240" x2="420" y2="140" marker-end="url(#pap10)"/>
+    <!-- Decoder -->
+    <rect class="box-key" x="550" y="100" width="120" height="90" rx="8"/>
+    <text class="ttl" x="610" y="125" text-anchor="middle">Decoder = HiFi-GAN</text>
+    <text class="lbl" x="610" y="143" text-anchor="middle">MRF + TransConv 上采样</text>
+    <text class="lbl-k" x="610" y="160" text-anchor="middle">直接 z → 波形</text>
+    <text class="lbl" x="610" y="178" text-anchor="middle">(不经 mel)</text>
+    <line class="arrow" x1="520" y1="145" x2="548" y2="145" marker-end="url(#pa10)"/>
+    <!-- Waveform -->
+    <rect class="box-done" x="690" y="115" width="60" height="60" rx="5"/>
+    <text class="ttl" x="720" y="140" text-anchor="middle">波形</text>
+    <text class="lbl" x="720" y="158" text-anchor="middle">22k/44k</text>
+    <line class="arrow" x1="670" y1="145" x2="688" y2="145" marker-end="url(#pa10)"/>
+    <!-- Disc -->
+    <rect x="550" y="230" width="200" height="80" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="ttl" x="650" y="255" text-anchor="middle" fill="#991b1b">Discriminator (MPD+MSD)</text>
+    <text class="lbl" x="650" y="275" text-anchor="middle">+ Feature Matching Loss</text>
+    <text class="lbl" x="650" y="292" text-anchor="middle">+ 多说话人 Spk Emb (可选)</text>
+    <path class="arrow" d="M720,175 L720,200 L650,230" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#pa10)"/>
+    <!-- KL / Reconstruction / GAN losses -->
+    <text class="lbl" x="250" y="335" text-anchor="middle" fill="#6d28d9">L = L_recon (mel-L1) + λ_kl · KL(q(z|mel)‖p(z|text,A)) + λ_adv L_adv + λ_fm L_fm</text>
+    <text class="lbl" x="250" y="355" text-anchor="middle" fill="#6d28d9">推理时 z ~ p(z|text)（Flow 变换后的先验），无需 posterior encoder，直接 Decoder → 波形</text>
+  </svg>
+  </div>
+</div>
+<div class="tab-pnl" id="p10-formula">
+  <div class="formula-block">
+    <div class="formula">A* = argmax_{A∈𝓐} Σ_{n,t} A_{n,t} · log N(z_t; μ_n, σ_n²)   （MAS）</div>
+    <div class="fd"><b>单调对齐搜索：</b>在所有单调非交叉对齐矩阵 A（A_{n,t}=1 表示第 n 个音素对齐第 t 帧）中找对数似然最大的——DP 在 O(N·T) 内完成。对齐每步更新，无需外部对齐器。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">log p(x|c) ≥ E_{q(z|x)}[log p(x|z)] − KL(q(z|x) ‖ p(z|c,A))   （ELBO）</div>
+    <div class="fd"><b>VAE 变分下界：</b>Posterior encoder 编码真波形得到 q(z|x)（含相位等全部信息）；text encoder 经 flow + MAS 得到先验 p(z|c,A)。训练时最大化 ELBO：重构项让 decoder 还原波形，KL 项让先验逼近后验（推理时仅需先验采样）。</div>
+  </div>
+  <div class="formula-block">
+    <div class="formula">f_θ ← f_θ + Normalizing Flow，使 z = f_θ(z_0)，z_0 ~ N(μ_text, σ_text²)，|det ∂f/∂z_0| 可 O(D) 算</div>
+    <div class="fd"><b>归一化流增强先验：</b>简单 Gaussian 先验表达力不够，用残差耦合块（Residual Coupling Layers）的可逆流把简单高斯变换为更复杂的多模态分布——训练时反向运行（z→z_0）算 KL，推理时正向运行（z_0→z）采样出 latent。</div>
+  </div>
+</div>
+<div class="tab-pnl" id="p10-ablation">
+  <p>LJSpeech（单说话人，22kHz）MOS 对比：</p>
+  <table>
+    <tr><th>系统</th><th>MOS</th><th>推理阶段数</th></tr>
+    <tr><td>GT</td><td>4.47</td><td>-</td></tr>
+    <tr><td>Tacotron2 + WaveGlow</td><td>4.10</td><td>2</td></tr>
+    <tr><td>Glow-TTS + HiFi-GAN</td><td>4.32</td><td>2</td></tr>
+    <tr><td>VITS w/o adv loss</td><td>3.74</td><td>1</td></tr>
+    <tr><td>VITS w/o MAS（固定对齐）</td><td>4.15</td><td>1</td></tr>
+    <tr><td>VITS w/o Flow（单高斯先验）</td><td>4.20</td><td>1</td></tr>
+    <tr><td><b>VITS (full)</b></td><td><b>4.43</b></td><td><b>1（单模型直接文本→波形）</b></td></tr>
+  </table>
+  <p><b>关键结论：</b>对抗损失带来最大 MOS 增益（+0.7，从"有模糊"到"锐利好"），MAS 比固定对齐 +0.3，Flow +0.2——三者缺一不可。</p>
+</div>
+<div class="tab-pnl" id="p10-why">
+  <p><b>1. 首个真正端到端的 TTS：</b>从文本/音素一次性出波形，取消 mel 信息瓶颈，latent z 直接编码全部声学信息（含相位），decoder 不需要"补相位"，自然度接近录音。</p>
+  <p><b>2. 统一训练框架：</b>VAE（变分）+ Flow（强先验）+ GAN（感知质量）+ MAS（对齐自学习）——把当时所有 TTS 优秀组件有机整合。</p>
+  <p><b>3. 催生大量后续工作：</b>多说话人/多语言/跨语种 VITS（YourTTS）、VITS2（改进 duration/discriminator）、Bert-VITS2（中文+多情感）、NaturalSpeech（结合 VAE+diffusion）等，开源社区几乎全部基于 VITS 二次开发。</p>
+  <div class="myth"><b>⚠️ 常见误区：</b>"VITS 不需要声码器所以更快"——不是！VITS 的 decoder <b>就是 HiFi-GAN 生成器</b>，本质上把声码器合并进模型里一起训，推理速度和单独 HiFi-GAN 同一量级；它快是因为少了"mel 自回归"的那一步（FastSpeech2 本身非自回归，所以 VITS 在速度上和 FS2+HiFi-GAN 相近，但质量更统一）。</div>
+</div>
+<div class="tab-pnl" id="p10-code">
+<pre class="code"><span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">def</span> <span class="fn">mas_search</span>(log_p: torch.Tensor):
+    <span class="str">"""单调对齐搜索（DP）——极简版
+    log_p: (N, T) 每对(n,t)的对数似然（来自 z_t 与 prior_n 的 -log NLL）
+    返回: A (N,T) 0/1 对齐矩阵
+    """</span>
+    N, T = log_p.shape
+    Q = torch.<span class="fn">full</span>((N, T), <span class="num">-1e9</span>)
+    path = torch.<span class="fn">zeros</span>((N, T), dtype=torch.long)
+    Q[<span class="num">0</span>,<span class="num">0</span>] = log_p[<span class="num">0</span>,<span class="num">0</span>]
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, T):
+        Q[<span class="num">0</span>,t] = Q[<span class="num">0</span>,t-<span class="num">1</span>] + log_p[<span class="num">0</span>,t]; path[<span class="num">0</span>,t] = <span class="num">1</span>
+    <span class="kw">for</span> n <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, N):
+        <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(n, T):
+            <span class="cmt"># 单调：来自(n-1,t-1)走"对角线"或(n,t-1)走"stay"</span>
+            stay = Q[n,t-<span class="num">1</span>]; move = Q[n-<span class="num">1</span>,t-<span class="num">1</span>]
+            <span class="kw">if</span> stay > move: Q[n,t] = stay+log_p[n,t]; path[n,t] = <span class="num">1</span>
+            <span class="kw">else</span>:           Q[n,t] = move+log_p[n,t]; path[n,t] = <span class="num">0</span>
+    A = torch.<span class="fn">zeros_like</span>(log_p); n,t = N-<span class="num">1</span>, T-<span class="num">1</span>
+    <span class="kw">while</span> n>=<span class="num">0</span> <span class="kw">and</span> t>=<span class="num">0</span>:
+        A[n,t]=<span class="num">1</span>; n -= <span class="num">1</span>-path[n,t]; t -= <span class="num">1</span>
+    <span class="kw">return</span> A
+
+<span class="kw">def</span> <span class="fn">kl_loss</span>(z, mu_q, logvar_q, mu_p, logvar_p):
+    <span class="str">"""z~N(mu_q,var_q) 与 N(mu_p,var_p) 之间的 KL，每个样本"""</span>
+    <span class="kw">return</span> <span class="num">0.5</span>*(logvar_p - logvar_q
+              + (logvar_q.<span class="fn">exp</span>()+(mu_q-mu_p).<span class="fn">pow</span>(<span class="num">2</span>))/logvar_p.<span class="fn">exp</span>()
+              - <span class="num">1</span>).<span class="fn">sum</span>(-<span class="num">1</span>)
+</pre>
+</div>
+</article>
+
+</main>
+
+<footer>
+  <div class="wrap" style="padding:1.5rem 1.25rem">
+    <p>© 2024-2026 <a href="index.html" style="color:var(--ppt)">agent-speech</a> · 📚 论文精读卡片 · 精选语音领域10篇里程碑论文</p>
+    <p style="margin-top:.3rem;font-size:.78rem">所有公式、消融结果、代码仅作教学目的，以原论文为准。</p>
+  </div>
+</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+// Tab 切换：在每个 paper-card 内部切换 .tab 和 .tab-pnl
+document.querySelectorAll('.paper-card').forEach(card => {
+  const tabs = card.querySelectorAll('.tab');
+  const panels = card.querySelectorAll('.tab-pnl');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+      tabs.forEach(t => t.classList.remove('on'));
+      panels.forEach(p => p.classList.remove('on'));
+      tab.classList.add('on');
+      const pnl = card.querySelector('#' + target);
+      if (pnl) pnl.classList.add('on');
+    });
+  });
+});
+
+// 标签筛选
+const filterBtns = document.querySelectorAll('.filter-bar .fb');
+const paperCards = document.querySelectorAll('.paper-card');
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    const f = btn.getAttribute('data-filter');
+    paperCards.forEach(card => {
+      if (f === 'all') {
+        card.classList.remove('hide');
+      } else {
+        card.classList.toggle('hide', !card.classList.contains('tag-' + f));
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

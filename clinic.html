@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🕵️ ASR 错误诊断诊所 · agent-speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ========== 诊所专属样式 ========== */
+  .meter{flex:1;height:10px;background:#f1f5f9;border-radius:999px;overflow:hidden;position:relative}
+  .meter .fill{height:100%;width:0%;background:linear-gradient(90deg,#a855f7,#7c3aed);border-radius:999px;transition:width .4s ease}
+  .score-bar .streak{font-size:.85rem;color:#64748b;margin-left:auto;white-space:nowrap}
+  .score-bar .streak b{color:#7c3aed}
+  .score-bar .btn-reset{margin-left:.5rem;padding:.4rem .8rem;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:.4rem;font-size:.85rem;cursor:pointer;font-family:inherit}
+  .score-bar .btn-reset:hover{background:#ede9fe}
+  .progress-txt{font-weight:700;font-family:Monaco,monospace;color:#1e293b;min-width:68px}
+
+  .clinic-case .q{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .case-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#7c3aed;color:#fff;font-size:.82rem;font-weight:700;flex-shrink:0}
+  .play-btn{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:.4rem;font-size:.8rem;cursor:pointer;font-family:inherit;transition:.15s}
+  .play-btn:hover{background:#ede9fe}
+  .play-btn.playing{background:#7c3aed;color:#fff}
+  .wave-canvas{width:120px;height:28px;border-radius:4px;background:#fafafa;border:1px solid #e2e8f0;display:inline-block;vertical-align:middle}
+  .clue{margin:.6rem 0;padding:.55rem .8rem;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:0 .4rem .4rem 0;font-size:.85rem;color:#78350f;cursor:pointer;user-select:none}
+  .clue summary{list-style:none;font-weight:600;display:flex;align-items:center;gap:.4rem}
+  .clue summary::-webkit-details-marker{display:none}
+  .clue .clue-body{margin-top:.4rem;padding-top:.4rem;border-top:1px dashed #fde68a;font-weight:400;line-height:1.7}
+  .opts{margin-top:.8rem}
+
+  /* 模态 */
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:1rem}
+  .modal-overlay.show{display:flex}
+  .modal-card{background:#fff;border-radius:1rem;padding:2rem 2.2rem;max-width:520px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+  .modal-card h2{font-size:1.5rem;margin-bottom:.5rem;color:#6d28d9}
+  .modal-card .final-score{font-size:2.5rem;font-weight:800;font-family:Monaco,monospace;color:#7c3aed;text-align:center;margin:1rem 0}
+  .modal-card .wrong-list{margin:1rem 0;max-height:200px;overflow-y:auto;padding:.8rem;background:#fff1f2;border-radius:.5rem;font-size:.85rem;color:#9f1239}
+  .modal-card .wrong-list li{margin:.3rem 0;list-style:disc;margin-left:1.2em}
+  .modal-card .perfect{text-align:center;color:#065f46;font-weight:600;margin:.5rem 0}
+  .modal-card .btn{margin-top:1rem;width:100%;justify-content:center;padding:.75rem;background:#7c3aed;color:#fff}
+  .modal-card .btn:hover{background:#6d28d9}
+
+  /* 速查表 */
+  .cheatsheet{margin-top:2rem;background:#fff;border:1px solid var(--border);border-radius:.7rem;padding:1.2rem 1.4rem;overflow-x:auto}
+  .cheatsheet h2{margin:0 0 1rem;font-size:1.3rem;color:#6d28d9;display:flex;align-items:center;gap:.4rem}
+  .cheatsheet table{width:100%;border-collapse:collapse;font-size:.88rem}
+  .cheatsheet th,.cheatsheet td{padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+  .cheatsheet th{background:#f5f3ff;color:#6d28d9;font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em}
+  .cheatsheet tr:last-child td{border-bottom:none}
+  .cheatsheet td:first-child{font-weight:600;color:#1e293b;white-space:nowrap}
+  .tag-cause{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.75rem;font-weight:600;margin-right:.3rem}
+  .tag-ac{background:#ddd6fe;color:#5b21b6}
+  .tag-sig{background:#bae6fd;color:#075985}
+  .tag-lm{background:#fde68a;color:#92400e}
+  .tag-env{background:#fed7aa;color:#9a3412}
+  .tag-data{background:#bbf7d0;color:#166534}
+
+  @media(max-width:640px){
+    .score-bar{flex-wrap:wrap;gap:.5rem}
+    .score-bar .streak{margin-left:0;width:100%;order:3}
+    .meter{order:4;flex-basis:100%}
+  }
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23a11 11 0 016 0c2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero"><div class="wrap">
+  <div class="crumbs"><a href="index.html">首页</a> / <a href="asr/">ASR</a> / 🕵️ 错误诊所</div>
+  <h1>🕵️ ASR 错误诊断诊所</h1>
+  <p>真实工业场景中 ASR 会把「我想去首都机场」识别成「我想去首度鸡场」……当一名语音 AI 医生，看 10 个真实病例，选对病因、给出药方，游戏化通关。每完成一题得 10 分，全对即可获得「ASR 诊断专家」称号 🏆。</p>
+</div></header>
+
+<div class="page-body">
+
+<!-- ===== 分数条 ===== -->
+<div class="score-bar" id="scoreBar">
+  <span class="progress-txt">🏥 进度 <span id="done">0</span>/10</span>
+  <span class="pct" id="pct">0%</span>
+  <div class="meter"><div class="fill" id="meterFill"></div></div>
+  <span class="streak" id="streakInfo">🔥 连胜 <b>0</b> &nbsp;|&nbsp; ⭐ 最高 <b>0</b></span>
+  <button class="btn-reset" id="resetBtn" title="重置所有病例">🔄 重置</button>
+</div>
+
+<!-- ===== 10 个病例 ===== -->
+<div id="casesWrap"></div>
+
+<!-- ===== 速查表 ===== -->
+<section class="cheatsheet">
+  <h2>📖 诊断速查表</h2>
+  <table>
+    <thead>
+      <tr><th>错误现象</th><th>可能病因类别</th><th>排查顺序</th><th>对应药方</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>高频塞擦音错（x/q/j、小/拼）</td>
+        <td><span class="tag-cause tag-ac">声学</span>儿童/高音调说话人</td>
+        <td>看录音说话人年龄 → 查 F0 分布</td>
+        <td>加入儿童语料微调；Pitch shift +2~+6 半音数据增强；提升前端采样率到 24k+</td>
+      </tr>
+      <tr>
+        <td>尾音吞掉、糊成一片、有 gee/du 音</td>
+        <td><span class="tag-cause tag-env">环境</span>远场混响（RT60>500ms）</td>
+        <td>录音距离 → 看波形拖尾 → 测 RT60</td>
+        <td>WPE 去混响；多麦波束形成（Beamforming）；训练时加 RIR 房间冲激响应增强</td>
+      </tr>
+      <tr>
+        <td>结果带 ## 乱码、爆破音失真</td>
+        <td><span class="tag-cause tag-sig">信号</span>前端 AGC 削波（clipping）</td>
+        <td>看波形是否平顶 → 查是否启用 AGC/限幅</td>
+        <td>关闭或调低 AGC；加软限幅器（limiter）；训练数据加随机 clipping 增强</td>
+      </tr>
+      <tr>
+        <td>声学相似但字错（古/股/鼓、市/事）</td>
+        <td><span class="tag-cause tag-lm">语言模型</span>同音词混淆</td>
+        <td>对比困惑度 → 查热词/领域词</td>
+        <td>注入领域热词（Context Biasing）；在领域语料上 LM finetune；LLM 重打分</td>
+      </tr>
+      <tr>
+        <td>英文词被音译成「跑温坡」类汉字</td>
+        <td><span class="tag-cause tag-data">数据</span>中英码切换（code-switch）</td>
+        <td>看词汇表是否覆盖英文 → 查混说训练集</td>
+        <td>多语言 BPE/SentencePiece；加中英混说数据；英文热词注入；联合 LM</td>
+      </tr>
+      <tr>
+        <td>「介个」「酱紫」「灰机」类音偏字错</td>
+        <td><span class="tag-cause tag-ac">声学</span>方言/口音音素偏移</td>
+        <td>判断口音来源 → 看音素混淆矩阵</td>
+        <td>口音数据微调；用 Adapter/LoRA 插入口音适配器；多口音联合建模</td>
+      </tr>
+      <tr>
+        <td>低频「轰」声、声母被吃掉</td>
+        <td><span class="tag-cause tag-env">环境</span>风噪/低频共振</td>
+        <td>看频谱低频能量 → 判断室外/骑车场景</td>
+        <td>高通滤波（~80Hz 截止）+ 谱减法；多麦风噪抵消；防风罩硬件 + 深度学习降噪</td>
+      </tr>
+      <tr>
+        <td>新词、人名地名被替换成常见字</td>
+        <td><span class="tag-cause tag-lm">OOV</span>集外词/热词缺失</td>
+        <td>查词汇表是否包含该词 → 看 LM 困惑度</td>
+        <td>热词 biasing/shallow fusion；自定义词汇表；LLM/N-gram 重打分；定期更新词表</td>
+      </tr>
+      <tr>
+        <td>「乒乓球拍卖完了」分成「乒乓球/拍卖」</td>
+        <td><span class="tag-cause tag-lm">解码</span>分词/断句歧义</td>
+        <td>看解码 lattice → 对比 N-gram/神经 LM 分数</td>
+        <td>更大上下文的 N-gram/Transformer LM；LLM 长上下文重打分；加入标点联合建模</td>
+      </tr>
+      <tr>
+        <td>电话音/8k 下全乱码、机器人声</td>
+        <td><span class="tag-cause tag-sig">信号</span>采样率不匹配</td>
+        <td>查音频实际采样率 → 对比模型训练采样率</td>
+        <td>统一重采样到模型采样率（常 16k）；多采样率联合训练；8k 电话数据增强</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 页脚 -->
+<footer style='text-align:center;padding:24px;color:#94a3b8;font-size:13px;border-top:1px solid #e2e8f0;margin-top:24px'>
+  © 2026 语音AI实验室 · 语音信号处理可视化教学平台 &nbsp;|&nbsp; 🕵️ ASR 错误诊断诊所
+</footer>
+
+</div><!-- /page-body -->
+
+<!-- 完成模态 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-card">
+    <h2>🏆 诊断完成！</h2>
+    <p style='color:#64748b;font-size:.92rem'>你已完成全部 10 个 ASR 病例诊断。</p>
+    <div class="final-score" id="finalScore">0/100</div>
+    <div id="perfectTip" class="perfect" style='display:none'>🎉 满分！你就是 ASR 界的「神医喜来乐」！</div>
+    <ul class="wrong-list" id="wrongList" style='display:none'></ul>
+    <button class="btn" id="playAgainBtn">🔄 再来一轮</button>
+  </div>
+</div>
+
+<script src="audio-utils.js"></script>
+<script>
+/* ========== 病例数据 ========== */
+const CASES = [
+  {
+    id: 1,
+    scene: '📱 儿童手表发来的语音指令',
+    truth: '我要听小苹果',
+    hyp: '我要听小<mark style="background:#fecaca">拼锅</mark>',
+    hypRaw: '我要听小拼锅',
+    clue: '录音来自 5 岁小朋友，说话尖细、语速快；手表麦克风离嘴约 20cm；背景音乐嘈杂。',
+    audioType: 'child',
+    options: [
+      { key:'A', text:'A. 儿童语音基频高 + 训练语料儿童占比不足', right:true,
+        explain:'儿童 F0 普遍在 250–400Hz（成人男 85–180Hz、女 165–255Hz），且发音器官未发育成熟；如果训练语料以成人为主，模型对高频塞擦音（p/q/x 等）判别力差，「苹(píng)果(guǒ)」→「拼(pīn)锅(guō)」是典型的高频辅音混淆。' },
+      { key:'B', text:'B. 麦克风增益过大导致削波', right:false,
+        whyWrong:'削波会产生 ## 类乱码、爆破音劈裂，不会让整句平滑地错成音近字。' },
+      { key:'C', text:'C. 混响过大（RT60>500ms）', right:false,
+        whyWrong:'混响主要让尾音拖长、音节糊在一起（如出现拖音/gee-du 类音节），不会精准替换为其他汉字。' },
+      { key:'D', text:'D. 语言模型词表过小', right:false,
+        whyWrong:'「小苹果」是常见词，词表一定会覆盖；LM 不足更常导致同音错字，而不是声学差异显著的「拼锅」。' }
+    ],
+    recipe: '药方：① 加入儿童语音数据进行微调；② 数据增强做 pitch shift +2~+6 半音模拟童声；③ 前端采样率提到 24kHz 以保留高频辅音信息。'
+  },
+  {
+    id: 2,
+    scene: '🏢 会议室远场拾音（桌底全向麦）',
+    truth: '我们下个季度计划',
+    hyp: '<del>我</del>们<mark style="background:#fecaca">下 gee du</mark>季度<u>计</u>划',
+    hypRaw: '我下gee du ji hua',
+    clue: '说话人距离麦克风约 3 米，会议室是玻璃+硬墙，无吸音处理；多人讨论场景。',
+    audioType: 'reverb',
+    options: [
+      { key:'A', text:'A. 模型过拟合导致泛化差', right:false,
+        whyWrong:'过拟合表现是训练集好测试集差，但一般是整体字错率上升，不会只在远场出现「gee du」这种典型的拖尾糊音。' },
+      { key:'B', text:'B. 房间混响（RT60>500ms）', right:true,
+        explain:'硬墙玻璃会议室 RT60 常 600–1200ms，声波多次反射叠加在直达声上，导致音节尾部拉长、辅音边界模糊，就会把「下个季度」听成拖音「gee du」。' },
+      { key:'C', text:'C. AGC 削波失真', right:false, whyWrong:'削波是波形平顶 + 乱码，不是拖尾糊音。' },
+      { key:'D', text:'D. 采样率不匹配（8k/16k）', right:false, whyWrong:'采样率不匹配会导致整体声音「机器人化」、全句乱码，不会只影响远场。' }
+    ],
+    recipe: '药方：① 前端用 WPE（Weighted Prediction Error）去混响；② 多麦克风阵列波束形成（Beamforming）指向说话人；③ 训练时在线加 RIR（房间冲激响应）做混响增强。'
+  },
+  {
+    id: 3,
+    scene: '📢 车载语音（大声喊+开大声音乐）',
+    truth: '打开空调',
+    hyp: '##<del>打</del>#<mark style="background:#fecaca">空</mark>#',
+    hypRaw: '##打#空#',
+    clue: '用户在高速上开窗大喊，车载机 AGC 自动拉满增益，音频波形可见大量平顶削顶。',
+    audioType: 'clip',
+    options: [
+      { key:'A', text:'A. 前端 AGC 导致削波（clipping）失真', right:true,
+        explain:'AGC 在大声喊+音乐背景时会把增益推到极限，超过 16bit 满幅就被硬截断为 ±1，波形变平，高频谐波爆炸，声学特征完全乱掉，输出自然变成 ## 乱码。' },
+      { key:'B', text:'B. 训练数据量不足', right:false, whyWrong:'数据不够会导致整体识别率下降，不会特殊地出现 ## 符号级乱码。' },
+      { key:'C', text:'C. 语言模型过弱', right:false, whyWrong:'LM 问题不会产生符号级乱码，乱码必然来自前端声学失真或解码崩溃。' },
+      { key:'D', text:'D. 风噪低频干扰', right:false, whyWrong:'风噪主要吃低频声母（b/p/m），识别结果是缺字、模糊，而不是 ## 劈裂。' }
+    ],
+    recipe: '药方：① 关闭/调缓 AGC，改用固定增益 + 软限幅器（limiter 压到 -3dBFS）；② 前端加 ADC 防削顶检测；③ 训练时随机加 clipping 增强让模型「见过」这种失真。'
+  },
+  {
+    id: 4,
+    scene: '📈 财经新闻播报（录音清晰、普通话标准）',
+    truth: '今年股市大涨',
+    hyp: '今年<mark style="background:#fecaca">古市</mark>大涨',
+    hypRaw: '今年古市大涨',
+    clue: '录音棚专业麦克风、安静环境、说话人是一级播音员；声学得分几乎相同。',
+    audioType: 'clean',
+    options: [
+      { key:'A', text:'A. 信噪比过低导致声学判错', right:false, whyWrong:'录音棚环境 SNR>30dB，且「股(gǔ)」和「古(gǔ)」声学完全相同，不是噪声问题。' },
+      { key:'B', text:'B. 语言模型缺热词/领域语料不足（同音混淆）', right:true,
+        explain:'「股」和「古」读音完全相同（gǔ），声学模型无法区分，必须靠语言模型的上下文概率「股市」远大于「古市」来判别。如果 LM 是通用域、未在财经语料上 finetune，就会在同音候选里选错。' },
+      { key:'C', text:'C. 麦克风频响不平坦', right:false, whyWrong:'频响问题会影响音素识别，同音词频率特征完全相同，不会被频响左右。' },
+      { key:'D', text:'D. 儿童声基频偏移', right:false, whyWrong:'本题是成人播音员。' }
+    ],
+    recipe: '药方：① 注入财经/领域热词（Context Biasing / Shallow Fusion）；② 在领域语料上 LM finetune；③ 用 LLM 做 N-best 重打分。'
+  },
+  {
+    id: 5,
+    scene: '💻 白领职场指令（中英夹杂）',
+    truth: '打开 PowerPoint',
+    hyp: '打开<mark style="background:#fecaca">跑温坡</mark>',
+    hypRaw: '打开跑温坡',
+    clue: '用户普通话中夹杂英文产品名，中文模型把英文音节强行映射到近音汉字。',
+    audioType: 'codeswitch',
+    options: [
+      { key:'A', text:'A. 麦克风坏了', right:false, whyWrong:'前面「打开」两个字识别正确，说明麦克风正常。' },
+      { key:'B', text:'B. 中英码切换：英文词汇表未覆盖 + 混说训练不足', right:true,
+        explain:'纯中文建模的系统词汇表里没有「PowerPoint」，BPE 会把英文音节强拆到中文近音 token（「跑/温/坡」近「Pa/wer/Point」）。本质是词表/语料未覆盖中英混说场景。' },
+      { key:'C', text:'C. 混响过大', right:false, whyWrong:'混响会糊尾音，不会精准音译。' },
+      { key:'D', text:'D. 采样率太低（8kHz）', right:false, whyWrong:'8k 会让高频辅音丢，但不会把英文音译成三个音近汉字。' }
+    ],
+    recipe: '药方：① 用多语 BPE/SentencePiece 词表覆盖中英文；② 加中英码切换训练数据；③ 把「PowerPoint」等热词注入热词表做 biasing。'
+  },
+  {
+    id: 6,
+    scene: '🌶️ 四川用户普通话点餐',
+    truth: '这个东西真好吃',
+    hyp: '<mark style="background:#fecaca">介</mark>个东西真好吃',
+    hypRaw: '介个东西真好吃',
+    clue: '用户是四川人，平翘舌/前后鼻音混淆，「这(zhè)」被发成「介(jiè)」类的音；环境安静。',
+    audioType: 'accent',
+    options: [
+      { key:'A', text:'A. 说话人方言口音导致音素偏移', right:true,
+        explain:'川普、港普、东北话等会系统性偏移某些音素：zh→j/g、n/l 不分、前后鼻韵 in/ing 混等。如果训练语料是标准普通话为主，这些偏移的音素会被映射到最近的标准音（zhè→jiè）。' },
+      { key:'B', text:'B. 模型太小（参数量不足）', right:false, whyWrong:'大模型对口音也会错，核心问题是语料分布，而不是参数量。' },
+      { key:'C', text:'C. 信噪比太低', right:false, whyWrong:'本题场景安静。' },
+      { key:'D', text:'D. OOV 新词问题', right:false, whyWrong:'「这」「介」都是常用字，不是新词。' }
+    ],
+    recipe: '药方：① 采集/加入带口音的数据微调；② 用 Adapter/LoRA 做口音适配模块，按口音切换；③ 多口音联合训练 + 口音 ID 条件输入。'
+  },
+  {
+    id: 7,
+    scene: '🚴 骑车/开摩托开着窗导航',
+    truth: '帮我导航到西湖',
+    hyp: '帮我<del>导航</del>##到<mark style="background:#fecaca">#</mark>湖',
+    hypRaw: '帮我##到#湖',
+    clue: '用户开着车窗高速行驶，麦克风被风吹；频谱上可见 <200Hz 大能量低频轰鸣，b/d 等声母被吃掉。',
+    audioType: 'wind',
+    options: [
+      { key:'A', text:'A. 模型学习率太大没收敛', right:false, whyWrong:'学习率问题是整体表现差，不会只在骑车开窗场景出现低频轰鸣。' },
+      { key:'B', text:'B. 风噪引起低频共振，掩盖声母', right:true,
+        explain:'风吹麦克风产生 <200Hz 的高能量湍流噪声，能量远大于语音声母（b/d/m/n 等低频声母能量本身不高），被淹没；识别结果出现「##」缺字，元音/韵母相对保留（「湖 hú」主能量在 300Hz+）。' },
+      { key:'C', text:'C. 语言模型没有地理名词', right:false, whyWrong:'「西湖」是超高频词，LM 一定覆盖；而且连「导航」这种高频词都识别失败，指向声学问题。' },
+      { key:'D', text:'D. 采样率过高', right:false, whyWrong:'采样率高只会保留更多信息，不会让识别变差。' }
+    ],
+    recipe: '药方：① 前端加 80–100Hz 高通滤波 + 谱减/DNN 风噪抑制；② 多麦克风阵列做风噪抵消；③ 硬件加防风海绵；④ 训练加风噪数据增强。'
+  },
+  {
+    id: 8,
+    scene: '🗺️ 新地名/新词出现（用户去新开通高铁站）',
+    truth: '帮我订一张去芫湖的票',
+    hyp: '帮我订一张去<mark style="background:#fecaca">芜湖</mark>的票',
+    hypRaw: '帮我订一张去芜湖的票',
+    clue: '「芫湖」是新规划区新地名，系统词表未收录；「芫(yuán/yán)」与「芜(wú)」音近；用户清晰发音。',
+    audioType: 'clean',
+    options: [
+      { key:'A', text:'A. OOV（集外词/新词）问题', right:true,
+        explain:'当用户说一个词表里没有的词（新地名、新品牌、人名），模型会在词汇表范围内找音近的常见词替代，「芫湖」→「芜湖」就是典型 OOV 替换。声学上其实已经识别对了发音，但输出层没有对应 token。' },
+      { key:'B', text:'B. 混响问题', right:false, whyWrong:'场景是安静室内手机近讲，无混响。' },
+      { key:'C', text:'C. 儿童语音', right:false, whyWrong:'成人清晰发音。' },
+      { key:'D', text:'D. 学习率太高导致训练发散', right:false, whyWrong:'训练超参不会导致特定新词被替换成近音常见词。' }
+    ],
+    recipe: '药方：① 热词 biasing / 上下文 LM 动态注入新词；② 自定义用户词表；③ 用带类 LM（Class-based LM）+ 新词列表；④ LLM/N-gram 长上下文重打分。'
+  },
+  {
+    id: 9,
+    scene: '🏓 体育新闻转写',
+    truth: '乒乓球拍卖完了',
+    hyp: '乒乓球 <mark style="background:#fecaca">拍卖</mark> 完了',
+    hypRaw: '乒乓球拍卖完了',
+    clue: '录音清晰、标准普通话；字都对了，但分词/断句错误——把「乒乓球拍/卖完了」切成了「乒乓球/拍卖/完了」。',
+    audioType: 'clean',
+    options: [
+      { key:'A', text:'A. 麦克风距离太远', right:false, whyWrong:'近讲清晰录音。' },
+      { key:'B', text:'B. 语言模型分词/断句歧义', right:true,
+        explain:'这是经典的中文分词歧义案例：字级声学都对，但「乒乓球拍/卖」和「乒乓球/拍卖」两条路径在 LM 上打分接近，若 LM 没有体育上下文（或 N-gram 阶数不够看不到「乒乓球拍」这个长距搭配），就会走错分词路径。' },
+      { key:'C', text:'C. AGC 削波', right:false, whyWrong:'无乱码、无失真。' },
+      { key:'D', text:'D. 风噪', right:false, whyWrong:'无低频轰鸣。' }
+    ],
+    recipe: '药方：① 用更长上下文的 N-gram（4-gram/5-gram）或神经 LM（Transformer-LM）；② LLM 长上下文重打分；③ 加入标点/分词联合建模；④ 领域（体育）finetune。'
+  },
+  {
+    id: 10,
+    scene: '☎️ 8kHz 电话信道 IVR',
+    truth: '喂你好',
+    hyp: '<mark style="background:#fecaca">##乱码</mark>',
+    hypRaw: '##乱码',
+    clue: '音频来自 PSTN 电话线路，实际采样率 8kHz；模型是用 16kHz 数据训练的，上线时没做重采样就直接喂了 8k 音频，频谱严重错位。',
+    audioType: 'telephone',
+    options: [
+      { key:'A', text:'A. 采样率不匹配（训练 16k、推理 8k，未重采样）', right:true,
+        explain:'声学模型的前端 filterbank 是按 16kHz 设计的，直接喂 8kHz 相当于把时间轴拉伸一倍，频率轴压一半，所有特征帧错位，输出自然乱码。' },
+      { key:'B', text:'B. 儿童语音问题', right:false, whyWrong:'成人电话音。' },
+      { key:'C', text:'C. LM 太小', right:false, whyWrong:'「喂你好」是超常用语，LM 一定覆盖；乱码是声学端崩溃，不是 LM。' },
+      { key:'D', text:'D. 过拟合', right:false, whyWrong:'过拟合是整体泛化差，不是这种特定信道下完全乱码。' }
+    ],
+    recipe: '药方：① 推理前统一重采样到模型训练采样率（通常 16kHz）；② 多采样率联合训练（8k/16k/24k 混合）；③ 加 telephone code 条件让模型知道是电话信道；④ 8k 电话数据专门增强。'
+  }
+];
+
+/* ========== 游戏状态 ========== */
+let state = {
+  answered: new Set(),
+  score: 0,
+  streak: 0,
+  best: +localStorage.getItem('clinicBest') || 0,
+  wrongs: []
+};
+
+/* ========== 渲染病例 ========== */
+const wrap = document.getElementById('casesWrap');
+
+CASES.forEach(c => {
+  const optsHtml = c.options.map(o =>
+    '<button class="opt" data-case="' + c.id + '" data-key="' + o.key + '">' + o.text + '</button>'
+  ).join('');
+
+  const div = document.createElement('div');
+  div.className = 'clinic-case';
+  div.id = 'case-' + c.id;
+  div.innerHTML =
+    '<div class="q">' +
+      '<span class="case-num">' + c.id + '</span>' +
+      '<span>' + c.scene + '</span>' +
+      '<button class="play-btn" data-case="' + c.id + '" title="合成错误音效模拟（非真实语音）">' +
+        '🔊 播放错误音' +
+      '</button>' +
+      '<canvas class="wave-canvas" data-case="' + c.id + '" width="120" height="28"></canvas>' +
+    '</div>' +
+    '<div class="grid-2" style="margin:.5rem 0">' +
+      '<div class="col" style="padding:.6rem;background:#ecfdf5;border-radius:.4rem;font-size:.9rem"><b>✅ 正确文本</b>：<br>' + c.truth + '</div>' +
+      '<div class="col" style="padding:.6rem;background:#fff1f2;border-radius:.4rem;font-size:.9rem"><b>❌ 识别结果</b>：<br>' + c.hyp + '</div>' +
+    '</div>' +
+    '<details class="clue">' +
+      '<summary>📊 录音线索（点击展开） <span style="color:#f59e0b;font-size:.75rem">▾</span></summary>' +
+      '<div class="clue-body">' + c.clue + '</div>' +
+    '</details>' +
+    '<div class="opts" data-case="' + c.id + '">' + optsHtml + '</div>' +
+    '<div class="feedback" data-case="' + c.id + '"></div>';
+  wrap.appendChild(div);
+
+  drawWaveCanvas(div.querySelector('canvas.wave-canvas[data-case="' + c.id + '"]'), c.audioType);
+});
+
+/* ========== 波形示意图 ========== */
+function drawWaveCanvas(canvas, type){
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = '#fafafa';
+  ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle = type==='clip' ? '#ef4444'
+                  : type==='wind' ? '#f97316'
+                  : type==='reverb' ? '#8b5cf6'
+                  : '#7c3aed';
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  const mid = h/2;
+  for(let x=0;x<w;x++){
+    const t = x/w;
+    const env = Math.sin(t*Math.PI);
+    let y;
+    switch(type){
+      case 'clip':
+        var raw = Math.sin(x*0.6) * env * 1.6;
+        y = mid - Math.max(-0.9, Math.min(0.9, raw)) * (h/2 - 2);
+        break;
+      case 'wind':
+        y = mid - Math.sin(x*0.2) * (h/2-2) * env * 0.9 - (Math.random()-0.5)*2;
+        break;
+      case 'reverb':
+        var rev = Math.sin(x*0.5)*Math.exp(-t*1.5) + (t>0.2 ? Math.sin(x*0.53)*0.5*Math.exp(-(t-0.2)*1.2) : 0);
+        y = mid - rev * (h/2-3);
+        break;
+      case 'child':
+        y = mid - Math.sin(x*1.3)*env*(h/2-3) + (Math.random()-0.5)*1.5;
+        break;
+      case 'telephone':
+        y = mid - Math.sin(x*0.4)*env*(h/3) + (Math.random()-0.5)*3;
+        break;
+      case 'codeswitch':
+      case 'accent':
+      default:
+        y = mid - Math.sin(x*0.7)*env*(h/2-3) + (Math.random()-0.5)*1.2;
+    }
+    if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,mid); ctx.lineTo(w,mid); ctx.stroke();
+}
+
+/* ========== 选项点击 ========== */
+document.querySelectorAll('.opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const caseId = +btn.dataset.case;
+    const key = btn.dataset.key;
+    if(state.answered.has(caseId)) return;
+    const c = CASES.find(x => x.id === caseId);
+    const chosen = c.options.find(o => o.key === key);
+    const fb = document.querySelector('.feedback[data-case="' + caseId + '"]');
+    const allOpts = document.querySelectorAll('.opt[data-case="' + caseId + '"]');
+
+    state.answered.add(caseId);
+
+    if(chosen.right){
+      btn.classList.add('right');
+      state.score += 10;
+      state.streak += 1;
+      fb.className = 'feedback show good';
+      fb.innerHTML = '<b>✅ 诊断正确！</b><br><b>病因：</b>' + chosen.explain + '<br><b>' + c.recipe + '</b>';
+    } else {
+      btn.classList.add('wrong');
+      allOpts.forEach(o => {
+        const k = o.dataset.key;
+        const op = c.options.find(x => x.key === k);
+        if(op.right) o.classList.add('right');
+      });
+      state.streak = 0;
+      state.wrongs.push({id:caseId, truth:c.truth});
+      const right = c.options.find(o => o.right);
+      fb.className = 'feedback show bad';
+      fb.innerHTML = '<b>❌ 不对，真正病因是：</b>' + right.text + '<br>' +
+        '<b>为什么不是你选的：</b>' + chosen.whyWrong + '<br>' +
+        '<b>正确解释：</b>' + right.explain + '<br>' +
+        '<b>' + c.recipe + '</b>';
+    }
+    allOpts.forEach(o => { o.disabled = true; });
+    if(state.streak > state.best){
+      state.best = state.streak;
+      localStorage.setItem('clinicBest', state.best);
+    }
+    updateScore();
+    if(state.answered.size === CASES.length){
+      setTimeout(showModal, 600);
+    } else {
+      setTimeout(() => {
+        var next = document.getElementById('case-' + (caseId+1));
+        if(next) next.scrollIntoView({behavior:'smooth', block:'center'});
+      }, 400);
+    }
+  });
+});
+
+/* ========== 分数条 ========== */
+function updateScore(){
+  const done = state.answered.size;
+  const pct = Math.round(done/CASES.length*100);
+  document.getElementById('done').textContent = done;
+  document.getElementById('pct').textContent = state.score + '分 / ' + pct + '%';
+  document.getElementById('meterFill').style.width = pct + '%';
+  document.getElementById('streakInfo').innerHTML = '🔥 连胜 <b>' + state.streak + '</b> &nbsp;|&nbsp; ⭐ 最高 <b>' + state.best + '</b>';
+}
+
+/* ========== 重置 ========== */
+function reset(){
+  state = { answered:new Set(), score:0, streak:0, best:state.best, wrongs:[] };
+  document.querySelectorAll('.opt').forEach(o => {
+    o.classList.remove('right','wrong');
+    o.disabled = false;
+  });
+  document.querySelectorAll('.feedback').forEach(f => {
+    f.className = 'feedback';
+    f.innerHTML = '';
+  });
+  document.getElementById('modal').classList.remove('show');
+  updateScore();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.getElementById('resetBtn').addEventListener('click', reset);
+document.getElementById('playAgainBtn').addEventListener('click', reset);
+
+/* ========== 模态 ========== */
+function showModal(){
+  document.getElementById('finalScore').textContent = state.score + '/100';
+  const wl = document.getElementById('wrongList');
+  const pt = document.getElementById('perfectTip');
+  if(state.wrongs.length === 0){
+    wl.style.display = 'none';
+    pt.style.display = 'block';
+  } else {
+    pt.style.display = 'none';
+    wl.style.display = 'block';
+    var items = state.wrongs.map(w => {
+      var c = CASES.find(x => x.id === w.id);
+      return '<li>病例' + w.id + '：正确「' + c.truth + '」→ 识别「' + c.hypRaw + '」</li>';
+    }).join('');
+    wl.innerHTML = '<b>错题回顾：</b>' + items;
+  }
+  document.getElementById('modal').classList.add('show');
+}
+
+/* ========== WebAudio 合成「错误音」 ========== */
+var audioCtx = null;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playErrorSound(type){
+  const ctx = getCtx();
+  if(ctx.state === 'suspended') ctx.resume();
+  const dur = 1.6;
+  const buf = ctx.createBuffer(1, ctx.sampleRate*dur, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+
+  var f0 = 160;
+  if(type==='child') f0 = 340;
+  if(type==='telephone') f0 = 140;
+
+  for(var i=0;i<d.length;i++){
+    const t = i/ctx.sampleRate;
+    const env = Math.min(1, t/0.1) * Math.max(0, 1 - (t-(dur-0.2))/0.2);
+    const phase = (t*f0) % 1;
+    var glot = phase < 0.5 ? phase*2-0.5 : 0.5-phase*2;
+    glot *= 0.5;
+    var s = glot;
+    s *= (1 + 0.6*Math.sin(2*Math.PI*700*t) + 0.3*Math.sin(2*Math.PI*1200*t));
+
+    switch(type){
+      case 'child':
+        s = glot*(1 + 0.7*Math.sin(2*Math.PI*1800*t) + 0.5*Math.sin(2*Math.PI*3200*t)) + (Math.random()-0.5)*0.05;
+        break;
+      case 'reverb':
+        s += (i>ctx.sampleRate*0.08 ? d[i-Math.floor(ctx.sampleRate*0.08)]*0.5 : 0);
+        s += (i>ctx.sampleRate*0.17 ? d[i-Math.floor(ctx.sampleRate*0.17)]*0.3 : 0);
+        s += (i>ctx.sampleRate*0.29 ? d[i-Math.floor(ctx.sampleRate*0.29)]*0.18 : 0);
+        break;
+      case 'clip':
+        s *= 4;
+        s = Math.max(-0.9, Math.min(0.9, s));
+        s += (Math.random()-0.5)*0.1;
+        break;
+      case 'wind':
+        s = s*0.3 + Math.sin(2*Math.PI*80*t)*0.7 + (Math.random()-0.5)*0.2;
+        break;
+      case 'telephone':
+        break;
+      case 'codeswitch':
+        s *= (1 + 0.4*Math.sin(2*Math.PI*900*t*1.2));
+        break;
+      case 'accent':
+        s = glot*(1 + 0.6*Math.sin(2*Math.PI*500*t) + 0.3*Math.sin(2*Math.PI*1100*t*0.9));
+        break;
+      default:
+        s += (Math.random()-0.5)*0.04;
+    }
+    d[i] = s * env * 0.35;
+  }
+
+  if(type==='telephone'){
+    const sr8 = Math.floor(ctx.sampleRate/2);
+    const small = new Float32Array(sr8*dur);
+    for(var j=0;j<small.length;j++){ small[j] = d[j*2]; }
+    for(var k=0;k<d.length;k++){
+      var idx = k/2;
+      var i0 = Math.floor(idx), i1 = Math.min(small.length-1, i0+1);
+      d[k] = small[i0]*(i1-idx) + small[i1]*(idx-i0);
+    }
+  }
+
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const g = ctx.createGain();
+  g.gain.value = 0.9;
+  src.connect(g).connect(ctx.destination);
+  src.start();
+}
+
+document.querySelectorAll('.play-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(btn.classList.contains('playing')) return;
+    const caseId = +btn.dataset.case;
+    const c = CASES.find(x => x.id === caseId);
+    btn.classList.add('playing');
+    btn.textContent = '🔊 播放中…';
+    playErrorSound(c.audioType);
+    setTimeout(() => {
+      btn.classList.remove('playing');
+      btn.textContent = '🔊 播放错误音';
+    }, 1700);
+  });
+});
+
+updateScore();
+</script>
+</body>
+</html>

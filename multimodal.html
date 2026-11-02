@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👁️‍🗨️ 跨模态联动 · Agent-Speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.nav-links a.cur3{color:#6d28d9;background:var(--ppt-l)}
+
+/* 入口卡片 */
+.entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:2.5rem}
+.entry-card{background:var(--card);border:1px solid var(--border);border-radius:.8rem;padding:1.5rem;transition:.2s;cursor:pointer;position:relative;overflow:hidden}
+.entry-card:hover{box-shadow:0 8px 24px rgba(139,92,246,.15);transform:translateY(-3px);border-color:#c4b5fd}
+.entry-card.active{border-color:#8b5cf6;background:linear-gradient(135deg,#f5f3ff,#fff)}
+.entry-card .ec-ico{font-size:2.25rem;margin-bottom:.75rem}
+.entry-card h3{font-size:1.15rem;font-weight:700;margin-bottom:.4rem;color:#6d28d9}
+.entry-card p{color:var(--muted);font-size:.9rem;line-height:1.65;margin-bottom:1rem}
+.entry-card input[type=file]{display:none}
+.entry-card .ec-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;background:#8b5cf6;color:#fff;border-radius:.5rem;font-weight:600;font-size:.88rem;border:none;cursor:pointer;font-family:inherit;transition:.15s}
+.entry-card .ec-btn:hover{background:#7c3aed}
+.entry-card .ec-btn.secondary{background:var(--ppt-l);color:#6d28d9}
+.entry-card .ec-btn.secondary:hover{background:#ede9fe}
+.entry-status{margin-top:.75rem;font-size:.82rem;color:var(--muted)}
+
+/* mm viewport */
+.mm-viewport{background:#000;border-radius:.7rem;overflow:hidden;position:relative;aspect-ratio:16/9;width:100%;margin-bottom:1rem}
+.mm-viewport video{width:100%;height:100%;object-fit:cover;display:block}
+.mm-viewport canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.mm-viewport .mm-overlay-text{position:absolute;top:12px;left:12px;background:rgba(0,0,0,.55);color:#fff;padding:.35rem .65rem;border-radius:.35rem;font-size:.8rem;font-family:Monaco,Consolas,monospace}
+.mm-viewport .lip-placeholder{position:absolute;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:.95rem;width:100%;height:100%;flex-direction:column;gap:.5rem}
+.mm-viewport .lip-placeholder .big{font-size:2.5rem}
+
+/* 实时面板布局 */
+.mm-panel{background:var(--card);border:1px solid var(--border);border-radius:.8rem;padding:1.5rem;margin-bottom:1.5rem}
+.mm-panel h3{font-size:1.1rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;color:#6d28d9}
+.realtime-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:800px){.realtime-grid,.entry-grid{grid-template-columns:1fr}.fusion-row{flex-direction:column}}
+.canvas-row{display:flex;flex-direction:column;gap:.5rem}
+.canvas-wrap{background:#0f172a;border-radius:.5rem;overflow:hidden;position:relative}
+.canvas-wrap canvas{width:100%;display:block}
+.canvas-label{position:absolute;top:6px;left:8px;color:#94a3b8;font-size:.72rem;font-family:Monaco,Consolas,monospace;text-transform:uppercase;letter-spacing:.05em}
+.stat-line{display:flex;gap:1rem;font-size:.85rem;color:var(--muted);padding:.4rem .6rem;background:#f8fafc;border-radius:.4rem;margin-top:.5rem}
+.stat-line b{color:#6d28d9;font-family:Monaco,Consolas,monospace}
+
+/* 融合架构SVG容器 */
+.fusion-row{display:flex;gap:1rem;align-items:stretch}
+.fusion-svg-box{flex:1;background:#fafafe;border:1px solid #e9e5ff;border-radius:.6rem;padding:.75rem;display:flex;align-items:center;justify-content:center}
+
+/* 架构说明 */
+.arch-block{margin:1rem 0}
+.arch-block .step{display:flex;gap:1rem;padding:.85rem 0;border-bottom:1px dashed var(--border)}
+.arch-block .step:last-child{border-bottom:none}
+.arch-block .step .sn{width:28px;height:28px;flex-shrink:0;border-radius:50%;background:var(--ppt-l);color:#6d28d9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
+.arch-block .step .sc{flex:1}
+.arch-block .step .sc h4{font-size:.95rem;font-weight:600;margin-bottom:.2rem}
+.arch-block .step .sc p{font-size:.88rem;color:var(--muted);margin:0}
+.arch-block code{background:#ede9fe;color:#6d28d9}
+
+/* 模型表格 */
+table.mm-tab{width:100%;border-collapse:collapse;background:#fff;border-radius:.6rem;overflow:hidden;border:1px solid var(--border);font-size:.88rem;margin:1rem 0}
+table.mm-tab th{background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;padding:.7rem .9rem;text-align:left;font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.03em}
+table.mm-tab td{padding:.65rem .9rem;border-top:1px solid var(--border);color:#334155}
+table.mm-tab tr:hover td{background:#faf5ff}
+table.mm-tab .mod{font-weight:600;color:#6d28d9}
+
+/* 跨站联动 */
+.cross-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin:1.5rem 0}
+.cross-card{background:linear-gradient(135deg,#f5f3ff,#fff);border:1px solid #ddd6fe;border-radius:.8rem;padding:1.5rem;transition:.2s}
+.cross-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(139,92,246,.12)}
+.cross-card h4{font-size:1.05rem;font-weight:700;margin-bottom:.5rem;color:#5b21b6;display:flex;align-items:center;gap:.4rem}
+.cross-card p{font-size:.88rem;color:#475569;line-height:1.65;margin-bottom:1rem}
+.cross-card a.btn-ext{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;background:#6d28d9;color:#fff;border-radius:.5rem;font-weight:600;font-size:.85rem;text-decoration:none;transition:.15s}
+.cross-card a.btn-ext:hover{background:#5b21b6;transform:translateX(3px)}
+
+/* callout */
+.callout{border-left:4px solid #8b5cf6;background:#f5f3ff;padding:.9rem 1.1rem;border-radius:0 .5rem .5rem 0;margin:.8rem 0}
+.callout.warn{border-left-color:#f59e0b;background:#fffbeb}
+.callout.note{border-left-color:#0ea5e9;background:#f0f9ff}
+.callout.done{border-left-color:#10b981;background:#ecfdf5}
+.callout b{color:#6d28d9}
+.callout.warn b{color:#b45309}
+.callout.note b{color:#0369a1}
+.callout.done b{color:#047857}
+.callout p{font-size:.9rem;margin:0;color:#334155;line-height:1.65}
+
+/* 融合架构内联SVG */
+.av-arch-svg{width:100%;max-width:100%;height:auto;margin:1rem 0}
+.av-arch-svg .box{fill:#fff;stroke:#8b5cf6;stroke-width:2;rx:8}
+.av-arch-svg .box-v{fill:#ede9fe;stroke:#7c3aed;stroke-width:2;rx:8}
+.av-arch-svg .box-a{fill:#e0f2fe;stroke:#0284c7;stroke-width:2;rx:8}
+.av-arch-svg .box-key{fill:#fef3c7;stroke:#d97706;stroke-width:2;rx:8}
+.av-arch-svg .box-done{fill:#d1fae5;stroke:#059669;stroke-width:2;rx:8}
+.av-arch-svg .ttl{font-size:13px;font-weight:700;fill:#1e1b4b;font-family:-apple-system,sans-serif;text-anchor:middle}
+.av-arch-svg .lbl{font-size:11px;fill:#64748b;font-family:-apple-system,sans-serif;text-anchor:middle}
+.av-arch-svg .arrow{stroke:#94a3b8;stroke-width:1.8;fill:none;marker-end:url(#arr-m)}
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="in">
+  <a href="index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
+    <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="index.html#playground">🎨 玩法</a>
+    <a href="asr/">🎤 ASR</a>
+    <a href="tts/">📢 TTS</a>
+    <a href="lab.html">🔬 Praat实验室</a>
+    <a href="vowel.html">🗣️ 元音</a>
+    <a href="tone.html">🎼 声调</a>
+    <a href="filter.html">🎚️ 滤镜</a>
+    <a href="synth.html">🧪 合成</a>
+    <a href="voice-changer.html">🎭 变声</a>
+    <a href="illusion.html">🎭 错觉</a>
+    <a href="universe.html">🌌 宇宙</a>
+    <a href="papers.html">📚 论文</a>
+    <a href="clinic.html">🕵️ 诊所</a>
+    <a href="pitfalls.html">💥 踩坑</a>
+    <a href="benchmark.html">📊 Bench</a>
+    <a href="multimodal.html" style="color:#7c3aed;background:#f5f3ff;font-weight:600">👁️ 跨模态</a>
+    <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23 2.3-.7 4.8-.7 6 0 2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
+  </div>
+</div></nav>
+
+<header class="page-hero" style="background:linear-gradient(135deg,#6d28d9,#a855f7);color:#fff">
+  <div class="wrap">
+    <h1>👁️‍🗨️ 视听多模态联动</h1>
+    <p>一段语音同时画波形、声谱图、F0/共振峰，再加上唇动关键点（用摄像头或视频），直观演示 AV-Hubert、唇读、视听一致性——让你的 ASR/TTS 站和 CV/YOLO 站真正联动起来。</p>
+  </div>
+</header>
+
+<main class="page-body">
+
+<!-- ============ 1. 入口卡片 ============ -->
+<section>
+<h2>🎬 选择入口</h2>
+<div class="entry-grid">
+  <div class="entry-card" id="ec-upload">
+    <div class="ec-ico">🎥</div>
+    <h3>上传视频分析</h3>
+    <p>上传 mp4/webm/mov 视频，canvas 实时绘制唇动区域、声谱图、波形，展示"视觉流+听觉流+融合"架构。浏览器内仅做可视化演示，不跑真ASR大模型。</p>
+    <label class="ec-btn" for="video-file">📂 选择视频文件</label>
+    <input type="file" id="video-file" accept="video/mp4,video/webm,video/quicktime,video/*">
+    <div class="ec-status" id="upload-status">支持 mp4 / webm / mov</div>
+  </div>
+  <div class="entry-card" id="ec-cam">
+    <div class="ec-ico">📹</div>
+    <h3>摄像头+麦克风实时采集</h3>
+    <p>调用 getUserMedia 同时申请 video+audio 权限，左侧实时摄像头画面（唇部ROI启发式红框随音量开合）+ 中声谱图+F0 + 下方波形，右侧融合架构动态示意。</p>
+    <button class="ec-btn" id="btn-cam">🎙️ 开启摄像头+麦克风</button>
+    <button class="ec-btn secondary" id="btn-cam-stop" style="display:none">⏹ 停止</button>
+    <div class="ec-status" id="cam-status">需授权摄像头与麦克风</div>
+  </div>
+</div>
+</section>
+
+<!-- ============ 2. 功能详细说明 ============ -->
+<section>
+<h2>🧠 为什么视觉帮助语音？</h2>
+<p>人类在面对面交流时，有 <b>40% 以上</b>的信息来自视觉——嘴唇、牙齿、舌头的位置强烈约束可能的音素。鸡尾酒会效应中，看嘴能帮大脑把目标说话人从噪声里"拽"出来。</p>
+
+<ul style="margin:1rem 0;line-height:2;padding-left:1.2em">
+  <li>🍸 <b>鸡尾酒会信噪比提升</b>：看嘴相当于提升信噪比 <b>10–15 dB</b>（视觉增强 / 视听语音分离）</li>
+  <li>🔇 <b>噪声鲁棒性</b>：在 -5 dB 噪声环境下，AV-Hubert 相比纯音频基线 WER <b>降低约 30%</b></li>
+  <li>👄 <b>静音也能懂</b>：纯视觉唇读（lip reading）在受限词表上可达 95%+ 准确率（如 LipNet 在 GRID 语料）</li>
+  <li>🧩 <b>麦格克效应（McGurk）</b>：听到 /ba/ 看到 /ga/ 时大脑会感知成 /da/——证明语音感知本身就是多模态融合</li>
+</ul>
+
+<h3 style="margin-top:2rem">🏗️ 视听融合架构</h3>
+<p>经典双流架构：<b>视觉流</b>提取唇部运动特征，<b>听觉流</b>提取声学特征，在中间或后端通过 Concat/Attention/Transformer 融合。</p>
+
+<svg class="av-arch-svg" viewBox="0 0 860 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="arr-m" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#94a3b8"/></marker>
+</defs>
+
+<!-- 视觉流 -->
+<rect class="box-v" x="20" y="30" width="110" height="50" rx="8"/>
+<text class="ttl" x="75" y="52">视频帧</text>
+<text class="lbl" x="75" y="70">唇部ROI</text>
+
+<rect class="box-v" x="160" y="30" width="130" height="50" rx="8"/>
+<text class="ttl" x="225" y="52">2D/3D CNN</text>
+<text class="lbl" x="225" y="70">ResNet18/MC3</text>
+
+<rect class="box-v" x="320" y="30" width="100" height="50" rx="8"/>
+<text class="ttl" x="370" y="52">视觉特征</text>
+<text class="lbl" x="370" y="70">v_t</text>
+
+<!-- 听觉流 -->
+<rect class="box-a" x="20" y="160" width="110" height="50" rx="8"/>
+<text class="ttl" x="75" y="182">音频波形</text>
+<text class="lbl" x="75" y="200">16kHz</text>
+
+<rect class="box-a" x="160" y="160" width="130" height="50" rx="8"/>
+<text class="ttl" x="225" y="182">Log-Mel谱图</text>
+<text class="lbl" x="225" y="200">80-dim</text>
+
+<rect class="box-a" x="320" y="160" width="100" height="50" rx="8"/>
+<text class="ttl" x="370" y="182">听觉特征</text>
+<text class="lbl" x="370" y="200">a_t (Conformer/Hubert)</text>
+
+<!-- Concat 箭头 -->
+<line class="arrow" x1="420" y1="55" x2="470" y2="110"/>
+<line class="arrow" x1="420" y1="185" x2="470" y2="140"/>
+
+<!-- 融合 -->
+<rect class="box-key" x="470" y="90" width="170" height="70" rx="8"/>
+<text class="ttl" x="555" y="112">跨模态融合</text>
+<text class="lbl" x="555" y="130">Concat + AV-Transformer</text>
+<text class="lbl" x="555" y="148">shared encoder + mask pretrain</text>
+
+<line class="arrow" x1="640" y1="125" x2="690" y2="125"/>
+
+<!-- 输出 -->
+<rect class="box-done" x="690" y="95" width="150" height="60" rx="8"/>
+<text class="ttl" x="765" y="118">CTC/Attention</text>
+<text class="lbl" x="765" y="138">输出文本 tokens</text>
+
+<!-- 训练目标 -->
+<text x="430" y="235" text-anchor="middle" font-size="12" fill="#6d28d9" font-weight="600">🎯 自监督：掩码预测（mask 掉部分视频/音频帧，预测对应token）</text>
+</svg>
+
+<h3 style="margin-top:1.5rem">📊 经典模型一览</h3>
+<table class="mm-tab">
+<thead><tr><th>模型</th><th>年份</th><th>模态</th><th>方法</th><th>性能（WER/噪声）</th><th>出处/特点</th></tr></thead>
+<tbody>
+<tr><td class="mod">AV-Hubert</td><td>2022</td><td>Audio+Video</td><td>Self-supervised shared encoder</td><td>LRW 唇读 85%</td><td>Meta，音视频统一掩码预训练</td></tr>
+<tr><td class="mod">LipNet</td><td>2016</td><td>Video only</td><td>CTC + 3D CNN</td><td>GRID 语料 95.2%</td><td>首个端到端句级唇读</td></tr>
+<tr><td class="mod">Whisper</td><td>2022</td><td>Audio only</td><td>Transformer large-scale</td><td>clean WER 2.5%</td><td>OpenAI 纯音，噪声鲁棒有限</td></tr>
+<tr><td class="mod">RAVNet</td><td>2020</td><td>A+V</td><td>Two-stream + attention</td><td>LRS2+noise ↓WER 40%</td><td>Google，音频-视觉对齐</td></tr>
+<tr><td class="mod">VisualVoice</td><td>2021</td><td>A+V</td><td>Audio-visual separation</td><td>声源分离 SDR↑</td><td>Meta，看嘴分离多个说话人</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============ 3. 实时 Demo ============ -->
+<section>
+<h2>🎮 实时 Demo</h2>
+
+<div class="mm-panel">
+<h3>🖥️ 可视化视口</h3>
+
+<div class="mm-viewport" id="mm-viewport">
+  <video id="mm-video" playsinline muted style="display:none"></video>
+  <canvas id="mm-canvas"></canvas>
+  <div class="lip-placeholder" id="mm-placeholder">
+    <div class="big">👁️‍🗨️</div>
+    <div>请在上方选择「上传视频」或「开启摄像头」</div>
+  </div>
+  <div class="mm-overlay-text" id="mm-overlay" style="display:none">RMS: 0.00 | F0: -- Hz</div>
+</div>
+
+<div class="canvas-row">
+  <div class="canvas-wrap" style="height:80px">
+    <span class="canvas-label">Waveform</span>
+    <canvas id="wave-canvas" height="80"></canvas>
+  </div>
+  <div class="canvas-wrap" style="height:120px">
+    <span class="canvas-label">Spectrogram</span>
+    <canvas id="spec-canvas" height="120"></canvas>
+  </div>
+</div>
+
+<div class="stat-line">
+  <span>模式：<b id="mode-label">未启动</b></span>
+  <span>状态：<b id="run-status">等待输入</b></span>
+  <span>唇开合度：<b id="lip-val">0%</b></span>
+</div>
+
+<div class="callout note" style="margin-top:1rem">
+<p><b>ℹ️ 说明：</b>这是演示可视化，浏览器内不跑 ASR/人脸检测模型；红框通过音频 RMS 能量启发式映射到"嘴张开度"（固定定位在画面中下部）。真实 AV-Hubert 推理需要 GPU 部署 MTCNN/YOLO-face 做人脸关键点检测 + 唇部ROI裁剪 + 3D CNN 特征提取。</p>
+</div>
+</div>
+</section>
+
+<!-- ============ 4. 跨站联动 ============ -->
+<section>
+<h2>🔗 与 agent-cv / agent-yolo 联动</h2>
+<p>真正的多模态系统不是一个站能做完的——<b>视觉前端</b>由 CV/YOLO 站负责做人脸检测、唇部关键点、ROI裁剪；<b>语音后端</b>由本 ASR/TTS 站负责声学特征提取和识别合成。两个站通过 HTTP/WebSocket 传递裁剪好的唇部帧和音频流即可。</p>
+
+<div class="cross-grid">
+  <div class="cross-card">
+    <h4>👁️ agent-cv · CV 基础站</h4>
+    <p>学习传统图像处理 → 人脸检测（MTCNN/Haar）→ 唇部ROI裁剪 → 光流法跟踪唇动 → 送唇读网络（3D CNN+CTC）。理解从像素到视觉特征 v_t 的全过程。</p>
+    <a href="https://yejinlei.github.io/agent-cv/" target="_blank" rel="noopener" class="btn-ext">👉 去 agent-cv 学CV基础</a>
+  </div>
+  <div class="cross-card">
+    <h4>🎯 agent-yolo · YOLO 检测站</h4>
+    <p>YOLO-face / YOLOv8-pose 可实时做人脸/唇部关键点检测（68点），延迟 <20ms，适合实时多模态 ASR。比 MTCNN 快一个数量级，是工程部署首选。</p>
+    <a href="https://yejinlei.github.io/agent-yolo/" target="_blank" rel="noopener" class="btn-ext">👉 去 agent-yolo 学YOLO检测</a>
+  </div>
+</div>
+
+<!-- 小架构SVG：跨站数据流 -->
+<svg class="av-arch-svg" viewBox="0 0 860 140" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arr-m2" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker></defs>
+
+<rect class="box-v" x="10" y="40" width="140" height="60" rx="8"/>
+<text class="ttl" x="80" y="65">摄像头帧</text>
+<text class="lbl" x="80" y="85">video stream</text>
+
+<line x1="150" y1="70" x2="180" y2="70" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr-m2)"/>
+
+<rect class="box-v" x="180" y="30" width="150" height="80" rx="8"/>
+<text class="ttl" x="255" y="55">YOLO-face</text>
+<text class="lbl" x="255" y="73">检测人脸+68点</text>
+<text class="lbl" x="255" y="90">裁剪唇部ROI</text>
+
+<line x1="330" y1="70" x2="370" y2="70" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr-m2)"/>
+
+<rect class="box-key" x="370" y="30" width="140" height="80" rx="8"/>
+<text class="ttl" x="440" y="55">3D CNN</text>
+<text class="lbl" x="440" y="73">提取视觉特征 v_t</text>
+<text class="lbl" x="440" y="90">(MC3/ResNet18)</text>
+
+<rect class="box-a" x="180" y="115" width="0" height="0"/>
+<rect class="box-a" x="10" y="115" width="0" height="0"/>
+
+<!-- 音频流 -->
+<rect class="box-a" x="540" y="30" width="130" height="80" rx="8"/>
+<text class="ttl" x="605" y="55">音频流</text>
+<text class="lbl" x="605" y="73">Log-Mel → Conformer</text>
+<text class="lbl" x="605" y="90">提取 a_t</text>
+
+<line x1="510" y1="70" x2="540" y2="70" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr-m2)"/>
+<line x1="670" y1="70" x2="700" y2="70" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr-m2)"/>
+
+<rect class="box-done" x="700" y="40" width="150" height="60" rx="8"/>
+<text class="ttl" x="775" y="65">Concat + Transformer</text>
+<text class="lbl" x="775" y="83">输出文本</text>
+</svg>
+</section>
+
+<!-- ============ 5. 动手实验 ============ -->
+<section>
+<h2>🧪 动手实验</h2>
+
+<div class="callout done">
+<p><b>实验 1 · 同步观察：</b>点击上方「开启摄像头+麦克风」，授权后在安静房间对着摄像头持续说"啊——"，看<b>波形振幅、声谱图低频带亮度、唇部红框高度</b>三者同步变化；换说"啊呜咿"感受不同音素的频谱与开合差异。</p>
+</div>
+
+<div class="callout warn">
+<p><b>实验 2 · 静音唇读：</b>先授权再点"停止音频"（可在系统层面静音麦克风），只做口型不发声——此时频谱一片黑、波形平直线，但你能看到红框（实际上是静音零开合）；真实唇读网络仅靠视频帧就能识别 ~50% 内容，体会"光看嘴也能懂"的难度。</p>
+</div>
+
+<div class="callout note">
+<p><b>实验 3 · 鸡尾酒会：</b>开启采集后放背景噪声（播放音乐或让旁人说话），你会看到<b>频谱被噪声大面积淹没</b>，但眼睛看嘴依然能听懂自己在说什么——这就是视觉通道为 ASR 提供的"抗噪锚点"，也是 AV-Hubert 在低 SNR 下 WER 大幅下降的核心原因。</p>
+</div>
+
+<div class="callout">
+<p><b>🔬 进阶实验：</b>上传一段有多人说话的视频，观察波形和声谱——单纯音频无法分离说话人，但若配合视频中不同嘴的开合时序，VisualVoice 等模型可实现"按嘴分离声音"（audio-visual speech separation）。</p>
+</div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">© 2025 agent-speech · 语音技术本体论研究站 · <a href="https://yejinlei.github.io/agent-cv/" target="_blank" rel="noopener">agent-cv</a> · <a href="https://yejinlei.github.io/agent-yolo/" target="_blank" rel="noopener">agent-yolo</a></div>
+</footer>
+
+<script src="audio-utils.js"></script>
+<script>
+(function(){
+  // ===== DOM =====
+  const video = document.getElementById('mm-video');
+  const canvas = document.getElementById('mm-canvas');
+  const ctx = canvas.getContext('2d');
+  const waveCv = document.getElementById('wave-canvas');
+  const waveCtx = waveCv.getContext('2d');
+  const specCv = document.getElementById('spec-canvas');
+  const specCtx = specCv.getContext('2d');
+  const placeholder = document.getElementById('mm-placeholder');
+  const overlay = document.getElementById('mm-overlay');
+  const modeLabel = document.getElementById('mode-label');
+  const runStatus = document.getElementById('run-status');
+  const lipVal = document.getElementById('lip-val');
+
+  // ===== WebAudio =====
+  let audioCtx = null;
+  let analyser = null;
+  let srcNode = null;
+  let rafId = null;
+  let mediaStream = null;
+  let mode = 'idle'; // 'upload' | 'camera' | 'idle'
+
+  // 声谱图滚动缓冲
+  let specImageData = null;
+
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function stopAll(){
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+    if(srcNode){try{srcNode.disconnect();}catch(e){}srcNode=null;}
+    if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
+    if(video.srcObject){video.srcObject=null;}
+    if(video.src && mode==='upload'){URL.revokeObjectURL(video.src);video.src='';}
+    video.style.display='none';
+    video.pause();
+    placeholder.style.display='flex';
+    overlay.style.display='none';
+    mode='idle';
+    modeLabel.textContent='未启动';
+    runStatus.textContent='已停止';
+    document.getElementById('btn-cam-stop').style.display='none';
+    document.getElementById('btn-cam').style.display='';
+    // clear canvases
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    waveCtx.fillStyle='#0f172a';waveCtx.fillRect(0,0,waveCv.width,waveCv.height);
+    specCtx.fillStyle='#0f172a';specCtx.fillRect(0,0,specCv.width,specCv.height);
+    specImageData=null;
+  }
+
+  function resizeCanvases(){
+    const dpr = window.devicePixelRatio||1;
+    // 主canvas与viewport一致
+    const vp = document.getElementById('mm-viewport');
+    const w = vp.clientWidth, h = vp.clientHeight;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    canvas.style.width = w+'px'; canvas.style.height = h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    // waveform
+    const ww = waveCv.clientWidth;
+    waveCv.width = ww*dpr; waveCv.height = 80*dpr;
+    waveCtx.setTransform(dpr,0,0,dpr,0,0);
+
+    // spec
+    const sw = specCv.clientWidth;
+    specCv.width = sw*dpr; specCv.height = 120*dpr;
+    specCtx.setTransform(dpr,0,0,dpr,0,0);
+    specImageData = null;
+  }
+  window.addEventListener('resize', ()=>{ if(mode!=='idle') resizeCanvases(); });
+
+  function computeRMS(buf){
+    let s=0;
+    for(let i=0;i<buf.length;i++){const v=(buf[i]-128)/128;s+=v*v;}
+    return Math.sqrt(s/buf.length);
+  }
+
+  // 简单 F0：用自相关/过零率启发式（复用AU.yin更准，但这里用轻量版）
+  function estimateF0(floatBuf, sr){
+    if(!window.AU || !AU.yin) return 0;
+    // 取一帧 ~1024
+    const N = Math.min(1024, floatBuf.length);
+    const frame = floatBuf.slice(0, N);
+    const r = AU.yin(frame, sr, 0.15, 70, 400);
+    return r.voiced ? Math.round(r.f0) : 0;
+  }
+
+  function getFloatTimeData(){
+    const td = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(td);
+    const f = new Float32Array(td.length);
+    for(let i=0;i<td.length;i++) f[i]=(td[i]-128)/128;
+    return {td, f};
+  }
+
+  function drawFrame(){
+    rafId = requestAnimationFrame(drawFrame);
+    const W = canvas.width/(window.devicePixelRatio||1);
+    const H = canvas.height/(window.devicePixelRatio||1);
+
+    // 1. 画视频帧
+    ctx.drawImage(video, 0, 0, W, H);
+
+    // 2. RMS & F0
+    const {td, f} = getFloatTimeData();
+    const rms = computeRMS(td);
+    // lip open 0~1，带平滑
+    const target = Math.min(1, rms*5); // 放大系数
+    lipOpen = lipOpen*0.7 + target*0.3;
+    const f0 = estimateF0(f, audioCtx.sampleRate);
+
+    // 3. 画唇部红框（启发式：画面中下部）
+    const lipX = W*0.35;
+    const lipY = H*0.7;
+    const lipW = W*0.3;
+    const minH = H*0.04;
+    const maxH = H*0.18;
+    const lipH = minH + (maxH-minH)*lipOpen;
+    ctx.strokeStyle = 'rgba(239,68,68,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(lipX, lipY - lipH/2, lipW, lipH);
+    // 角点
+    ctx.fillStyle = 'rgba(239,68,68,0.9)';
+    [[0,0],[1,0],[0,1],[1,1]].forEach(([dx,dy])=>{
+      ctx.beginPath();
+      ctx.arc(lipX+dx*lipW, lipY - lipH/2 + dy*lipH, 3, 0, Math.PI*2);
+      ctx.fill();
+    });
+    // 标签
+    ctx.fillStyle = 'rgba(239,68,68,0.95)';
+    ctx.font = '11px Monaco,Consolas,monospace';
+    ctx.fillText('LIP ROI', lipX, lipY - lipH/2 - 6);
+
+    // 4. 波形
+    const ww = waveCv.clientWidth, wh = 80;
+    waveCtx.fillStyle = 'rgba(15,23,42,0.2)';
+    waveCtx.fillRect(0,0,ww,wh);
+    waveCtx.strokeStyle = '#a78bfa';
+    waveCtx.lineWidth = 1.5;
+    waveCtx.beginPath();
+    const step = Math.ceil(td.length/ww);
+    for(let x=0;x<ww;x++){
+      const i = x*step;
+      const v = (td[i]-128)/128;
+      const y = wh/2 + v*wh/2*0.9;
+      if(x===0) waveCtx.moveTo(x,y); else waveCtx.lineTo(x,y);
+    }
+    waveCtx.stroke();
+
+    // 5. 声谱图（瀑布：左新右移）
+    const sw = specCv.clientWidth, sh = 120;
+    const fftSize = analyser.frequencyBinCount;
+    const freq = new Uint8Array(fftSize);
+    analyser.getByteFrequencyData(freq);
+
+    // 将现有内容右移1像素
+    const img = specCtx.getImageData(1, 0, sw-1, sh);
+    specCtx.putImageData(img, 0, 0);
+    // 在最左列画新数据（低频在下，高频在上——反转更直观）
+    const col = specCtx.createImageData(1, sh);
+    // 实际映射：显示 0~4kHz（语音主要能量）
+    const binMax = Math.min(fftSize, Math.floor(4000/(audioCtx.sampleRate/2)*fftSize));
+    for(let y=0;y<sh;y++){
+      const binIdx = Math.floor((sh-1-y)/sh * binMax);
+      const v = freq[binIdx]/255;
+      // viridis-ish 色
+      let r,g,b;
+      if(v<0.2){r=10;g=15;b=40;}
+      else if(v<0.5){r=60;g=60+v*180;b=200-v*150;}
+      else if(v<0.8){r=60+v*200;g=180;b=80;}
+      else{r=255;g=240;b=100;}
+      const i=y*4;
+      col.data[i]=r;col.data[i+1]=g;col.data[i+2]=b;col.data[i+3]=255;
+    }
+    specCtx.putImageData(col, 0, 0);
+
+    // 6. overlay 数字
+    overlay.textContent = `RMS: ${rms.toFixed(2)} | F0: ${f0>0?f0+' Hz':'--'} | lip: ${(lipOpen*100).toFixed(0)}%`;
+    lipVal.textContent = (lipOpen*100).toFixed(0)+'%';
+  }
+
+  let lipOpen = 0;
+
+  function startAnalyserFromSource(){
+    ensureAudioCtx();
+    if(analyser){try{analyser.disconnect();}catch(e){}}
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.6;
+    srcNode.connect(analyser);
+    // 注意：不 connect 到 destination（避免摄像头回声/视频自放音；用户muted）
+    resizeCanvases();
+    // 初始化spec背景
+    specCtx.fillStyle='#0f172a';specCtx.fillRect(0,0,specCv.clientWidth,120);
+    waveCtx.fillStyle='#0f172a';waveCtx.fillRect(0,0,waveCv.clientWidth,80);
+    placeholder.style.display='none';
+    overlay.style.display='';
+    video.style.display='block';
+    video.play();
+    drawFrame();
+  }
+
+  // ===== 上传视频 =====
+  document.getElementById('video-file').addEventListener('change', function(e){
+    const f = e.target.files[0];
+    if(!f) return;
+    stopAll();
+    mode = 'upload';
+    document.getElementById('ec-upload').classList.add('active');
+    document.getElementById('ec-cam').classList.remove('active');
+    modeLabel.textContent='视频分析';
+    runStatus.textContent='加载中...';
+    const url = URL.createObjectURL(f);
+    video.src = url;
+    video.muted = false; // 需要声音
+    video.loop = true;
+    video.crossOrigin = 'anonymous';
+    ensureAudioCtx();
+    video.addEventListener('loadedmetadata', ()=>{
+      if(srcNode){try{srcNode.disconnect();}catch(e){}}
+      srcNode = audioCtx.createMediaElementSource(video);
+      startAnalyserFromSource();
+      runStatus.textContent='播放中：'+f.name;
+      document.getElementById('upload-status').textContent='✅ 已加载：'+f.name;
+    }, {once:true});
+  });
+
+  // ===== 摄像头 =====
+  document.getElementById('btn-cam').addEventListener('click', async ()=>{
+    try{
+      stopAll();
+      runStatus.textContent='请求权限中...';
+      mediaStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+      mode = 'camera';
+      document.getElementById('ec-cam').classList.add('active');
+      document.getElementById('ec-upload').classList.remove('active');
+      modeLabel.textContent='实时采集';
+      runStatus.textContent='采集已开启';
+      video.srcObject = mediaStream;
+      video.muted = true; // 防止自激啸叫
+      ensureAudioCtx();
+      const audioTracks = mediaStream.getAudioTracks();
+      if(audioTracks.length>0){
+        srcNode = audioCtx.createMediaStreamSource(mediaStream);
+      }
+      document.getElementById('btn-cam').style.display='none';
+      document.getElementById('btn-cam-stop').style.display='';
+      startAnalyserFromSource();
+    }catch(err){
+      runStatus.textContent='❌ '+err.message;
+      alert('无法访问摄像头/麦克风：'+err.message);
+    }
+  });
+
+  document.getElementById('btn-cam-stop').addEventListener('click', stopAll);
+
+  // 初始 size
+  requestAnimationFrame(()=>{
+    resizeCanvases();
+    waveCtx.fillStyle='#0f172a';waveCtx.fillRect(0,0,waveCv.clientWidth,80);
+    specCtx.fillStyle='#0f172a';specCtx.fillRect(0,0,specCv.clientWidth,120);
+  });
+})();
+</script>
+</body>
+</html>
