@@ -1,948 +1,499 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASR 语音识别 · Agent-Speech</title>
-<script src="https://aisearch-task.bj.bcebos.com/static/tailwindcss/3.4.17/tailwind.min.js"></script>
-<script src="https://aisearch-task.bj.bcebos.com/static/echarts/5.6.0/echarts.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js"></script>
+<title>ASR · 语音识别研究站 | Agent-Speech</title>
+<link rel="stylesheet" href="../style.css">
 <style>
-:root {
-  --primary: #0ea5e9;
-  --primary-dark: #0284c7;
-  --primary-light: #38bdf8;
-  --bg: #f8fafc;
-  --text: #1e293b;
-  --text-light: #64748b;
-  --border: #e2e8f0;
-  --code-bg: #0f172a;
-}
-html { scroll-behavior: smooth; }
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1400px; margin: 0 auto; }
-.sidebar {
-  position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
-  overflow-y: auto;
-  padding: 2rem 1rem;
-  border-right: 1px solid var(--border);
-  background: white;
-}
-.sidebar h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 600; margin: 1.5rem 0 0.5rem; padding-left: 1rem; }
-.sidebar h3:first-child { margin-top: 0; }
-.sidebar a {
-  display: block;
-  padding: 0.4rem 1rem;
-  font-size: 0.875rem;
-  color: var(--text-light);
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-}
-.sidebar a:hover { background: #f0f9ff; color: var(--primary); }
-.sidebar a.active { background: #e0f2fe; color: var(--primary-dark); font-weight: 500; }
-.main-content { padding: 2rem 3rem; min-height: calc(100vh - 64px); }
-.top-nav {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-}
-.top-nav-inner {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.125rem; }
-.nav-links { display: flex; gap: 2rem; align-items: center; }
-.nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--text-light); transition: color 0.2s; }
-.nav-links a:hover, .nav-links a.active { color: var(--primary); }
-h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
-h2 { font-size: 1.875rem; font-weight: 700; margin: 3rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-h2:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
-h3 { font-size: 1.25rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--text); }
-h4 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-p { line-height: 1.8; color: #475569; margin-bottom: 1rem; }
-.card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin: 1rem 0;
-}
-.code-block {
-  background: var(--code-bg);
-  color: #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 1.25rem;
-  font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
-  overflow-x: auto;
-  line-height: 1.7;
-  margin: 1rem 0;
-}
-.code-comment { color: #64748b; }
-.code-keyword { color: #7dd3fc; }
-.code-string { color: #86efac; }
-.code-func { color: #fbbf24; }
-.inline-code {
-  background: #f1f5f9;
-  color: #0369a1;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  font-family: "SF Mono", Menlo, monospace;
-  font-size: 0.875em;
-}
-.tag {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-right: 0.5rem;
-}
-.tag-blue { background: #e0f2fe; color: #0369a1; }
-.tag-green { background: #dcfce7; color: #15803d; }
-.tag-yellow { background: #fef9c3; color: #854d0e; }
-.tag-purple { background: #f3e8ff; color: #7c3aed; }
-.formula-box {
-  background: #f0f9ff;
-  border-left: 4px solid var(--primary);
-  padding: 1rem 1.5rem;
-  border-radius: 0 0.5rem 0.5rem 0;
-  margin: 1rem 0;
-}
-.math-block { text-align: center; margin: 0.75rem 0; }
-.callout {
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
-  padding: 1rem 1.5rem;
-  border-radius: 0 0.5rem 0.5rem 0;
-  margin: 1rem 0;
-}
-.callout-blue { background: #e0f2fe; border-left-color: var(--primary); }
-.callout-green { background: #dcfce7; border-left-color: #22c55e; }
-.callout-title { font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-.architecture-diagram {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 0.75rem;
-  padding: 2rem;
-  margin: 1.5rem 0;
-  text-align: center;
-  font-family: "SF Mono", Menlo, monospace;
-  font-size: 0.8rem;
-  line-height: 1.6;
-  white-space: pre;
-  overflow-x: auto;
-}
-.tab-group { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
-.tab-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  background: white;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-.tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-.model-card {
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: white;
-  margin: 1rem 0;
-}
-.model-header {
-  padding: 1rem 1.5rem;
-  background: linear-gradient(90deg, #f0f9ff, white);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.model-body { padding: 1.25rem 1.5rem; }
-.timeline-year {
-  display: inline-block;
-  background: var(--primary);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-right: 0.75rem;
-}
-ul.styled-list { padding-left: 1.5rem; margin-bottom: 1rem; }
-ul.styled-list li { margin-bottom: 0.5rem; line-height: 1.7; color: #475569; }
-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
-th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-th { background: #f8fafc; font-weight: 600; color: var(--text); }
-tr:hover { background: #f8fafc; }
-.quiz-box { background: white; border: 2px solid var(--primary); border-radius: 0.75rem; padding: 1.5rem; margin: 1rem 0; }
-.quiz-option {
-  display: block;
-  padding: 0.75rem 1rem;
-  margin: 0.5rem 0;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.quiz-option:hover { border-color: var(--primary); background: #f0f9ff; }
-.quiz-option.correct { border-color: #22c55e; background: #dcfce7; }
-.quiz-option.wrong { border-color: #ef4444; background: #fee2e2; }
+/* ASR 主题色 */
+:root{--primary:var(--sky);--primary-d:var(--sky-d);--primary-l:var(--sky-l)}
+.hero{background:linear-gradient(135deg,#0c4a6e,#0369a1)}
+.hero h1 em{background:linear-gradient(120deg,#7dd3fc,#bae6fd);-webkit-background-clip:text;background-clip:text;color:transparent}
+.algo{border-left-color:var(--sky)}.algo:hover{background:var(--sky-l)}
+.nav-links a.cur{color:var(--sky);background:var(--sky-l)}
+.toc a.on{color:var(--sky);border-left-color:var(--sky);background:var(--sky-l)}
+.tab.on{color:var(--sky);border-bottom-color:var(--sky)}
+.tab:hover{color:var(--sky)}
+.lab{background:var(--sky-l);border-color:#bae6fd}
+.lab h3{color:var(--sky-d)}
+section h2{border-bottom-color:var(--sky-l)}
+section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);border-radius:2px;display:inline-block}
+.btn-p{background:var(--sky);color:#fff}.btn-p:hover{background:var(--sky-d)}
+.btn-pl{background:var(--sky-l);color:var(--sky-d)}.btn-pl:hover{background:#bae6fd}
 </style>
 </head>
 <body>
 
-<!-- 顶部导航 -->
-<nav class="top-nav">
-<div class="top-nav-inner">
-  <a href="../index.html" class="logo">
-    <span class="text-2xl">🎙️</span>
-    <span>Agent-Speech</span>
-    <span class="text-sky-600 ml-2">/ ASR</span>
-  </a>
+<nav class="top"><div class="in">
+  <a href="../index.html" class="logo"><span>🎙️</span><span>agent-<em>speech</em></span></a>
   <div class="nav-links">
     <a href="../index.html">首页</a>
-    <a href="index.html" class="active">🎤 ASR</a>
-    <a href="../tts/index.html">📢 TTS</a>
-    <a href="https://github.com" aria-label="GitHub 仓库">
-      <svg class="w-5 h-5" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-    </a>
+    <a href="#intro" class="cur">🎤 ASR</a>
+    <a href="../tts/">📢 TTS</a>
+    <a href="#papers">论文</a>
+    <a href="#code">源码</a>
+    <a href="https://github.com" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23 2.3-.7 4.8-.7 6 0 2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
   </div>
-</div>
-</nav>
+</div></nav>
 
-<div class="layout">
-<!-- 侧边栏 -->
-<aside class="sidebar">
-  <h3>入门</h3>
-  <a href="#intro">ASR 是什么</a>
-  <a href="#history">技术发展简史</a>
-  
-  <h3>信号基础</h3>
-  <a href="#signal">语音信号本质</a>
-  <a href="#preprocess">预处理四步曲</a>
-  <a href="#fourier">傅里叶变换</a>
-  
-  <h3>特征提取</h3>
-  <a href="#features">概述</a>
-  <a href="#mfcc">MFCC 详解</a>
-  <a href="#features">FBANK</a>
-  
-  <h3>传统框架</h3>
-  <a href="#pipeline">ASR 流水线</a>
-  <a href="#hmm">GMM-HMM 模型</a>
-  <a href="#decoding">Viterbi 解码</a>
-  
-  <h3>端到端ASR</h3>
-  <a href="#e2e-overview">端到端概述</a>
-  <a href="#ctc">CTC 模型</a>
-  <a href="#attention">Attention 模型</a>
-  <a href="#rnnt">RNN-T</a>
-  <a href="#conformer">Conformer</a>
-  
-  <h3>经典模型</h3>
-  <a href="#deepspeech">DeepSpeech</a>
-  <a href="#las">Listen-Attend-Spell</a>
-  <a href="#whisper">OpenAI Whisper</a>
-  
-  <h3>实战</h3>
-  <a href="#quickstart">快速开始</a>
-  <a href="#tools">工具推荐</a>
-  <a href="#datasets">数据集</a>
-</aside>
+<header class="hero"><div class="wrap">
+  <div style="font-size:3rem;margin-bottom:.75rem">🎤</div>
+  <h1>ASR · <em>自动语音识别</em></h1>
+  <p>从一段波形到一句文字——从信号处理、特征提取到 GMM-HMM、CTC、Attention、Conformer、Whisper，系统拆解"让机器听懂人说话"的全流程。</p>
+  <div class="cta">
+    <a href="#signal" class="btn btn-sky">📖 从信号开始</a>
+    <a href="#whisper" class="btn btn-ghost">⚡ 直奔 Whisper</a>
+    <a href="../tts/" class="btn btn-ghost">📢 去 TTS 子站</a>
+  </div>
+  <div class="stat-grid">
+    <div class="stat"><div class="n">18</div><div class="l">核心章节</div></div>
+    <div class="stat"><div class="n">8</div><div class="l">经典模型精读</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">互动 Demo</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">段源码走读</div></div>
+  </div>
+</div></header>
 
-<!-- 主内容 -->
-<main class="main-content">
+<div class="wrap body">
+<aside class="toc"><nav aria-label="ASR目录">
+  <h4>ASR 目录</h4>
+  <a href="#intro" class="on">🎯 ASR 是什么</a>
+  <a href="#signal">📡 语音信号基础</a>
+  <a href="#preprocess">🔪 预处理四步</a>
+  <a href="#mfcc">📊 MFCC 特征</a>
+  <a href="#gmm-hmm">🔗 GMM-HMM</a>
+  <a href="#viterbi">🧭 Viterbi 解码</a>
+  <a href="#dnn-hmm">🤖 DNN-HMM</a>
+  <a href="#ctc">⚡ CTC</a>
+  <a href="#attention">🎯 Attention</a>
+  <a href="#rnnt">🔄 RNN-T</a>
+  <a href="#conformer">🧱 Conformer</a>
+  <a href="#whisper">🌐 Whisper</a>
+  <a href="#papers">📄 经典论文</a>
+  <a href="#code">💻 源码走读</a>
+  <a href="#tools">🛠️ 工具框架</a>
+  <a href="#wer">📉 WER 演进</a>
+</nav></aside>
+
+<main>
 
 <section id="intro">
-  <div class="inline-flex items-center gap-2 mb-4">
-    <span class="tag tag-blue">Automatic Speech Recognition</span>
-    <span class="text-sm text-slate-500">语音转文本</span>
-  </div>
-  <h1>🎤 ASR 语音识别</h1>
-  <p class="text-lg text-slate-600 leading-relaxed mb-6">
-    自动语音识别（Automatic Speech Recognition，ASR）是将人类语音中的词汇内容转换为计算机可读文本的技术。
-    它是语音交互、智能客服、实时字幕、会议记录等应用的核心技术基础。
-  </p>
-
-  <div class="callout callout-blue">
-    <div class="callout-title">💡 通俗理解</div>
-    <p class="mb-0 text-sm">
-      ASR 就像给计算机装了"耳朵"。想象一位专业的速记员：他听到你说话，把声音转换成文字记录下来。ASR 做的事情完全一样，
-      只不过这位"速记员"是由算法和神经网络构成的。它需要处理各种口音、背景噪音、语速变化，尽可能准确地"听写"出你说的每一个字。
-    </p>
-  <div class="mt-4 rounded-lg border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-4 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <span class="text-2xl">📢</span>
-      <div>
-        <div class="text-sm font-semibold text-orange-900">学完「听写」还想学「朗读」？</div>
-        <div class="text-xs text-orange-700 mt-0.5">ASR 是听（声音→文本），TTS 是说（文本→声音），二者共享声学模型与神经网络基础，构成语音技术的完整闭环。</div>
-      </div>
-    </div>
-    <a href="../tts/index.html" class="shrink-0 tts-gradient text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition whitespace-nowrap">前往 TTS 子站 →</a>
-  </div>
-</section>
-
-<section id="history">
-  <h2>📅 技术发展简史</h2>
-  <p>语音识别的研究已有超过70年历史，经历了数次范式转变，从模板匹配到统计建模，再到深度学习和大模型时代。</p>
-  
-  <div class="card">
-    <div class="space-y-4">
-      <div>
-        <span class="timeline-year">1952</span>
-        <span class="font-semibold">Audrey系统</span>
-        <p class="text-sm mt-1 mb-0">贝尔实验室开发，只能识别10个英文数字，是第一个可工作的语音识别系统。</p>
-      </div>
-      <div>
-        <span class="timeline-year">1960s</span>
-        <span class="font-semibold">动态时间规整(DTW)</span>
-        <p class="text-sm mt-1 mb-0">解决不同语速下的语音匹配问题，模板匹配方法主导这一时期。</p>
-      </div>
-      <div>
-        <span class="timeline-year">1980s</span>
-        <span class="font-semibold">GMM-HMM 范式确立</span>
-        <p class="text-sm mt-1 mb-0">隐马尔可夫模型成为主流统计方法，结合高斯混合模型建模声学特征，开启长达30年的HMM时代。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2009</span>
-        <span class="font-semibold">DNN 革命</span>
-        <p class="text-sm mt-1 mb-0">Hinton等人提出用深度神经网络替代GMM，DNN-HMM大幅提升识别准确率。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2014-2016</span>
-        <span class="font-semibold">端到端时代</span>
-        <p class="text-sm mt-1 mb-0"> Graves的CTC、Bahdanau的注意力机制、Chan的LAS模型相继提出，打破传统流水线解耦。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2020-2022</span>
-        <span class="font-semibold">Transformer与大模型</span>
-        <p class="text-sm mt-1 mb-0">Conformer结合卷积与Transformer优势，OpenAI Whisper展示大规模弱监督预训练的威力，通用ASR时代到来。</p>
-      </div>
-    </div>
-  </div>
-
-  <div id="asrTimelineChart" style="height: 350px; min-height: 350px;" class="card"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:0.875rem;">正在加载图表...</div></div>
+<h2>🎯 ASR 是什么</h2>
+<p><strong>自动语音识别（Automatic Speech Recognition, ASR）</strong>，目标是把人类语音（声波）转换成文字。它是 Siri、小爱同学、会议转写、字幕生成、语音输入法背后的核心技术。</p>
+<div class="callout callout-i"><span class="ic">🗣️</span><span><b>通俗理解</b>：ASR = 机器的"耳朵+听写员"。你说话产生声波（空气振动），机器先把振动变成数字信号，再一层层加工，最后猜你说的是哪几个字。</span></div>
+<p>ASR 的难度来自三个层面：</p>
+<ul>
+<li><strong>声学层面</strong>：同一个字，不同人、不同口音、不同情绪、不同环境噪音下，波形差异巨大</li>
+<li><strong>语言层面</strong>：同音词多（"世事/逝世/事实"），必须靠上下文语言模型消歧</li>
+<li><strong>时序层面</strong>：语音是连续流，一个字占几帧不定，存在"对齐"问题</li>
+</ul>
+<p>70 年来 ASR 经历了三次范式跃迁：<b>模板匹配 DTW</b> → <b>统计模型 GMM-HMM</b> → <b>端到端神经网络 CTC/Attention/RNN-T</b> → <b>大规模预训练 Whisper</b>。下面按这个顺序展开。</p>
 </section>
 
 <section id="signal">
-  <h2>🔊 语音信号的本质</h2>
-  <p>理解ASR的第一步是理解语音信号本身。语音本质上是空气振动产生的声波，通过麦克风转换成数字信号后被计算机处理。</p>
-
-  <div class="grid md:grid-cols-2 gap-4">
-    <div class="card">
-      <h4>语音产生机制</h4>
-      <ul class="styled-list text-sm">
-        <li><b>声源</b>：肺部气流冲击声带产生振动（浊音），或气流通过狭窄通道产生湍流（清音）</li>
-        <li><b>声道</b>：咽腔、口腔、鼻腔构成谐振腔，相当于一个时变滤波器</li>
-        <li><b>共振峰</b>：声道谐振频率，决定元音的音色差异（F1, F2, F3）</li>
-        <li><b>基频F0</b>：声带振动频率，决定音高（男性80-180Hz，女性160-320Hz）</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h4>数字信号采样</h4>
-      <ul class="styled-list text-sm">
-        <li><b>采样率</b>：语音常用16kHz（电话8kHz，高保真48kHz）</li>
-        <li><b>量化位深</b>：通常16-bit，每个采样点取值范围[-32768, 32767]</li>
-        <li><b>奈奎斯特定理</b>：采样率需大于最高频率的2倍才能无失真重建</li>
-        <li><b>帧长</b>：语音分帧处理，通常25ms一帧，帧移10ms</li>
-      </ul>
-    </div>
+<h2>📡 语音信号基础</h2>
+<p>声音的物理本质是空气振动。麦克风把振动转换成电压随时间变化的<strong>一维信号</strong>——这就是波形（waveform）。</p>
+<div class="grid-2">
+  <div class="card"><h4>📐 采样率 Sampling Rate</h4>
+    <p style="font-size:.9rem;margin:.25rem 0 0">每秒采多少个点。电话音质 8kHz，广播 16kHz，音乐 CD 44.1kHz。ASR 常用 <b>16kHz</b>（奈奎斯特频率 8kHz，覆盖人声主要频段）。</p>
   </div>
+  <div class="card"><h4>🔢 量化位深 Bit Depth</h4>
+    <p style="font-size:.9rem;margin:.25rem 0 0">每个采样点用多少 bit 表示振幅。16bit（2¹⁶=65536 级）是主流，动态范围约 96dB，足够用。</p>
+  </div>
+</div>
+
+<h3>🎛️ 互动：看看不同频率是什么样</h3>
+<div class="lab">
+<p style="font-size:.88rem;margin-bottom:.75rem">调节频率，观察单个正弦波在时域上的变化——频率越高，波形越"密"，听起来音调越高。</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+  <div><label for="freq">频率：<b id="fv">2</b> Hz（演示用低频）</label><input type="range" id="freq" min="1" max="20" value="2" aria-label="正弦波频率"></div>
+  <div><label for="amp">幅度：<b id="av">1.0</b></label><input type="range" id="amp" min="0" max="20" value="10" aria-label="正弦波幅度"></div>
+</div>
+<canvas id="scv" width="800" height="180" style="width:100%;height:180px;background:#fff;border-radius:.5rem;border:1px solid var(--border);margin-top:.75rem"></canvas>
+<div class="math-b" id="sfml">s(t) = 1.0 · sin(2π · 2 · t)</div>
+<div class="callout callout-i" style="margin-top:.75rem"><span class="ic">💡</span><span>真实人声不是单一频率，而是基频（声带振动频率，男声 ≈120Hz，女声 ≈220Hz）叠加多个谐波，再经过口腔共振形成"共振峰"，构成不同元音的音色。</span></div>
+</div>
 </section>
 
 <section id="preprocess">
-  <h2>⚙️ 预处理四步曲</h2>
-  <p>原始语音波形不能直接送入模型，需要经过标准预处理流程，将一维时域信号转换为适合建模的特征表示。</p>
-
-  <div class="architecture-diagram">语音波形
-    ↓
-[1] 预加重 (Pre-emphasis)
-    ↓
-[2] 分帧 (Framing)
-    ↓
-[3] 加窗 (Windowing)
-    ↓
-[4] 短时傅里叶变换 (STFT)
-    ↓
-功率谱 / 幅度谱
-    ↓
-梅尔滤波 → FBANK
-    ↓
-离散余弦变换(DCT) → MFCC</div>
-
-  <h3>1. 预加重</h3>
-  <p>语音信号中高频能量通常较弱，预加重通过一个一阶高通滤波器提升高频分量，平衡频谱：</p>
-  <div class="formula-box">
-    <div class="math-block">$$ y(t) = x(t) - \alpha \cdot x(t-1), \quad \alpha \approx 0.97 $$</div>
-  </div>
-
-  <h3>2. 分帧</h3>
-  <p>语音是短时平稳信号（约10-30ms内统计特性近似不变），将信号切成25ms的帧，帧移10ms（相邻帧重叠15ms），保证帧间平滑。</p>
-  <div class="callout">
-    <div class="callout-title">⚠️ 为什么是25ms？</div>
-    <p class="mb-0 text-sm">如果帧太短，频率分辨率不足；如果帧太长，信号已不再平稳，无法假设其频谱稳定。20-30ms是经过大量实验验证的经验最优值。</p>
-  </div>
-
-  <h3>3. 加窗</h3>
-  <p>直接对帧截断会导致频谱泄漏（吉布斯现象），需要乘以窗函数使帧两端平滑过渡到0。最常用汉明窗(Hamming)：</p>
-  <div class="formula-box">
-    <div class="math-block">$$ w(n) = 0.54 - 0.46 \cos\left(\frac{2\pi n}{N-1}\right), \quad 0 \le n \le N-1 $$</div>
-  </div>
-
-  <h3>4. STFT 短时傅里叶变换</h3>
-  <p>对每一帧加窗后做N点FFT（通常N=512），得到短时频谱，每一帧对应一个频谱向量，最终形成<span class="inline-code">(T, F)</span>的时频谱图。</p>
-</section>
-
-<section id="fourier">
-  <h2>📐 傅里叶变换：信号的"透视镜"</h2>
-  <p>傅里叶变换是语音信号处理最核心的数学工具。它告诉我们：任何复杂信号都可以分解为不同频率正弦波的叠加。</p>
-  
-  <div class="formula-box">
-    <div class="math-block">$$ X(\omega) = \int_{-\infty}^{\infty} x(t) e^{-j\omega t} dt $$</div>
-    <p class="text-sm text-center text-slate-600 mb-0">连续傅里叶变换：将时域信号x(t)分解为各频率分量的幅度和相位</p>
-  </div>
-
-  <div class="callout callout-green">
-    <div class="callout-title">🎵 音乐类比</div>
-    <p class="mb-0 text-sm">想象你在听交响乐，傅里叶变换就像能"听出"每种乐器正在演奏什么音——它把复杂的合声音响分解成各个频率（音高）的组成成分。对语音来说，它告诉我们每一时刻哪些频率（对应声道形状、共振峰）在振动。</p>
-  </div>
-</section>
-
-<section id="features">
-  <h2>🎛️ 特征提取：从波形到特征向量</h2>
-  <p>原始波形维度高、冗余大，直接送模型效果差。特征提取就是从波形中提取与语音内容相关、压缩掉无关信息（如音高、音量）的紧凑表示。</p>
-  
-  <div class="tab-group">
-    <button class="tab-btn active" data-tab="feat-mfcc" onclick="switchTab(this)">MFCC</button>
-    <button class="tab-btn" data-tab="feat-fbank" onclick="switchTab(this)">FBANK</button>
-    <button class="tab-btn" data-tab="feat-compare" onclick="switchTab(this)">对比</button>
-  </div>
+<h2>🔪 预处理四步曲</h2>
+<p>拿到原始波形后，不能直接喂给模型，必须先做预处理：</p>
+<div class="grid-4">
+  <div class="card"><div class="tag tag-sky">1</div><h4>预加重 Pre-emphasis</h4><p style="font-size:.85rem;margin:.25rem 0 0">用一阶高通滤波器 <code class="math">y[t] = x[t] - 0.97·x[t-1]</code> 提升高频能量，补偿声门脉冲的高频衰减。</p></div>
+  <div class="card"><div class="tag tag-sky">2</div><h4>分帧 Framing</h4><p style="font-size:.85rem;margin:.25rem 0 0">把长信号切成 25ms 一帧、帧移 10ms。16kHz 下每帧 400 点、步长 160 点。假设帧内信号"短时平稳"。</p></div>
+  <div class="card"><div class="tag tag-sky">3</div><h4>加窗 Windowing</h4><p style="font-size:.85rem;margin:.25rem 0 0">每帧乘上汉明窗 <code class="math">w[n]=0.54-0.46cos(2πn/N)</code>，减少帧两端的频谱泄漏（吉布斯现象）。</p></div>
+  <div class="card"><div class="tag tag-sky">4</div><h4>STFT 短时傅里叶</h4><p style="font-size:.85rem;margin:.25rem 0 0">对每帧做 FFT 得到频谱，拼起来是"频谱图"Spectrogram——这是后续所有处理的基础。</p></div>
+</div>
+<div class="callout callout-tip"><span class="ic">🤔</span><b>为什么是 25ms/10ms？</b> 经验值：小于 25ms 频谱不稳定，大于 25ms 帧内信号变化太大（音素已经变了）。帧移 10ms 是为了让相邻帧有 60% 重叠，避免漏掉快速变化的音素。<span></span></div>
 </section>
 
 <section id="mfcc">
-  <div id="feat-mfcc" class="tab-panel active">
-    <h3>MFCC 梅尔频率倒谱系数</h3>
-    <p>MFCC是GMM-HMM时代最主流的特征，模拟人耳听觉感知特性。它的提取过程共有7步：</p>
-    
-    <div class="card">
-      <ol class="styled-list">
-        <li><b>预加重 → 分帧 → 加窗 → STFT</b>：得到幅度谱（前面已讲）</li>
-        <li><b>计算功率谱</b>：幅度谱取平方，|X(ω)|²</li>
-        <li><b>梅尔滤波器组</b>：用一组三角带通滤波器（在梅尔刻度上等距分布）滤波，将线性频率映射到梅尔频率，模拟人耳对低频更敏感</li>
-        <li><b>取对数</b>：对每个滤波器输出取对数，模拟人耳响度感知（分贝尺度）</li>
-        <li><b>离散余弦变换(DCT)</b>：对滤波器组输出做DCT，去相关得到倒谱系数</li>
-        <li><b>保留前13维</b>：通常取前12-13维DCT系数（高阶系数变化快，主要是激励细节）</li>
-        <li><b>加动态特征</b>：一阶差分(Δ) + 二阶差分(ΔΔ)，共39维特征</li>
-      </ol>
-    </div>
+<h2>📊 MFCC · 梅尔频率倒谱系数</h2>
+<p>MFCC（Mel-Frequency Cepstral Coefficients）是 ASR 历史上统治最久的特征（1980s-2010s），至今 FBank 仍是主流。它模拟了人耳对频率的非线性感知——<b>对低频敏感、对高频粗略</b>。</p>
+<h3>MFCC 七步流程</h3>
+<ol>
+  <li><b>预加重 → 分帧 → 加窗</b>（上节已讲）</li>
+  <li><b>FFT</b>：每帧做 512 点 FFT，得幅度谱</li>
+  <li><b>Mel 滤波器组</b>：用一组三角滤波器（Mel 刻度）对幅度谱滤波并求和，模拟人耳频率感知</li>
+  <li><b>取 log</b>：模拟人耳对响度的对数感知（dB）</li>
+  <li><b>DCT 离散余弦变换</b>：把滤波器组输出去相关，得到倒谱系数</li>
+  <li><b>保留前 13 维</b>（含能量）：高阶系数主要是激励细节，可丢弃</li>
+  <li><b>加 Δ/ΔΔ 一阶二阶差分</b>：加上动态特征，最终 39 维</li>
+</ol>
+<div class="math-b">f<sub>mel</sub> = 2595 · log<sub>10</sub>(1 + f / 700)</div>
+<div class="callout callout-i"><span class="ic">📐</span><span>Mel 刻度把 Hz 转换成感知频率。1kHz 以下近似线性，1kHz 以上近似对数——这是因为人耳基底膜上的毛细胞在低频区分布密、高频区分布稀。</span></div>
+<div class="callout callout-w"><span class="ic">⚠️</span><span>深度学习时代，大家发现 DCT 这步是<strong>线性变换</strong>，神经网络自己就能学，所以现在主流用 <b>FBank（Log-Mel 谱，省略 DCT）</b> 作为输入特征，维数更高（80 维）但信息损失更少。</span></div>
+</section>
 
-    <div class="formula-box">
-      <div class="callout-title">📐 梅尔频率刻度</div>
-      <div class="math-block">$$ f_{mel} = 2595 \cdot \log_{10}\left(1 + \frac{f}{700}\right) $$</div>
-      <p class="text-sm text-center text-slate-600 mb-0">1kHz以下近似线性，1kHz以上近似对数，完美匹配人耳听觉</p>
-    </div>
-  </div>
+<section id="gmm-hmm">
+<h2>🔗 GMM-HMM · 传统 ASR 的基石</h2>
+<p>在深度学习之前，ASR 的绝对主流是 GMM-HMM。它把问题拆成两个模型：</p>
+<div class="grid-2">
+<div class="card">
+<h4 style="color:var(--primary-d)">🔊 声学模型 GMM</h4>
+<p style="font-size:.9rem;margin:.25rem 0 0"><b>作用</b>：给定一帧特征，计算它属于某个音素（状态）的概率 <code class="math">p(x<sub>t</sub>|s<sub>t</sub>)</code>。<br><b>做法</b>：每个 HMM 状态对应一个高斯混合模型（通常 8-32 个高斯分量）。</p>
+</div>
+<div class="card">
+<h4 style="color:var(--primary-d)">🔗 时序模型 HMM</h4>
+<p style="font-size:.9rem;margin:.25rem 0 0"><b>作用</b>：建模音素/状态之间的转移概率 <code class="math">p(s<sub>t</sub>|s<sub>t-1</sub>)</code>，处理时间对齐。<br><b>拓扑</b>：典型三状态 left-to-right（无自回跳），对应音素的进入-稳定-离开。</p>
+</div>
+</div>
+<h3>HMM 的三个经典问题</h3>
+<table>
+<thead><tr><th>问题</th><th>含义</th><th>算法</th></tr></thead>
+<tbody>
+<tr><td>评估</td><td>给定模型和观测序列，计算 P(O|λ)</td><td>前向算法</td></tr>
+<tr><td>解码</td><td>给定模型和观测，找最可能的状态序列</td><td><b>Viterbi 算法</b></td></tr>
+<tr><td>训练</td><td>给定观测序列，估计模型参数 λ</td><td>Baum-Welch (EM)</td></tr>
+</tbody>
+</table>
+<div class="callout callout-i"><span class="ic">🧠</span><span>ASR 中最常用的是<b>Viterbi 解码</b>——把一整段音频特征，在所有可能的音素/词序列中，找概率最大的那条路径。</span></div>
+</section>
 
-  <div id="feat-fbank" class="tab-panel">
-    <h3>FBANK (Filter Bank) 特征</h3>
-    <p>FBANK是MFCC的前半部分——做完梅尔滤波、取对数后，<b>不做DCT</b>直接使用的特征。</p>
-    <ul class="styled-list">
-      <li>通常取40维或80维滤波器组输出</li>
-      <li>保留了滤波器组输出之间的相关性，DNN可以自动学习去相关</li>
-      <li>深度学习时代ASR普遍使用FBANK替代MFCC，因为DCT是线性变换，DNN完全可以学到</li>
-      <li>端到端模型中几乎全部使用80维log-mel滤波器组特征</li>
+<section id="viterbi">
+<h2>🧭 Viterbi 解码 · 互动演示</h2>
+<p>Viterbi 本质是动态规划：每个时间步每个状态，记录"到达这里的最大概率"和"从哪来的"，最后回溯得到最优路径。</p>
+<div class="lab">
+<h3>🎯 玩具级 Viterbi（3 状态 × 5 帧）</h3>
+<p style="font-size:.88rem;margin-bottom:.75rem">观察下面 3 状态（音素 A/B/C）× 5 帧的发射概率矩阵，点击"运行 Viterbi"看最优路径如何被选出来：</p>
+<div id="vt-grid" style="overflow-x:auto"></div>
+<button id="vt-run" class="btn btn-p" style="margin-top:.75rem">▶ 运行 Viterbi</button>
+<button id="vt-reset" class="btn btn-pl" style="margin-top:.75rem">🔄 重置</button>
+<div id="vt-out" style="margin-top:.75rem;min-height:40px;font-family:Monaco,Consolas,monospace;font-size:.85rem"></div>
+<div class="callout callout-tip" style="margin-top:.75rem"><span class="ic">💡</span><span>真实 ASR 的 Viterbi 要在 WFST（加权有限状态转换器）图上搜索，把 <b>H·C·L·G</b> 四个子图（HMM/上下文/词典/语言模型）级联起来，Beam Search 剪枝，每秒要处理上万帧。</span></div>
+</div>
+</section>
+
+<section id="dnn-hmm">
+<h2>🤖 DNN-HMM · 深度混合时代</h2>
+<p>2012 年 Hinton 组把 GMM 换成 DNN（深度神经网络）来估计发射概率 <code class="math">p(s|x<sub>t</sub>)</code>，WER 相对下降了 30%，开启了深度学习时代。</p>
+<div class="grid-2">
+  <div class="card"><h4>🔑 关键变化</h4>
+    <ul style="font-size:.9rem;margin-top:.25rem">
+      <li>GMM 建模 <code class="math">p(x|s)</code>（生成式）</li>
+      <li>DNN 直接建模 <code class="math">p(s|x)</code>（判别式）</li>
+      <li>输入可以是<strong>拼接多帧</strong>（如 ±5 帧）的 FBank 特征，利用上下文</li>
     </ul>
-    <div class="callout">
-      <div class="callout-title">💡 经验之谈</div>
-      <p class="mb-0 text-sm">在现代端到端ASR中，<b>直接使用80维FBANK特征</b>是标准配置；MFCC因为DCT做了去相关，更适合GMM这种假设特征独立的模型。</p>
-    </div>
   </div>
-
-  <div id="feat-compare" class="tab-panel">
-    <h3>MFCC vs FBANK 对比</h3>
-    <table>
-      <thead><tr><th>特性</th><th>MFCC</th><th>FBANK</th></tr></thead>
-      <tbody>
-        <tr><td>维度</td><td>13(+Δ+ΔΔ=39)</td><td>40/80</td></tr>
-        <tr><td>DCT变换</td><td>有</td><td>无</td></tr>
-        <tr><td>特征相关性</td><td>低（DCT去相关）</td><td>高（相邻滤波器有重叠）</td></tr>
-        <tr><td>信息损失</td><td>丢弃高阶系数有信息损失</td><td>无信息损失</td></tr>
-        <tr><td>适用模型</td><td>GMM-HMM（特征独立假设）</td><td>DNN/端到端模型</td></tr>
-        <tr><td>计算量</td><td>多一步DCT</td><td>更少</td></tr>
-      </tbody>
-    </table>
+  <div class="card"><h4>⚠️ 为什么还是 HMM？</h4>
+    <p style="font-size:.9rem;margin:.25rem 0 0">DNN 仍然只在单帧上输出状态概率，<strong>帧间时序转移和语言模型仍靠 HMM+WFST</strong>。这是一个"神经网络替换部件"的过渡方案，不是真正的端到端。</p>
   </div>
-</section>
-
-<section id="pipeline">
-  <h2>🏗️ 传统ASR完整流水线</h2>
-  <p>在深度学习到来之前，ASR是一个高度解耦的模块化系统，由四个核心组件构成：</p>
-  
-  <div class="architecture-diagram">┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│  特征提取  │ → │ 声学模型  │ → │   解码   │ → │ 输出文本  │
-│ (MFCC等)  │    │ (GMM/DNN) │    │  (WFST)  │    │          │
-└──────────┘    └────┬─────┘    └────▲─────┘    └──────────┘
-                     │               │
-               P(帧|音素)     ┌──────┴──────┐
-                              │   发音词典   │
-                              │ (Lexicon)   │
-                              └──────▲──────┘
-                                     │
-                              ┌──────┴──────┐
-                              │   语言模型   │
-                              │  (N-gram)   │
-                              │ P(词序列)   │
-                              └─────────────┘</div>
-
-  <div class="grid md:grid-cols-2 gap-4 mt-4">
-    <div class="card">
-      <h4><span class="tag tag-blue">声学模型 AM</span></h4>
-      <p class="text-sm mb-0">建模 <b class="inline-code">P(声学特征 | 音素状态)</b>，给定发音单元，计算观测到该帧语音特征的概率。从GMM发展到DNN/CNN/RNN。</p>
-    </div>
-    <div class="card">
-      <h4><span class="tag tag-green">发音词典 Lexicon</span></h4>
-      <p class="text-sm mb-0">定义词到音素序列的映射，例如"你好"→"n i3 h au3"。连接声学模型（音素级）和语言模型（词级）的桥梁。</p>
-    </div>
-    <div class="card">
-      <h4><span class="tag tag-yellow">语言模型 LM</span></h4>
-      <p class="text-sm mb-0">建模 <b class="inline-code">P(词序列)</b>，衡量词序列出现的先验概率。帮助区分发音相同的词（如"戴"vs"带"），提供语义约束。</p>
-    </div>
-    <div class="card">
-      <h4><span class="tag tag-purple">解码器 Decoder</span></h4>
-      <p class="text-sm mb-0">结合声学得分和语言模型得分，在巨大的搜索空间中寻找最可能的词序列。使用WFST（加权有限状态转换器）HCLG图高效搜索。</p>
-    </div>
-  </div>
-
-  <div class="formula-box">
-    <div class="callout-title">🎯 贝叶斯决策公式</div>
-    <div class="math-block">$$ \hat{W} = \arg\max_W P(W|O) = \arg\max_W \underbrace{P(O|W)}_{声学模型} \cdot \underbrace{P(W)}_{语言模型} $$</div>
-    <p class="text-sm text-center text-slate-600 mb-0">ASR的核心就是在给定观测语音O时，找到后验概率最大的词序列W。贝叶斯公式将其分解为声学似然×语言模型先验。</p>
-  </div>
-</section>
-
-<section id="hmm">
-  <h2>🔮 GMM-HMM：统治三十年的经典框架</h2>
-  <p>隐马尔可夫模型（HMM）是传统ASR的基石。它非常巧妙地解决了语音时序对齐的核心问题。</p>
-
-  <h3>HMM的基本假设</h3>
-  <ul class="styled-list">
-    <li><b>马尔可夫性</b>：当前状态只依赖于前一个状态（一阶马尔可夫）</li>
-    <li><b>观测独立</b>：当前帧观测只依赖于当前状态</li>
-    <li>每个音素对应一个3状态HMM（开始/中间/结束），状态间转移建模时序</li>
-  </ul>
-
-  <h3>HMM三要素</h3>
-  <table>
-    <thead><tr><th>要素</th><th>符号</th><th>含义</th><th>在ASR中</th></tr></thead>
-    <tbody>
-      <tr><td>初始概率</td><td>π</td><td>开始时在各状态的概率</td><td>通常从句子开头状态开始</td></tr>
-      <tr><td>转移概率</td><td>A</td><td>从状态i转移到状态j的概率</td><td>控制时序推进，只能自环或向右</td></tr>
-      <tr><td>观测概率</td><td>B</td><td>在状态j下观测到o_t的概率</td><td>由GMM建模（GMM-HMM）或DNN计算（DNN-HMM）</td></tr>
-    </tbody>
-  </table>
-
-  <div class="callout">
-    <div class="callout-title">🧩 为什么用HMM？</div>
-    <p class="mb-0 text-sm">因为同样一句话说出来时长每次都不一样，我们不知道每个音素对应到哪几帧。HMM通过隐含状态序列和Viterbi算法自动找到最优对齐路径，这就是"隐"的含义——状态序列是隐藏的，我们只能观测到声学特征。</p>
-  </div>
-</section>
-
-<section id="decoding">
-  <h2>🔍 Viterbi解码与WFST</h2>
-  <p>解码就是在给定观测特征序列时，搜索概率最大的词序列。Viterbi算法是HMM上的动态规划解码算法。</p>
-  
-  <div class="code-block">
-<span class="code-comment"># Viterbi 算法核心思想 (伪代码)</span>
-<span class="code-keyword">for</span> t = <span class="code-func">1</span> to T:
-    <span class="code-keyword">for each</span> state j:
-        v[t][j] = max_i (v[t-1][i] * a[i][j]) * b[j][o_t]
-        backpointer[t][j] = argmax_i (...)
-
-<span class="code-comment"># 回溯最优路径</span>
-best_path[T] = argmax_j v[T][j]
-<span class="code-keyword">for</span> t = T-1 <span class="code-keyword">down to</span> <span class="code-func">1</span>:
-    best_path[t] = backpointer[t+1][best_path[t+1]]</div>
-
-  <p>现代ASR系统将H(HMM)、C(上下文相关)、L(发音词典)、G(语言模型)四个WFST组合成统一的HCLG解码图，实现非常高效的静态搜索。</p>
-</section>
-
-<section id="e2e-overview">
-  <h2>🚀 端到端ASR革命</h2>
-  <p>传统ASR系统组件繁多、训练复杂、需要专家知识调优。端到端ASR的核心思想是：<b>用一个神经网络直接输入语音特征、输出文本</b>，不需要显式的发音词典、HMM、分段式训练。</p>
-  
-  <div class="architecture-diagram">传统ASR:  特征 → AM → HMM → 词典 → LM → 解码 → 文本
-              (多模块独立训练，需要发音词典和对齐)
-
-端到端ASR:  特征 → Encoder → Decoder → CTC/Attention → 文本
-              (一个神经网络，端到端联合优化)</div>
-
-  <p>目前端到端ASR三大主流范式：<b>CTC</b>、<b>Attention (Seq2Seq)</b>、<b>RNN-Transducer</b>。</p>
+</div>
+<p>DNN-HMM 之后还有 RNN-HMM、LSTM-HMM，但真正的革命是 CTC / Attention 让模型直接输出字符序列——跳过了音素、HMM、解码图等手工设计。</p>
 </section>
 
 <section id="ctc">
-  <h2>🔗 CTC：连接时序分类</h2>
-  <p>CTC (Connectionist Temporal Classification) 是Alex Graves在2006年提出的方法，核心是解决输入输出长度不一致、无需逐帧标注对齐的问题。</p>
+<h2>⚡ CTC · 连接时序分类</h2>
+<p>CTC（Connectionist Temporal Classification，Graves 2006/2014）是端到端 ASR 的开山之作，解决了一个核心难题：<b>输入输出长度不等、无法帧级对齐时如何训练</b>。</p>
+<h3>核心思想：引入 blank</h3>
+<p>在输出标签集中加入一个特殊符号 <b>ε（blank）</b>，允许模型在帧级别输出 blank 或重复字符。最终序列通过两步合并得到真实文本：</p>
+<ol>
+  <li><b>去重复</b>：把连续相同字符合并（如 "aaεbb" → "aεb"）</li>
+  <li><b>去 blank</b>：删掉所有 ε（"aεb" → "ab"）</li>
+</ol>
+<div class="math-b">
+  P(Y|X) = Σ<sub>π ∈ B⁻¹(Y)</sub> Π<sub>t</sub> p(π<sub>t</sub>|X)
+</div>
+<p style="font-size:.88rem;color:var(--muted);text-align:center;margin-top:-.5rem">所有合并后等于 Y 的路径 π 的概率之和，可以用前向-后向算法高效计算</p>
 
-  <h3>核心思想：引入blank符号</h3>
-  <p>在输出标签集中增加一个特殊的blank符号"∅"，允许模型在某些帧输出blank，并定义一个多对一的映射B：</p>
-  <ul class="styled-list">
-    <li>先合并连续重复字符</li>
-    <li>再去掉所有blank符号</li>
-    <li>例如：<code>aa∅b∅∅cc → a b c</code></li>
-  </ul>
+<div class="callout callout-i"><span class="ic">🧮</span><span><b>为什么要求和而不是取 argmax</b>？因为同一句话可以对应很多条合法路径（blank 插在哪、重复几次都可以），训练时必须把所有合法路径的概率加起来作为该标签序列的似然。</span></div>
 
-  <div class="formula-box">
-    <div class="callout-title">📐 CTC损失函数</div>
-    <div class="math-block">$$ P(y|x) = \sum_{\pi \in \mathcal{B}^{-1}(y)} \prod_{t=1}^{T} P(\pi_t | x_t) $$</div>
-    <p class="text-sm text-center text-slate-600 mb-0">所有经过B映射后能得到标签序列y的路径π的概率之和，用动态规划（前向-后向算法）高效计算</p>
-  </div>
-
-  <div class="callout callout-blue">
-    <div class="callout-title">🎮 通俗理解</div>
-    <p class="mb-0 text-sm">想象你在抄写黑板上逐帧闪过的字。有的帧你看不清（输出blank），有的帧同一个字连续出现了好多次。最后你把重复的字合并、跳过看不清的，就得到了正确的句子。CTC让神经网络可以自己"决定"什么时候输出什么字、什么时候不输出，不需要人工标注每帧对应哪个字。</p>
-  </div>
-
-  <div class="quiz-box">
-    <div class="font-semibold mb-3">📝 小测验：在CTC中，路径"∅ hh ∅ ee ∅ l l ∅ oo ∅"经过B映射后得到什么？</div>
-    <div class="quiz-option" onclick="checkAnswer(this, false)">A. ∅h∅e∅ll∅o∅</div>
-    <div class="quiz-option" onclick="checkAnswer(this, true)">B. helo</div>
-    <div class="quiz-option" onclick="checkAnswer(this, false)">C. hello</div>
-    <div class="quiz-option" onclick="checkAnswer(this, false)">D. h e l o</div>
-    <div id="quiz-feedback" class="mt-2 text-sm hidden"></div>
-  </div>
+<h3>🎮 CTC 对齐可视化</h3>
+<div class="lab">
+<p style="font-size:.88rem;margin-bottom:.5rem">输入一个词，点击"生成对齐"，看 CTC 如何用 blank（灰色）和重复构建对齐路径：</p>
+<div style="display:flex;gap:.5rem">
+  <input id="ctc-txt" type="text" value="hi" maxlength="5" aria-label="CTC文本" style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:.4rem;font-family:inherit">
+  <button id="ctc-gen" class="btn btn-p">生成对齐</button>
+</div>
+<div id="ctc-vis" style="margin-top:.75rem;display:flex;gap:2px;flex-wrap:wrap;min-height:40px"></div>
+<p id="ctc-info" style="font-size:.85rem;color:var(--muted);margin-top:.5rem"></p>
+</div>
+<div class="callout callout-w"><span class="ic">⚠️</span><span>CTC 条件独立假设（每帧独立输出）是它的弱点——它建模不了输出间的依赖，所以通常搭配外部语言模型做 Shallow Fusion。</span></div>
 </section>
 
 <section id="attention">
-  <h2>🎯 Attention 序列到序列模型</h2>
-  <p>基于注意力机制的Seq2Seq模型（如Listen-Attend-Spell）借鉴机器翻译，用编码器将语音编码为高级表示，解码器自回归生成字符，注意力模块动态对齐。</p>
-  
-  <ul class="styled-list">
-    <li><b>Encoder (Listener)</b>：多层RNN/Transformer，将长度T的语音序列下采样到长度T/4的高级表示</li>
-    <li><b>Attention</b>：解码每一步时，动态计算当前需要关注编码器哪些时间步的信息（软对齐）</li>
-    <li><b>Decoder (Speller)</b>：类似语言模型，自回归逐字符生成输出，每一步依赖之前生成的字</li>
-  </ul>
-
-  <div class="formula-box">
-    <div class="math-block">$$ \text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V $$</div>
-    <p class="text-sm text-center text-slate-600 mb-0">缩放点积注意力（Transformer中使用的形式）</p>
-  </div>
-
-  <p>纯Attention模型无需条件独立假设，对齐更灵活，但训练和推理速度慢，且存在输出重复/遗漏问题（对语音来说长度偏差明显），因此实际中经常和CTC联合训练（多任务学习）。</p>
+<h2>🎯 Attention · Seq2Seq 与 LAS</h2>
+<p>CTC 的条件独立假设太强。Attention Seq2Seq 引入自回归解码器：每步基于"已输出的字符"+"注意力加权后的编码器输出"预测下一个字符。</p>
+<h3>LAS（Listen, Attend, Spell）</h3>
+<div class="grid-3">
+  <div class="card" style="border-top:3px solid var(--sky)"><h4>👂 Listen（编码器）</h4><p style="font-size:.88rem;margin:.25rem 0 0">金字塔 BLSTM 把语音帧下采样 8 倍，得到高层声学表征 <code>h</code>。</p></div>
+  <div class="card" style="border-top:3px solid var(--sky)"><h4>🎯 Attend（注意力）</h4><p style="font-size:.88rem;margin:.25rem 0 0">每步预测一个对编码器输出的加权分布 <code>α<sub>t</sub></code>，得到上下文向量 <code>c<sub>t</sub>=Σα<sub>ti</sub>h<sub>i</sub></code>。</p></div>
+  <div class="card" style="border-top:3px solid var(--sky)"><h4>✍️ Spell（解码器）</h4><p style="font-size:.88rem;margin:.25rem 0 0">LSTM 以 <code>(y<sub>t-1</sub>, c<sub>t</sub>, s<sub>t-1</sub>)</code> 为输入，自回归输出下一个字符。</p></div>
+</div>
+<div class="callout callout-tip"><span class="ic">🆚</span><span><b>CTC vs Attention</b>：CTC 快（可流式）但弱建模，Attention 强但慢（自回归）且对齐不稳定。工业系统常用 <b>CTC+Attention 联合训练</b>（如 ESPnet、Conformer 模型），推理时 CTC 做前缀剪枝 + Attention 打分。</span></div>
 </section>
 
 <section id="rnnt">
-  <h2>🔄 RNN-Transducer</h2>
-  <p>RNN-T是Google提出的流式端到端模型，专为语音这种序列转换设计（输入输出长度不同且单调）。它在CTC基础上增加了预测网络（语言模型组件），支持逐帧流式输出，适合实时语音识别。</p>
-  <ul class="styled-list">
-    <li>包含<b>Encoder</b>(声学) + <b>Predict网络</b>(文本上下文) + <b>Joint网络</b>(融合二者)</li>
-    <li>除blank外，每次输出非blank标签时预测网络前进一步</li>
-    <li>严格单调对齐，天然适合流式识别</li>
-    <li>是Google、百度等商业ASR系统的核心模型</li>
+<h2>🔄 RNN-T · Transducer</h2>
+<p>RNN-T（Recurrent Neural Network Transducer，Graves 2012）被认为是 CTC 和 Attention 之间的"完美平衡"：既不需要外部对齐，又能流式输出，还能建模输出间依赖。</p>
+<div class="grid-2">
+<div class="card"><h4>三部分组成</h4>
+  <ul style="font-size:.9rem;margin-top:.25rem">
+    <li><b>Encoder</b>（转录网络）：处理声学特征</li>
+    <li><b>Prediction Network</b>：类似 RNN-LM，处理已输出标签</li>
+    <li><b>Joint Network</b>：融合两者输出，在每步决定"输出新标签"还是"继续听（blank）"</li>
   </ul>
+</div>
+<div class="card"><h4>为什么工业界偏爱 RNN-T？</h4>
+  <p style="font-size:.9rem;margin:.25rem 0 0">① 天然流式（无需看全句）；② 自带标签依赖建模（比 CTC 准）；③ 不需要像 Attention 那样对齐稳定。Google、Meta 的主流流式 ASR 都是 RNN-T。</p>
+</div>
+</div>
 </section>
 
 <section id="conformer">
-  <h2>🎭 Conformer：CNN与Transformer的完美结合</h2>
-  <p>Conformer (Convolution-augmented Transformer) 是Google在2020年提出的编码器架构，现已成为端到端ASR的事实标准主干。</p>
-  
-  <div class="callout callout-green">
-    <div class="callout-title">💡 核心洞察</div>
-    <p class="mb-0 text-sm">Transformer的自注意力擅长<b>全局长距离依赖</b>，CNN擅长<b>局部特征提取</b>。语音信号同时需要两者：局部需要提取发音细节，全局需要捕获上下文语义。Conformer将二者结合，每个模块依次是：FFN → Multi-Head Self-Attention → Convolution → FFN，用Macaron结构替换原始Transformer。</p>
-  </div>
-</section>
-
-<section id="deepspeech">
-  <h2>📦 经典模型解析：DeepSpeech</h2>
-  <div class="model-card">
-    <div class="model-header">
-      <div>
-        <span class="tag tag-blue">2014</span>
-        <b>DeepSpeech (Baidu/Mozilla)</b>
-      </div>
-      <span class="text-sm text-slate-500">RNN + CTC</span>
-    </div>
-    <div class="model-body">
-      <p class="text-sm">Mozilla DeepSpeech是开源端到端ASR的经典之作，架构简单但非常有效：</p>
-      <ul class="styled-list text-sm">
-        <li>输入层：26维MFCC特征（或FBANK）</li>
-        <li>5层：1层全连接 + 3层双向LSTM + 1层全连接</li>
-        <li>输出层：字符数+1个单元（含blank），CTC损失训练</li>
-        <li>使用N-gram语言模型在解码时做shallow fusion</li>
-        <li>证明了端到端ASR可以匹敌甚至超过传统GMM-HMM系统</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<section id="las">
-  <h2>📦 经典模型解析：Listen-Attend-Spell</h2>
-  <div class="model-card">
-    <div class="model-header">
-      <div>
-        <span class="tag tag-purple">2015</span>
-        <b>LAS (Listen, Attend and Spell)</b>
-      </div>
-      <span class="text-sm text-slate-500">Attention Seq2Seq</span>
-    </div>
-    <div class="model-body">
-      <p class="text-sm">William Chan等人提出，是第一个将机器翻译Seq2Seq框架完全应用到语音识别的代表作：</p>
-      <ul class="styled-list text-sm">
-        <li><b>Listener</b>：金字塔BiLSTM，逐层下采样（时间分辨率逐层减半）</li>
-        <li><b>Attend</b>：加性注意力机制，动态计算对编码器隐状态的关注权重</li>
-        <li><b>Speller</b>：2层LSTM解码器，自回归逐字符生成</li>
-        <li>缺点：非单调，需要整句话后才能处理，无法流式识别</li>
-      </ul>
-    </div>
-  </div>
+<h2>🧱 Conformer · CNN+Transformer 的融合</h2>
+<p>2020 年 Google 提出 Conformer，把 Transformer（长程建模）和 CNN（局部特征）结合起来，至今仍是<strong>非大模型时代最强 ASR 编码器</strong>。</p>
+<h3>Conformer Block 结构（Macaron 结构）</h3>
+<pre class="code">ConformerBlock(x):
+  x = x + ½·FFN(x)               <span style="color:#94a3b8"># 前 FFN（Macaron）</span>
+  x = x + MHSA(x)                 <span style="color:#94a3b8"># 多头自注意力（长程）</span>
+  x = x + ConvModule(x)           <span style="color:#94a3b8"># 深度可分离卷积 + 门控 + Swish（局部）</span>
+  x = x + ½·FFN(x)                <span style="color:#94a3b8"># 后 FFN</span>
+  x = LayerNorm(x)
+  return x</pre>
+<div class="callout callout-i"><span class="ic">💡</span><span><b>为什么要双 FFN（Macaron）</b>？论文发现把 FFN 拆成两半放在注意力+卷积两侧，每层总参数量减半但效果更好。这是一个实验结论，没有深刻理论，但非常好用。</span></div>
 </section>
 
 <section id="whisper">
-  <h2>🤖 经典模型解析：OpenAI Whisper</h2>
-  <div class="model-card" style="border-color: #0ea5e9;">
-    <div class="model-header" style="background: linear-gradient(90deg, #f0f9ff, white);">
-      <div>
-        <span class="tag tag-blue">2022</span>
-        <b>Whisper (OpenAI)</b>
-      </div>
-      <span class="text-sm text-slate-500">大规模弱监督预训练</span>
-    </div>
-    <div class="model-body">
-      <p>Whisper是ASR领域最重要的近期工作之一，它证明了用海量弱标注互联网数据预训练，可以得到鲁棒的多语言通用ASR模型。</p>
-      
-      <h4>核心特点</h4>
-      <ul class="styled-list text-sm">
-        <li><b>数据规模</b>：68万小时音频-文本对，其中11.7万小时多语言，12.5万小时翻译数据</li>
-        <li><b>架构</b>：标准Transformer Encoder-Decoder，没有特殊创新</li>
-        <li><b>多任务</b>：同时预测语言、是否有语音、时间戳、转录文本、翻译文本</li>
-        <li><b>训练</b>：简单的下一个token预测目标，用特殊token区分任务类型</li>
-        <li><b>模型尺寸</b>：tiny(39M)→base(74M)→small(244M)→medium(769M)→large(1550M)</li>
-      </ul>
-
-      <div class="callout callout-blue">
-        <div class="callout-title">🌟 Whisper的真正贡献</div>
-        <p class="mb-0 text-sm">不是架构创新，而是<b>数据规模和多样性</b>带来的超强泛化能力。它在口音、噪声、专业术语、多语言混读场景下的鲁棒性远超之前所有开源模型，彻底改变了ASR落地门槛。</p>
-      </div>
-    </div>
-  </div>
+<h2>🌐 Whisper · 大规模多语言预训练</h2>
+<p>2022 年 OpenAI 发布 Whisper，用 <b>68 万小时</b>（438 万小时有标签）多语言语音-文本对训练了一个简单的 Encoder-Decoder Transformer，效果惊人地好——鲁棒、零样本迁移到口音/噪音、99 种语言。</p>
+<div class="grid-2">
+<div class="card"><h4>模型设计（故意很朴素）</h4>
+  <ul style="font-size:.9rem;margin-top:.25rem">
+    <li>输入：80 维 Log-Mel，25ms 窗、10ms 步长</li>
+    <li>Encoder：2 层 CNN 下采样 2×，接 N 层 Transformer Encoder</li>
+    <li>Decoder：Transformer Decoder，特殊 token 控制任务（<code>&lt;|transcribe|&gt;</code>/<code>&lt;|translate|&gt;</code>/<code>&lt;|zh|&gt;</code>）</li>
+    <li>没有 CTC、没有 Conformer、没有流式优化</li>
+  </ul>
+</div>
+<div class="card"><h4>为什么这么强？</h4>
+  <ul style="font-size:.9rem;margin-top:.25rem">
+    <li><b>数据规模碾压</b>：68 万小时是前人的 10-100 倍</li>
+    <li><b>多任务</b>：同时做转写、翻译、语音活动检测、语种识别</li>
+    <li><b>弱标注过滤</b>：用 Kaldi 大模型筛掉错配的字幕对</li>
+    <li><b>简单就是好</b>：抛弃了所有复杂技巧，纯 Transformer + 大数据</li>
+  </ul>
+</div>
+</div>
+<pre class="code"><span style="color:#94a3b8"># 一行命令使用 Whisper</span>
+pip install -U openai-whisper
+whisper meeting.mp3 --model large-v3 --language zh --output_format srt
+<span style="color:#94a3b8"># Python 接口</span>
+import whisper
+model = whisper.load_model("large-v3")
+result = model.transcribe("meeting.mp3", word_timestamps=True)
+for seg in result["segments"]:
+    print(f"[{seg['start']:.1f}-{seg['end']:.1f}] {seg['text']}")</pre>
 </section>
 
-<section id="quickstart">
-  <h2>⚡ 快速开始：5分钟跑通ASR</h2>
-  <p>使用OpenAI Whisper是最简单的入门方式，无需任何训练即可获得不错的识别效果：</p>
-  
-  <h3>安装Whisper</h3>
-  <div class="code-block">
-<span class="code-comment"># 安装</span>
-pip install -U openai-whisper
+<section id="papers">
+<h2>📄 经典论文精读</h2>
 
-<span class="code-comment"># 还需要安装ffmpeg</span>
-<span class="code-comment"># Ubuntu: sudo apt install ffmpeg</span>
-<span class="code-comment"># macOS: brew install ffmpeg</span></div>
+<div class="paper"><div class="ti">📘 Deep Speech 2: End-to-End Speech Recognition in English and Mandarin</div><div class="me">Amodei et al., Baidu, 2015 · ICML 2016</div><div class="ab">第二篇端到端 ASR 大论文。GRU 编码器 + CTC 损失，中英文双语训练，首次证明端到端在工业规模上可行。提出"SortaGrad"（先训短语音再训长语音）和 BatchNorm 对 RNN 的重要性。</div></div>
 
-  <h3>Python识别示例</h3>
-  <div class="code-block">
-<span class="code-keyword">import</span> whisper
+<div class="paper"><div class="ti">📗 Listen, Attend and Spell</div><div class="me">Chan et al., Carnegie Mellon / Google, 2015 · ICASSP 2016</div><div class="ab">LAS 模型，把机器翻译的 Seq2Seq+Attention 搬来 ASR。金字塔 BLSTM 编码器逐步下采样，注意力做软对齐，自回归解码。首次证明纯 Attention 端到端可以超过 DNN-HMM（在大数据集上）。</div></div>
 
-<span class="code-comment"># 加载模型 (首次会自动下载)</span>
-<span class="code-comment"># 可选: tiny, base, small, medium, large</span>
-model = whisper.<span class="code-func">load_model</span>(<span class="code-string">"base"</span>)
+<div class="paper"><div class="ti">📙 Conformer: Convolution-augmented Transformer for Speech Recognition</div><div class="me">Gulati et al., Google, 2020 · INTERSPEECH 2020</div><div class="ab">把 Transformer 的 MHSA 和 CNN 的 ConvModule 结合，Macaron 双 FFN 结构，相对位置编码。至今仍是 ESPnet、WeNet 等主流框架的默认编码器。</div></div>
 
-<span class="code-comment"># 识别音频 (支持wav/mp3/flac/m4a等多种格式)</span>
-result = model.<span class="code-func">transcribe</span>(<span class="code-string">"audio.wav"</span>, language=<span class="code-string">"zh"</span>)
+<div class="paper"><div class="ti">📕 Robust Speech Recognition via Large-Scale Weak Supervision</div><div class="me">Radford et al., OpenAI, 2022 · Whisper 论文</div><div class="ab">68 万小时弱标注数据 + 极简 Encoder-Decoder Transformer，在多语言、噪音、口音上零样本接近人类水平。改变了 ASR 的范式——从"小数据精调"转向"大数据预训练+少量微调"。</div></div>
+</section>
 
-<span class="code-comment"># 输出完整文本</span>
-<span class="code-func">print</span>(result[<span class="code-string">"text"</span>])
+<section id="code">
+<h2>💻 源码走读 · Kaldi HMM 拓扑</h2>
+<p>Kaldi 是传统 ASR 的经典框架，理解它的 TransitionModel 是理解 HMM-ASR 的钥匙。下面是核心概念的伪代码：</p>
+<pre class="code"><span style="color:#94a3b8">// Kaldi 中三状态 HMM 拓扑（每个音素 = 3 个状态）</span>
+<span style="color:#7dd3fc">class</span> HmmTopology {
+  <span style="color:#7dd3fc">//</span> 每个音素 3 状态，状态 0/1/2，0 不能到 2（left-to-right）
+  TopologyEntry states[] = {
+    {<span style="color:#fdba74">0</span>, { {0, <span style="color:#fde68a">0.5</span>}, {1, <span style="color:#fde68a">0.5</span>} }},  <span style="color:#94a3b8">// 状态0：自环 0.5、到1 0.5</span>
+    {<span style="color:#fdba74">1</span>, { {1, <span style="color:#fde68a">0.5</span>}, {2, <span style="color:#fde68a">0.5</span>} }},  <span style="color:#94a3b8">// 状态1：自环 0.5、到2 0.5</span>
+    {<span style="color:#fdba74">2</span>, { {2, <span style="color:#fde68a">0.5</span>}, {-1, <span style="color:#fde68a">0.5</span>} }}  <span style="color:#94a3b8">// 状态2：自环 0.5、结束 -1 0.5</span>
+  };
+};
 
-<span class="code-comment"># 输出带时间戳的片段</span>
-<span class="code-keyword">for</span> seg <span class="code-keyword">in</span> result[<span class="code-string">"segments"</span>]:
-    <span class="code-func">print</span>(<span class="code-func">f</span><span class="code-string">"[{seg['start']:.1f}s - {seg['end']:.1f}s] {seg['text']}"</span>)</div>
-
-  <h3>命令行使用</h3>
-  <div class="code-block">
-<span class="code-comment"># 基本用法</span>
-whisper audio.mp3 --model small --language zh
-
-<span class="code-comment"># 输出多种格式 (txt/vtt/srt/tsv/json)</span>
-whisper interview.wav --model medium --output_format srt</div>
+<span style="color:#94a3b8">// Viterbi 核心：动态规划</span>
+<span style="color:#7dd3fc">for</span> t = <span style="color:#fdba74">1</span>; t < T; t++ {
+  <span style="color:#7dd3fc">for each</span> state j {
+    <span style="color:#94a3b8">// 找从哪个状态 i 过来概率最大</span>
+    best_i = argmax_i ( viterbi[t-1][i] * log_a[i][j] )
+    viterbi[t][j] = viterbi[t-1][best_i] + log_a[best_i][j] + log_b[j][o[t]]
+    backptr[t][j] = best_i
+  }
+}
+<span style="color:#94a3b8">// 回溯得到最优路径</span>
+path[T] = argmax_j viterbi[T][j]
+<span style="color:#7dd3fc">for</span> t = T-1; t >= 0; t--
+  path[t] = backptr[t+1][path[t+1]]</pre>
 </section>
 
 <section id="tools">
-  <h2>🛠️ 工具框架推荐</h2>
-  <table>
-    <thead><tr><th>工具</th><th>机构</th><th>特点</th><th>适用场景</th></tr></thead>
-    <tbody>
-      <tr><td><b>Whisper</b></td><td>OpenAI</td><td>多语言、开箱即用、零样本鲁棒</td><td>快速原型、通用场景</td></tr>
-      <tr><td><b>ESPnet</b></td><td>CMU/NAIST</td><td>学术导向、ASR+TTS统一框架</td><td>科研、复现论文</td></tr>
-      <tr><td><b>WeNet</b></td><td>出门问问</td><td>工业级、生产部署友好</td><td>工业落地、实时ASR</td></tr>
-      <tr><td><b>FunASR</b></td><td>阿里达摩院</td><td>中文效果好、支持标点/时间戳/说话人分离</td><td>中文ASR服务</td></tr>
-      <tr><td><b>Kaldi</b></td><td>JHU</td><td>传统HMM-DNN、最成熟</td><td>学习传统ASR、嵌入式</td></tr>
-      <tr><td><b>NVIDIA NeMo</b></td><td>NVIDIA</td><td>PyTorch、Conformer/RNN-T支持完善</td><td>GPU训练、微调</td></tr>
-      <tr><td><b>Transformers</b></td><td>HuggingFace</td><td>模型丰富、易于微调</td><td>快速实验、微调Whisper/Wav2Vec</td></tr>
-    </tbody>
-  </table>
+<h2>🛠️ 工具与框架</h2>
+<table>
+<thead><tr><th>框架</th><th>机构</th><th>特点</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td><b>Kaldi</b></td><td>JHU</td><td>C++、传统 HMM+DNN、WFST 解码、配置复杂</td><td>工业部署、嵌入式</td></tr>
+<tr><td><b>ESPnet</b></td><td>CMU/名古屋</td><td>PyTorch、CTC+Attention、Conformer、Recipe 丰富</td><td>研究、复现论文</td></tr>
+<tr><td><b>WeNet</b></td><td>出门问问</td><td>PyTorch、生产导向、流式/非流式统一</td><td>中文工业首选</td></tr>
+<tr><td><b>Whisper</b></td><td>OpenAI</td><td>多语言、零样本、简单易用</td><td>快速原型、多语言</td></tr>
+<tr><td><b>FunASR</b></td><td>阿里达摩院</td><td>中文优化、Paraformer 非自回归、标点时间戳</td><td>中文长语音转写</td></tr>
+<tr><td><b>Nvidia NeMo</b></td><td>Nvidia</td><td>PyTorch Lightning、Conformer/RNN-T、多模态</td><td>GPU 训练、大规模</td></tr>
+</tbody>
+</table>
 </section>
 
-<section id="datasets">
-  <h2>📊 常用数据集</h2>
-  <div class="grid md:grid-cols-2 gap-4">
-    <div class="card">
-      <h4>🌍 英文数据集</h4>
-      <ul class="styled-list text-sm">
-        <li><b>LibriSpeech</b> - 1000小时，英文有声书朗读，最常用ASR基准</li>
-        <li><b>Switchboard</b> - 300小时电话对话，经典测试集</li>
-        <li><b>Common Voice</b> - Mozilla众包，多语言，数千小时</li>
-        <li><b>TED-LIUM</b> - TED演讲转写，400+小时</li>
-        <li><b>GigaSpeech</b> - 1万小时多领域英文</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h4>🇨🇳 中文数据集</h4>
-      <ul class="styled-list text-sm">
-        <li><b>AISHELL-1</b> - 178小时普通话朗读，中文基准</li>
-        <li><b>AISHELL-2</b> - 1000小时多说话人普通话</li>
-        <li><b>AISHELL-3</b> - 85小时TTS数据集</li>
-        <li><b>WenetSpeech</b> - 1万小时多领域中文（最大开源中文ASR）</li>
-        <li><b>MAGICDATA</b> - 755小时普通话对话朗读</li>
-        <li><b>HKUST</b> - 200小时普通话电话对话</li>
-      </ul>
-    </div>
-  </div>
+<section id="wer">
+<h2>📉 ASR 性能演进（Switchboard 数据集 WER）</h2>
+<p>WER（词错率）=（替换+删除+插入）/ 参考词数，越低越好。这是 Switchboard（电话对话，ASR 传统 benchmark）上的演进：</p>
+<div class="card" style="padding:1rem">
+<svg viewBox="0 0 800 280" width="100%" style="font-family:inherit;font-size:11px">
+  <line x1="60" y1="240" x2="770" y2="240" stroke="#cbd5e1"/><line x1="60" y1="30" x2="60" y2="240" stroke="#cbd5e1"/>
+  <!-- y axis labels: WER 40% -> 5% -->
+  <text x="50" y="244" text-anchor="end" fill="#64748b">0%</text>
+  <text x="50" y="194" text-anchor="end" fill="#64748b">10%</text>
+  <text x="50" y="144" text-anchor="end" fill="#64748b">20%</text>
+  <text x="50" y="94" text-anchor="end" fill="#64748b">30%</text>
+  <text x="50" y="44" text-anchor="end" fill="#64748b">40%</text>
+  <text x="20" y="140" transform="rotate(-90,20,140)" fill="#64748b">WER (Switchboard)</text>
+  <!-- data points: year, wer, label -->
+  <!-- GMM-HMM 40%@1995, 25%@2005; DNN-HMM 16%@2012; LSTM 11%@2016; ResNet 8%@2017; Conformer 5.0%@2020; Whisper-large 4.2%@2022 (on other sets but approx) -->
+  <polyline points="100,140 220,115 320,160 440,185 520,200 620,215 720,219" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
+  <!-- points -->
+  <g fill="#0ea5e9">
+    <circle cx="100" cy="140" r="5"/><text x="100" y="130" text-anchor="middle" fill="#0369a1" font-weight="600">GMM-HMM</text><text x="100" y="260" text-anchor="middle" fill="#64748b">1995</text><text x="100" y="155" text-anchor="middle" fill="#64748b">~40%</text>
+    <circle cx="220" cy="115" r="5"/><text x="220" y="105" text-anchor="middle" fill="#0369a1" font-weight="600">fMPE+BMMI</text><text x="220" y="260" text-anchor="middle" fill="#64748b">2005</text><text x="220" y="130" text-anchor="middle" fill="#64748b">~25%</text>
+    <circle cx="320" cy="160" r="5"/><text x="320" y="150" text-anchor="middle" fill="#0369a1" font-weight="600">DNN-HMM</text><text x="320" y="260" text-anchor="middle" fill="#64748b">2012</text><text x="320" y="175" text-anchor="middle" fill="#64748b">16%</text>
+    <circle cx="440" cy="185" r="5"/><text x="440" y="175" text-anchor="middle" fill="#0369a1" font-weight="600">BLSTM</text><text x="440" y="260" text-anchor="middle" fill="#64748b">2016</text><text x="440" y="200" text-anchor="middle" fill="#64748b">11%</text>
+    <circle cx="520" cy="200" r="5"/><text x="520" y="190" text-anchor="middle" fill="#0369a1" font-weight="600">ResNet+LACE</text><text x="520" y="260" text-anchor="middle" fill="#64748b">2017</text><text x="520" y="215" text-anchor="middle" fill="#64748b">8%</text>
+    <circle cx="620" cy="215" r="5"/><text x="620" y="205" text-anchor="middle" fill="#0369a1" font-weight="600">Conformer</text><text x="620" y="260" text-anchor="middle" fill="#64748b">2020</text><text x="620" y="230" text-anchor="middle" fill="#64748b">5.0%</text>
+    <circle cx="720" cy="219" r="5"/><text x="720" y="209" text-anchor="middle" fill="#0369a1" font-weight="600">Whisper</text><text x="720" y="260" text-anchor="middle" fill="#64748b">2022</text><text x="720" y="234" text-anchor="middle" fill="#64748b">~4%</text>
+  </g>
+  <!-- human parity line -->
+  <line x1="60" y1="220" x2="770" y2="220" stroke="#ef4444" stroke-dasharray="4,3"/>
+  <text x="700" y="216" fill="#ef4444" font-size="10">人类速记员水平 ≈5%</text>
+</svg>
+</div>
+<div class="callout callout-tip"><span class="ic">🏆</span><span>2017 年微软宣称在 Switchboard 上达到 5.1% WER，"超过人类速记员"。但这是特定 benchmark 的结果——真实口音/噪音/远场场景下 ASR 仍远不如人类。</span></div>
+
+<div class="cross asr">
+<div class="ico">📢</div>
+<div class="bd">
+<h4>学完"听"，来学"说" →</h4>
+<p>从 Tacotron 2 的梅尔谱生成，到 VITS 端到端波形合成，再到 VALL-E 零样本克隆——TTS 子站同样的四层结构带你走完"让机器开口说话"的全流程。</p>
+<div class="btns">
+<a href="../tts/" class="btn btn-p">📢 进入 TTS 子站</a>
+<a href="../tts/#tacotron" class="btn btn-pl">🎼 直奔 Tacotron 2</a>
+<a href="../tts/#vits" class="btn btn-pl">🎭 直奔 VITS</a>
+<a href="../index.html" class="btn btn-pl">🏠 返回首页</a>
+</div>
+</div>
+</div>
 </section>
 
-<!-- 下一站：TTS 引导卡片 -->
-<section class="mt-12">
-  <div class="rounded-2xl overflow-hidden border-2 border-orange-200 shadow-lg shadow-orange-100/50 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50 p-8 md:p-10">
-    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
-      <div class="w-20 h-20 tts-gradient rounded-2xl flex items-center justify-center text-4xl text-white shadow-lg shrink-0">📢</div>
-      <div class="flex-1">
-        <div class="text-xs font-semibold text-orange-600 uppercase tracking-wider mb-1">下一站 · Next</div>
-        <h3 class="text-2xl md:text-3xl font-bold text-slate-900 mb-2">继续学习：TTS 语音合成</h3>
-        <p class="text-slate-700 leading-relaxed mb-4">
-          你已经掌握了让机器"听懂"人类说话的 ASR 技术。接下来去看看让机器"开口说话"的另一半——
-          <b>TTS</b>：从传统的源-滤波器模型，到 WaveNet、Tacotron2、FastSpeech2、HiFi-GAN、VITS，再到零样本克隆的 VALL-E 和对话式的 ChatTTS，
-          让机器开口像真人一样自然流畅。
-        </p>
-        <div class="flex flex-wrap gap-2 mb-5">
-          <span class="text-xs px-2 py-1 bg-white/70 text-orange-700 rounded border border-orange-200">文本前端</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-orange-700 rounded border border-orange-200">Tacotron2</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-orange-700 rounded border border-orange-200">FastSpeech2</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-orange-700 rounded border border-orange-200">HiFi-GAN 声码器</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-orange-700 rounded border border-orange-200">VITS 端到端</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-orange-700 rounded border border-orange-200">VALL-E 零样本克隆</span>
-        </div>
-        <div class="flex flex-wrap gap-3">
-          <a href="../tts/index.html" class="tts-gradient text-white font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 transition shadow-md shadow-orange-500/30 inline-flex items-center gap-2">
-            进入 TTS 子站 <span>→</span>
-          </a>
-          <a href="../tts/index.html#tacotron" class="bg-white text-orange-700 border border-orange-300 font-medium px-5 py-2.5 rounded-lg hover:bg-orange-50 transition text-sm">直奔 Tacotron2</a>
-          <a href="../tts/index.html#vits" class="bg-white text-orange-700 border border-orange-300 font-medium px-5 py-2.5 rounded-lg hover:bg-orange-50 transition text-sm">直奔 VITS</a>
-          <a href="../index.html" class="bg-white text-slate-600 border border-slate-300 font-medium px-5 py-2.5 rounded-lg hover:bg-slate-50 transition text-sm">← 返回首页</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div style="height: 100px;"></div>
+</main>
 </div>
 
+<footer><div class="wrap">ASR · 语音识别研究站 · agent-speech · 受 agent-cv / agent-yolo 启发</div></footer>
+
+<script src="../main.js"></script>
 <script>
-// 全局事件处理函数
-function switchTab(btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(btn.dataset.tab).classList.add('active');
-}
+document.addEventListener("DOMContentLoaded", function(){
+// ===== TOC =====
 
-// 测验答案检查
-function checkAnswer(el, correct) {
-  const options = el.parentElement.querySelectorAll('.quiz-option');
-  options.forEach(o => { o.onclick = null; o.style.cursor = 'default'; });
-  const feedback = document.getElementById('quiz-feedback');
-  if (correct) {
-    el.classList.add('correct');
-    feedback.textContent = '✅ 正确！路径"hh∅ee∅ll∅oo∅"去掉所有∅得到"hheelloo"，合并连续重复后得到 helo，因为连续 l 合并为一个 l，B选项正确。';
-  } else {
-    el.classList.add('wrong');
-    feedback.textContent = '❌ 再想想：CTC映射先合并连续重复字符，再去掉所有blank。';
+// ===== single sine (signal demo) =====
+(function(){
+  const cv=document.getElementById('scv'),ctx=cv.getContext('2d');
+  function resize(){const r=cv.getBoundingClientRect();cv.width=r.width*(devicePixelRatio||1);cv.height=r.height*(devicePixelRatio||1);ctx.setTransform(devicePixelRatio||1,0,0,devicePixelRatio||1,0,0);draw();}
+  function draw(){
+    const w=cv.clientWidth,h=cv.clientHeight,f=+freq.value,a=+amp.value/10;
+    fv.textContent=f;av.textContent=a.toFixed(1);
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='#e2e8f0';ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();
+    ctx.strokeStyle='#0ea5e9';ctx.lineWidth=2;ctx.beginPath();
+    for(let x=0;x<w;x++){const t=x/w*2;const py=h/2-a*Math.sin(2*Math.PI*f*t)*(h/2-20);x===0?ctx.moveTo(x,py):ctx.lineTo(x,py);}
+    ctx.stroke();
+    sfml.textContent=`s(t) = ${a.toFixed(1)} · sin(2π · ${f} · t)`;
   }
-  feedback.classList.remove('hidden');
-}
+  freq.addEventListener('input',draw);amp.addEventListener('input',draw);
+  window.addEventListener('resize',resize);resize();
+})();
 
-// KaTeX渲染
-document.addEventListener("DOMContentLoaded", function() {
-  if (window.renderMathInElement) {
-    renderMathInElement(document.body, {
-      delimiters: [
-        {left: "$$", right: "$$", display: true},
-        {left: "$", right: "$", display: false}
-      ]
-    });
+// ===== Viterbi demo =====
+(function(){
+  const states=['A','B','C'];
+  const T=5;
+  let emis; // [T][state]
+  function randEmis(){emis=Array.from({length:T},()=>{const r=states.map(()=>Math.random());const s=r.reduce((a,b)=>a+b);return r.map(v=>v/s);});render();document.getElementById('vt-out').innerHTML='<span style="color:#94a3b8">点击「运行 Viterbi」开始解码</span>';}
+  function render(){
+    let html='<table style="width:100%;font-size:.85rem;text-align:center;border-collapse:collapse"><thead><tr><th style="padding:.4rem">状态\帧</th>';
+    for(let t=0;t<T;t++) html+=`<th style="padding:.4rem;background:#f1f5f9">t=${t+1}</th>`;html+='</tr></thead><tbody>';
+    states.forEach((s,i)=>{html+=`<tr><td style="padding:.4rem;font-weight:600;background:var(--sky-l);color:var(--sky-d)">${s}</td>`;for(let t=0;t<T;t++)html+=`<td style="padding:.4rem;border:1px solid var(--border)" id="e${t}${i}">${emis[t][i].toFixed(2)}</td>`;html+='</tr>';});html+='</tbody></table>';
+    document.getElementById('vt-grid').innerHTML=html;
   }
+  function viterbi(){
+    const trellis=Array.from({length:T},()=>states.map(()=>({prob:-Infinity,from:-1})));
+    const trans=[[0.6,0.4,0.0],[0.0,0.6,0.4],[0.0,0.0,0.8]]; // left-to-right with self-loop+exit
+    states.forEach((_,i)=>trellis[0][i].prob=Math.log(emis[0][i])+Math.log(1/3));
+    for(let t=1;t<T;t++)for(let j=0;j<states.length;j++)for(let i=0;i<=j;i++){const p=trellis[t-1][i].prob+Math.log(trans[i][j])+Math.log(emis[t][j]);if(p>trellis[t][j].prob){trellis[t][j].prob=p;trellis[t][j].from=i;}}
+    let best=0;for(let j=1;j<states.length;j++)if(trellis[T-1][j].prob>trellis[T-1][best].prob)best=j;
+    const path=[best];for(let t=T-1;t>0;t--){path.unshift(trellis[t][path[0]].from);}
+    // highlight
+    for(let t=0;t<T;t++){states.forEach((_,i)=>{const el=document.getElementById(`e${t}${i}`);if(el){el.style.background='';el.style.fontWeight='';}});const el=document.getElementById(`e${t}${path[t]}`);if(el){el.style.background='var(--sky-l)';el.style.fontWeight='700';}}
+    const labels=path.map(i=>states[i]);
+    document.getElementById('vt-out').innerHTML='<span style="color:var(--muted)">最优路径：</span><b style="color:var(--sky-d);font-size:1rem;letter-spacing:2px">'+labels.join(' → ')+'</b> <span style="color:var(--muted);margin-left:.5rem">（对数概率 = '+(trellis[T-1][best].prob).toFixed(2)+'）</span>';
+  }
+  document.getElementById('vt-run').addEventListener('click',viterbi);
+  document.getElementById('vt-reset').addEventListener('click',randEmis);
+  randEmis();
+})();
 
-  // 等待 ECharts 加载完成后初始化图表
-  function initCharts() {
-    if (typeof echarts === 'undefined') {
-      setTimeout(initCharts, 100);
-      return;
+// ===== CTC alignment viz =====
+(function(){
+  const vis=document.getElementById('ctc-vis'),info=document.getElementById('ctc-info');
+  function gen(){
+    const txt=document.getElementById('ctc-txt').value||'a';
+    const T=18;const chars=['ε',...txt.split('')];
+    // generate a valid alignment path
+    let path=[];let ci=0;let last='ε';
+    while(path.length<T){
+      if(ci>=txt.length){for(let i=path.length;i<T;i++)path.push('ε');break;}
+      const r=Math.random();
+      let c;
+      if(last==='ε'){c=r<0.55?'ε':txt[ci];}
+      else if(last===txt[ci]){c=r<0.4?'ε':(r<0.85?txt[ci]:(ci+1<txt.length?txt[ci+1]:txt[ci]));}
+      else{c=r<0.45?'ε':txt[ci];}
+      if(c!=='ε' && last!==c && c!==last){if(c===txt[ci]){/* stay */}else if(c===txt[ci+1]){ci++;}}
+      path.push(c);last=c;
     }
-    // ECharts ASR演进图
-    const chart = echarts.init(document.getElementById('asrTimelineChart'));
-    chart.setOption({
-      tooltip: { trigger: 'axis' },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: ['GMM-HMM', 'DNN-HMM', 'CTC', 'LAS', 'Transformer', 'Conformer', 'Whisper'] },
-      yAxis: { type: 'value', name: 'Switchboard WER(%)', min: 4, max: 25 },
-      series: [{
-        type: 'line',
-        data: [23.6, 15.8, 13.2, 10.5, 8.3, 6.2, 5.0],
-        smooth: true,
-        lineStyle: { width: 3, color: '#0ea5e9' },
-        itemStyle: { color: '#0ea5e9' },
-        areaStyle: { color: 'rgba(14,165,233,0.1)' },
-        label: { show: true, position: 'top', formatter: '{c}%' }
-      }]
-    });
-    window.addEventListener('resize', () => chart.resize());
+    // ensure it collapses correctly: enforce transitions
+    let merged='',prev='ε';
+    for(const c of path){if(c!==prev&&c!=='ε')merged+=c;prev=c;}
+    // if mismatch, just add final eps until end and rerun if needed; but for demo, accept
+    vis.innerHTML=path.map(c=>`<span style="padding:4px 8px;border-radius:3px;font-weight:600;font-size:.9rem;background:${c==='ε'?'#f1f5f9':c===txt[0]?'#dbeafe':c===txt[1]||c===txt[2]?'#fed7aa':'#ddd6fe'};color:${c==='ε'?'#94a3b8':'inherit'};margin:1px">${c==='ε'?'ε':c}</span>`).join('');
+    info.innerHTML='合并去重去ε：<b style="color:var(--sky-d)">"'+merged+'"</b>'+(merged===txt?' ✅':'（随机对齐可能未正确收敛，再点一次）');
   }
-  initCharts();
-
-  // 侧边栏滚动高亮
-  const sections = document.querySelectorAll('section[id]');
-  const links = document.querySelectorAll('.sidebar a');
-  window.addEventListener('scroll', () => {
-    let current = '';
-    sections.forEach(s => {
-      const top = s.offsetTop - 100;
-      if (window.scrollY >= top) current = s.id;
-    });
-    links.forEach(l => {
-      l.classList.remove('active');
-      if (l.getAttribute('href') === '#' + current) l.classList.add('active');
-    });
-  });
+  document.getElementById('ctc-gen').addEventListener('click',gen);gen();
+})();
 });
 </script>
-
 </body>
 </html>

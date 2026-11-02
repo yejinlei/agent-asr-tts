@@ -1,953 +1,511 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TTS 语音合成 · Agent-Speech</title>
-<script src="https://aisearch-task.bj.bcebos.com/static/tailwindcss/3.4.17/tailwind.min.js"></script>
-<script src="https://aisearch-task.bj.bcebos.com/static/echarts/5.6.0/echarts.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js"></script>
+<title>TTS · 语音合成研究站 | Agent-Speech</title>
+<link rel="stylesheet" href="../style.css">
 <style>
-:root {
-  --primary: #f97316;
-  --primary-dark: #ea580c;
-  --primary-light: #fb923c;
-  --bg: #fffbf5;
-  --text: #1e293b;
-  --text-light: #64748b;
-  --border: #fed7aa;
-  --code-bg: #1c1917;
-}
-html { scroll-behavior: smooth; }
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-.layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1400px; margin: 0 auto; }
-.sidebar {
-  position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
-  overflow-y: auto;
-  padding: 2rem 1rem;
-  border-right: 1px solid var(--border);
-  background: white;
-}
-.sidebar h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #fdba74; font-weight: 600; margin: 1.5rem 0 0.5rem; padding-left: 1rem; }
-.sidebar h3:first-child { margin-top: 0; }
-.sidebar a {
-  display: block;
-  padding: 0.4rem 1rem;
-  font-size: 0.875rem;
-  color: var(--text-light);
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-}
-.sidebar a:hover { background: #fff7ed; color: var(--primary); }
-.sidebar a.active { background: #ffedd5; color: var(--primary-dark); font-weight: 500; }
-.main-content { padding: 2rem 3rem; min-height: calc(100vh - 64px); }
-.top-nav {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-}
-.top-nav-inner {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.125rem; }
-.nav-links { display: flex; gap: 2rem; align-items: center; }
-.nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--text-light); transition: color 0.2s; }
-.nav-links a:hover, .nav-links a.active { color: var(--primary); }
-h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
-h2 { font-size: 1.875rem; font-weight: 700; margin: 3rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-h2:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
-h3 { font-size: 1.25rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--text); }
-h4 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-p { line-height: 1.8; color: #475569; margin-bottom: 1rem; }
-.card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin: 1rem 0;
-  box-shadow: 0 1px 3px rgba(249,115,22,0.05);
-}
-.code-block {
-  background: var(--code-bg);
-  color: #fef3c7;
-  border-radius: 0.5rem;
-  padding: 1.25rem;
-  font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
-  overflow-x: auto;
-  line-height: 1.7;
-  margin: 1rem 0;
-}
-.code-comment { color: #a8a29e; }
-.code-keyword { color: #fdba74; }
-.code-string { color: #86efac; }
-.code-func { color: #fbbf24; }
-.inline-code {
-  background: #fff7ed;
-  color: #c2410c;
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  font-family: "SF Mono", Menlo, monospace;
-  font-size: 0.875em;
-}
-.tag {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-right: 0.5rem;
-}
-.tag-orange { background: #ffedd5; color: #c2410c; }
-.tag-green { background: #dcfce7; color: #15803d; }
-.tag-blue { background: #e0f2fe; color: #0369a1; }
-.tag-purple { background: #f3e8ff; color: #7c3aed; }
-.tag-red { background: #fee2e2; color: #b91c1c; }
-.formula-box {
-  background: #fff7ed;
-  border-left: 4px solid var(--primary);
-  padding: 1rem 1.5rem;
-  border-radius: 0 0.5rem 0.5rem 0;
-  margin: 1rem 0;
-}
-.math-block { text-align: center; margin: 0.75rem 0; }
-.callout {
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
-  padding: 1rem 1.5rem;
-  border-radius: 0 0.5rem 0.5rem 0;
-  margin: 1rem 0;
-}
-.callout-orange { background: #ffedd5; border-left-color: var(--primary); }
-.callout-green { background: #dcfce7; border-left-color: #22c55e; }
-.callout-title { font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-.architecture-diagram {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-  border-radius: 0.75rem;
-  padding: 2rem;
-  margin: 1.5rem 0;
-  text-align: center;
-  font-family: "SF Mono", Menlo, monospace;
-  font-size: 0.8rem;
-  line-height: 1.6;
-  white-space: pre;
-  overflow-x: auto;
-}
-.tab-group { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
-.tab-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border);
-  background: white;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-.tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-.model-card {
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background: white;
-  margin: 1rem 0;
-}
-.model-header {
-  padding: 1rem 1.5rem;
-  background: linear-gradient(90deg, #fff7ed, white);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.model-body { padding: 1.25rem 1.5rem; }
-.timeline-year {
-  display: inline-block;
-  background: var(--primary);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-right: 0.75rem;
-}
-ul.styled-list { padding-left: 1.5rem; margin-bottom: 1rem; }
-ul.styled-list li { margin-bottom: 0.5rem; line-height: 1.7; color: #475569; }
-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
-th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-th { background: #fff7ed; font-weight: 600; color: var(--text); }
-tr:hover { background: #fffbf5; }
-.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-.compare-card { padding: 1rem; border-radius: 0.5rem; }
-.compare-ar { background: #fef3c7; border: 1px solid #fcd34d; }
-.compare-nar { background: #dcfce7; border: 1px solid #86efac; }
+/* TTS 主题色（橙色） */
+:root{--primary:var(--org);--primary-d:var(--org-d);--primary-l:var(--org-l)}
+.hero{background:linear-gradient(135deg,#9a3412,#ea580c)}
+.hero h1 em{background:linear-gradient(120deg,#fdba74,#fed7aa);-webkit-background-clip:text;background-clip:text;color:transparent}
+.algo{border-left-color:var(--org)}.algo:hover{background:var(--org-l)}
+.toc a:hover{color:var(--org);background:var(--org-l)}
+.toc a.on{color:var(--org)!important;border-left-color:var(--org)!important;background:var(--org-l)!important;font-weight:600!important}
+.tab.on{color:var(--org);border-bottom-color:var(--org)}
+.tab:hover{color:var(--org)}
+.lab{background:var(--org-l);border-color:#fdba74}
+.lab h3{color:var(--org-d)}
+section h2{border-bottom-color:var(--org-l)}
+section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);border-radius:2px;display:inline-block}
+.btn-p{background:var(--org);color:#fff}.btn-p:hover{background:var(--org-d)}
+.btn-pl{background:var(--org-l);color:var(--org-d)}.btn-pl:hover{background:#fed7aa}
+.callout-i{background:var(--org-l);border-left-color:var(--org);color:var(--org-d)}
+.paper{border-left-color:var(--org)}.paper:hover{background:var(--org-l);border-left-color:var(--org-d)}
 </style>
 </head>
 <body>
 
-<!-- 顶部导航 -->
-<nav class="top-nav">
-<div class="top-nav-inner">
-  <a href="../index.html" class="logo">
-    <span class="text-2xl">🎙️</span>
-    <span>Agent-Speech</span>
-    <span class="text-orange-600 ml-2">/ TTS</span>
-  </a>
+<nav class="top"><div class="in">
+  <a href="../index.html" class="logo"><span>🎙️</span><span>agent-<em style="color:var(--org)">speech</em></span></a>
   <div class="nav-links">
     <a href="../index.html">首页</a>
-    <a href="../asr/index.html">🎤 ASR</a>
-    <a href="index.html" class="active">📢 TTS</a>
-    <a href="https://github.com" aria-label="GitHub 仓库">
-      <svg class="w-5 h-5" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-    </a>
+    <a href="../asr/">🎤 ASR</a>
+    <a href="#intro" class="cur2">📢 TTS</a>
+    <a href="#papers">论文</a>
+    <a href="#vocoder">声码器</a>
+    <a href="https://github.com" target="_blank" rel="noopener" class="gh" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.4.6.1.8-.26.8-.58v-2c-3.34.7-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.74.08-.74 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.8 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.48-1.34-5.48-5.94 0-1.3.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23 2.3-.7 4.8-.7 6 0 2.3-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.92 1.24 3.22 0 4.6-2.81 5.64-5.48 5.94.43.37.8 1.1.8 2.2v3.3c0 .32.2.7.8.58A12 12 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a>
   </div>
-</div>
-</nav>
+</div></nav>
 
-<div class="layout">
-<!-- 侧边栏 -->
-<aside class="sidebar">
-  <h3>入门</h3>
-  <a href="#intro">TTS 是什么</a>
-  <a href="#mos">评估指标MOS</a>
-  <a href="#history">技术发展简史</a>
-  
-  <h3>文本前端</h3>
-  <a href="#front-overview">前端流水线</a>
-  <a href="#textnorm">文本归一化</a>
-  <a href="#g2p">字音转换G2P</a>
-  <a href="#prosody">韵律预测</a>
-  
-  <h3>传统合成</h3>
-  <a href="#source-filter">源-滤波器模型</a>
-  <a href="#concat">拼接合成</a>
-  <a href="#parametric">参数合成HTS</a>
-  
-  <h3>声学模型</h3>
-  <a href="#am-overview">声学模型概述</a>
-  <a href="#tacotron">Tacotron/Tacotron2</a>
-  <a href="#fastspeech">FastSpeech/FastSpeech2</a>
-  
-  <h3>神经声码器</h3>
-  <a href="#vocoder-overview">声码器概述</a>
-  <a href="#wavenet">WaveNet</a>
-  <a href="#gan-vocoder">MelGAN/HiFi-GAN</a>
-  
-  <h3>端到端TTS</h3>
-  <a href="#vits">VITS</a>
-  <a href="#valle">VALL-E 零样本克隆</a>
-  <a href="#chattts">ChatTTS对话TTS</a>
-  
-  <h3>实战</h3>
-  <a href="#quickstart">快速开始</a>
-  <a href="#tools">工具推荐</a>
-  <a href="#datasets">数据集</a>
-</aside>
+<header class="hero"><div class="wrap">
+  <div style="font-size:3rem;margin-bottom:.75rem">📢</div>
+  <h1>TTS · <em>文本转语音合成</em></h1>
+  <p>从一段文字到一段自然语音——从源-滤波理论、共振峰合成到 WaveNet、Tacotron、FastSpeech、HiFi-GAN、VITS、VALL-E，系统拆解"让机器开口说话"的全流程。</p>
+  <div class="cta">
+    <a href="#source-filter" class="btn btn-sky">📖 从发声原理开始</a>
+    <a href="#valle" class="btn btn-ghost">⚡ 直奔 VALL-E</a>
+    <a href="../asr/" class="btn btn-ghost">🎤 去 ASR 子站</a>
+  </div>
+  <div class="stat-grid">
+    <div class="stat"><div class="n">19</div><div class="l">核心章节</div></div>
+    <div class="stat"><div class="n">10</div><div class="l">经典模型精读</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">互动 Demo</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">段源码走读</div></div>
+  </div>
+</div></header>
 
-<!-- 主内容 -->
-<main class="main-content">
+<div class="wrap body">
+<aside class="toc"><nav aria-label="TTS目录">
+  <h4>TTS 目录</h4>
+  <a href="#intro" class="on">🎯 TTS 是什么</a>
+  <a href="#mos">📊 MOS 评分体系</a>
+  <a href="#frontend">🔤 文本前端</a>
+  <a href="#source-filter">🎺 源-滤波模型</a>
+  <a href="#concatenative">✂️ 拼接合成</a>
+  <a href="#parametric">📐 参数合成</a>
+  <a href="#wavenet">🌊 WaveNet</a>
+  <a href="#tacotron">🎼 Tacotron 2</a>
+  <a href="#fastspeech">⚡ FastSpeech 2</a>
+  <a href="#vocoder">🎛️ 声码器家族</a>
+  <a href="#hifigan">🔥 HiFi-GAN</a>
+  <a href="#vits">🎭 VITS</a>
+  <a href="#valle">🤖 VALL-E 零样本</a>
+  <a href="#papers">📄 经典论文</a>
+  <a href="#code">💻 源码走读</a>
+  <a href="#tools">🛠️ 工具框架</a>
+</nav></aside>
+
+<main>
 
 <section id="intro">
-  <div class="inline-flex items-center gap-2 mb-4">
-    <span class="tag tag-orange">Text to Speech</span>
-    <span class="text-sm text-slate-500">文本转语音</span>
-  </div>
-  <h1>📢 TTS 语音合成</h1>
-  <p class="text-lg text-slate-600 leading-relaxed mb-6">
-    语音合成（Text to Speech，TTS）是将文本转换为自然人类语音的技术。从早期机械合成到现在的神经语音克隆，TTS的自然度已经接近甚至在某些场景超过真人水平。
-  </p>
-
-  <div class="callout callout-orange">
-    <div class="callout-title">💡 通俗理解</div>
-    <p class="mb-0 text-sm">
-      TTS 就像给计算机装了"嘴巴"。ASR是"听写员"把声音变成文字，TTS则是"播音员"把文字念出来。但要念得自然并不容易——
-      不仅要发音准确，还要掌握停顿、语调、重音、情感，甚至呼吸声，才能让人听起来像真人在说话，而不是机器人。
-    </p>
-  <div class="mt-4 rounded-lg border border-sky-200 bg-gradient-to-r from-sky-50 to-blue-50 p-4 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <span class="text-2xl">🎤</span>
-      <div>
-        <div class="text-sm font-semibold text-sky-900">学完「朗读」还想学「听写」？</div>
-        <div class="text-xs text-sky-700 mt-0.5">TTS 是说（文本→声音），ASR 是听（声音→文本），二者共享声学特征与神经网络基础，构成语音技术的完整闭环。</div>
-      </div>
-    </div>
-    <a href="../asr/index.html" class="shrink-0 asr-gradient text-white text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition whitespace-nowrap">前往 ASR 子站 →</a>
-  </div>
+<h2>🎯 TTS 是什么</h2>
+<p><strong>文本转语音（Text-to-Speech, TTS）</strong>，目标是把文字转换成自然流畅的语音。它是导航播报、有声书、智能音箱、屏幕阅读器、数字人背后的核心技术。</p>
+<div class="callout callout-i"><span class="ic">🗣️</span><span><b>通俗理解</b>：TTS = 机器的"嗓子+朗读者"。给它一段文字，它要像人一样决定每个字读什么音、声调多高、时长多长、哪里停顿，最后"振动空气"生成声波。</span></div>
+<p>TTS 的难度来自三个层面：</p>
+<ul>
+<li><strong>自然度</strong>：不能像机器人一字一顿，要有韵律、语气、情感</li>
+<li><b>表现力</b>：同一句话不同人/不同情绪说出来差异巨大，可控性是难题</li>
+<li><b>实时性</b>：语音是 16kHz~24kHz 高维信号（每秒 1.6-2.4 万个采样点），生成要快</li>
+</ul>
+<p>TTS 70 年同样经历了三次范式跃迁：<b>共振峰合成</b>（规则驱动）→ <b>拼接/参数合成</b>（统计驱动）→ <b>神经合成</b>（WaveNet/Tacotron/FastSpeech/VITS/VALL-E）。</p>
 </section>
 
 <section id="mos">
-  <h2>⭐ 如何评估TTS质量：MOS分</h2>
-  <p>TTS最核心的主观评价指标是MOS（Mean Opinion Score，平均意见分），由人类听音员对合成语音的自然度打分。</p>
-  
-  <div class="card">
-    <table>
-      <thead><tr><th>MOS分</th><th>质量等级</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td><b>5</b></td><td>优秀</td><td>与真人无法区分</td></tr>
-        <tr><td><b>4</b></td><td>良好</td><td>自然流畅，偶有小瑕疵</td></tr>
-        <tr><td><b>3</b></td><td>一般</td><td>可懂但明显机器感</td></tr>
-        <tr><td><b>2</b></td><td>较差</td><td>部分听不清，机器感重</td></tr>
-        <tr><td><b>1</b></td><td>很差</td><td>不可理解</td></tr>
-      </tbody>
-    </table>
-  </div>
-  
-  <p>真人自然语音的MOS约为<b>4.7-4.8</b>。当前最优的神经网络TTS系统MOS已可达4.6-4.7，基本与真人难以区分。</p>
-  
-  <div class="card">
-    <h4>其他常用客观指标</h4>
-    <ul class="styled-list text-sm">
-      <li><b>MCD (Mel Cepstral Distortion)</b>：梅尔倒谱失真，衡量合成语音与真实语音在倒谱域的距离，越低越好</li>
-      <li><b>F0 RMSE</b>：基频预测误差，衡量韵律准确度</li>
-      <li><b>说话人相似度</b>：用说话人验证模型(如ECAPA-TDNN)提取嵌入，计算余弦相似度</li>
-      <li><b>CMOS (Comparison MOS)</b>：成对比较MOS，A/B测试更稳定</li>
-      <li><b>WER (用于反向ASR验证)</b>：合成语音被ASR识别的字错率，可懂度的客观代理指标</li>
-    </ul>
-  </div>
-
-  <div id="mosChart" style="height: 350px; min-height: 350px;" class="card"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fdba74;font-size:0.875rem;">正在加载MOS趋势图...</div></div>
+<h2>📊 MOS 评分体系 · 自然度演进</h2>
+<p>TTS 用 <b>MOS（Mean Opinion Score，平均意见分）</b> 评价自然度：1-5 分，5 分是真人录音。下面是历年里程碑模型在 LJSpeech（英文女声）上的 MOS：</p>
+<div class="card" style="padding:1rem">
+<svg viewBox="0 0 800 280" width="100%" style="font-family:inherit;font-size:11px">
+  <line x1="60" y1="240" x2="770" y2="240" stroke="#cbd5e1"/><line x1="60" y1="40" x2="60" y2="240" stroke="#cbd5e1"/>
+  <text x="50" y="244" text-anchor="end" fill="#64748b">1.0</text>
+  <text x="50" y="190" text-anchor="end" fill="#64748b">2.0</text>
+  <text x="50" y="140" text-anchor="end" fill="#64748b">3.0</text>
+  <text x="50" y="90" text-anchor="end" fill="#64748b">4.0</text>
+  <text x="50" y="40" text-anchor="end" fill="#64748b">5.0</text>
+  <text x="20" y="140" transform="rotate(-90,20,140)" fill="#64748b">MOS (LJSpeech)</text>
+  <text x="720" y="55" fill="#10b981" font-size="10">—— 真人录音 4.9</text>
+  <line x1="60" y1="45" x2="770" y2="45" stroke="#10b981" stroke-dasharray="4,3"/>
+  <polyline points="100,220 200,200 300,160 400,90 480,60 560,55 640,48 720,48" fill="none" stroke="#f97316" stroke-width="2.5"/>
+  <g fill="#f97316">
+    <circle cx="100" cy="220" r="5"/><text x="100" y="210" text-anchor="middle" fill="#c2410c" font-weight="600">共振峰</text><text x="100" y="260" text-anchor="middle" fill="#64748b">1980</text><text x="100" y="233" text-anchor="middle" fill="#64748b">~1.5</text>
+    <circle cx="200" cy="200" r="5"/><text x="200" y="190" text-anchor="middle" fill="#c2410c" font-weight="600">单元拼接</text><text x="200" y="260" text-anchor="middle" fill="#64748b">2000</text><text x="200" y="213" text-anchor="middle" fill="#64748b">~2.0</text>
+    <circle cx="300" cy="160" r="5"/><text x="300" y="150" text-anchor="middle" fill="#c2410c" font-weight="600">HTS (HMM)</text><text x="300" y="260" text-anchor="middle" fill="#64748b">2010</text><text x="300" y="173" text-anchor="middle" fill="#64748b">~3.0</text>
+    <circle cx="400" cy="90" r="5"/><text x="400" y="80" text-anchor="middle" fill="#c2410c" font-weight="600">WaveNet</text><text x="400" y="260" text-anchor="middle" fill="#64748b">2016</text><text x="400" y="103" text-anchor="middle" fill="#64748b">4.0</text>
+    <circle cx="480" cy="60" r="5"/><text x="480" y="50" text-anchor="middle" fill="#c2410c" font-weight="600">Tacotron2</text><text x="480" y="260" text-anchor="middle" fill="#64748b">2018</text><text x="480" y="73" text-anchor="middle" fill="#64748b">4.5</text>
+    <circle cx="560" cy="55" r="5"/><text x="560" y="45" text-anchor="middle" fill="#c2410c" font-weight="600">FastSpeech2</text><text x="560" y="260" text-anchor="middle" fill="#64748b">2020</text><text x="560" y="68" text-anchor="middle" fill="#64748b">4.6</text>
+    <circle cx="640" cy="48" r="5"/><text x="640" y="38" text-anchor="middle" fill="#c2410c" font-weight="600">VITS</text><text x="640" y="260" text-anchor="middle" fill="#64748b">2021</text><text x="640" y="61" text-anchor="middle" fill="#64748b">4.7</text>
+    <circle cx="720" cy="48" r="5"/><text x="720" y="38" text-anchor="middle" fill="#c2410c" font-weight="600">VALL-E</text><text x="720" y="260" text-anchor="middle" fill="#64748b">2023</text><text x="720" y="61" text-anchor="middle" fill="#64748b">4.9</text>
+  </g>
+</svg>
+</div>
+<div class="callout callout-tip"><span class="ic">🏆</span><span>2021 年 VITS 之后，单说话人 TTS 在主观 MOS 上已经"超过普通人声"的门槛，研究重心转向<b>零样本克隆、多说话人、情感控制、跨语种</b>。</span></div>
 </section>
 
-<section id="history">
-  <h2>📅 技术发展简史</h2>
-  <div class="card">
-    <div class="space-y-4">
-      <div>
-        <span class="timeline-year">1939</span>
-        <span class="font-semibold">VODER 机械合成器</span>
-        <p class="text-sm mt-1 mb-0">贝尔实验室Homer Dudley制作，需要操作员按键控制发音，是第一个电子语音合成器。</p>
-      </div>
-      <div>
-        <span class="timeline-year">1960s-80s</span>
-        <span class="font-semibold">共振峰合成 / 拼接合成萌芽</span>
-        <p class="text-sm mt-1 mb-0">基于源-滤波器理论的共振峰合成（Klatt合成器）流行，能合成可懂度尚可的语音，但非常机械。</p>
-      </div>
-      <div>
-        <span class="timeline-year">1990s</span>
-        <span class="font-semibold">大语料库单元拼接合成</span>
-        <p class="text-sm mt-1 mb-0">从大量真人录音中挑选单元拼接，自然度大幅提升，是商用系统（如早期Siri）的基础。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2000s</span>
-        <span class="font-semibold">HMM统计参数合成(HTS)</span>
-        <p class="text-sm mt-1 mb-0">基于HMM的参数合成，灵活性强（可变声、变速），但有过平滑问题，声音发闷。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2016</span>
-        <span class="font-semibold">WaveNet 神经声码器革命</span>
-        <p class="text-sm mt-1 mb-0">DeepMind WaveNet首次证明神经网络可以生成高保真语音波形，MOS首次接近真人。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2017-2018</span>
-        <span class="font-semibold">端到端TTS：Tacotron2</span>
-        <p class="text-sm mt-1 mb-0">Google Tacotron2首次实现端到端文本→梅尔谱，结合WaveNet生成语音，MOS达4.53。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2019-2020</span>
-        <span class="font-semibold">非自回归时代</span>
-        <p class="text-sm mt-1 mb-0">FastSpeech、ParaNet实现并行解码，速度大幅提升；HiFi-GAN等GAN声码器实现实时高保真。</p>
-      </div>
-      <div>
-        <span class="timeline-year">2021-至今</span>
-        <span class="font-semibold">端到端+大模型+零样本克隆</span>
-        <p class="text-sm mt-1 mb-0">VITS统一框架实现完全端到端；VALL-E实现3秒零样本语音克隆；大模型驱动的对话TTS(ChatTTS)涌现。</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="front-overview">
-  <h2>📝 文本前端：TTS的"大脑"</h2>
-  <p>直接把字符送进神经网络是不行的——文本有数字、缩写、多音字、特殊符号，还需要预测在哪里停顿、哪个字重读。文本前端就是做这些"文本规范化"工作。</p>
-
-  <div class="architecture-diagram">输入文本
-    ↓
-[1] 文本归一化 (Text Normalization)
-    数字、日期、金额、缩写 → 文字
-    ↓
-[2] 分词 / 词性标注 / 多音字消歧
-    ↓
-[3] 字音转换 (G2P: Grapheme-to-Phoneme)
-    汉字/字符 → 音素序列(带声调)
-    ↓
-[4] 韵律预测 (Prosody Prediction)
-    停顿位置、停顿时长、重音、语调
-    ↓
-语言学特征 (音素+韵律标注)
-    ↓
-送入声学模型</div>
-</section>
-
-<section id="textnorm">
-  <h3>1. 文本归一化 (TN)</h3>
-  <p>把非标准文本转换为可朗读的标准文字，这是TTS最繁琐但最关键的预处理步骤：</p>
-  <div class="card">
-    <table>
-      <thead><tr><th>输入</th><th>归一化输出</th><th>说明</th></tr></thead>
-      <tbody>
-        <tr><td>2024年</td><td>二零二四年</td><td>年份按位读</td></tr>
-        <tr><td>123元</td><td>一百二十三元</td><td>金额按数量读</td></tr>
-        <tr><td>3:15</td><td>三点十五分 / 三点一刻</td><td>时间两种读法</td></tr>
-        <tr><td>90%</td><td>百分之九十</td><td>百分号展开</td></tr>
-        <tr><td>Mr. Smith</td><td>mister smith</td><td>缩写展开</td></tr>
-        <tr><td>No.1</td><td>number one</td><td>缩写展开</td></tr>
-        <tr><td>189cm</td><td>一百八十九厘米</td><td>单位展开</td></tr>
-        <tr><td>😀</td><td>开心地笑</td><td>表情符号转文字描述</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section id="g2p">
-  <h3>2. 字音转换 (G2P)</h3>
-  <p>将文字（grapheme）转换为发音音素（phoneme）序列，中文还需要解决多音字问题：</p>
-  <ul class="styled-list">
-    <li><b>英文</b>：字母到发音的映射非常不规则（如read/read、lead/lead），常用字词典+LSTM/Transformer G2P模型处理集外词</li>
-    <li><b>中文</b>：汉字带声调，例如"你好"→<code>n i3 h au3</code>；最大难点是多音字消歧（"银行"vs"行走"、"重量"vs"重复"、"音乐"vs"快乐"）</li>
-    <li>目前主流TTS模型直接用字符作为输入，让模型隐式学习G2P，但前端G2P仍然能显著提升生僻字和多音字准确率</li>
-  </ul>
-</section>
-
-<section id="prosody">
-  <h3>3. 韵律预测</h3>
-  <p>韵律（Prosody）就是说话的"节奏"——什么时候停、停多久、哪个字重读、语调升还是降。韵律自然不自然直接决定TTS是否听起来像真人。</p>
-  
-  <div class="callout callout-green">
-    <div class="callout-title">🎵 韵律的重要性</div>
-    <p class="mb-0 text-sm">如果把所有字都用同样的音高、同样的速度连续读出来，哪怕每个字发音再标准，听起来也像机器人，非常不自然。真人说话会在词间短暂停顿(#1)、短语间停顿(#2)、分句间停顿(#3)、句末停顿(#4)，并且通过音高变化表达疑问、陈述、感叹等语气。</p>
-  </div>
-
-  <h4>中文韵律层级标注（TBL标准）</h4>
-  <ul class="styled-list text-sm">
-    <li><b>#0</b>：无语停，字与字之间紧密连接</li>
-    <li><b>#1</b>：词间短停 (~100ms)</li>
-    <li><b>#2</b>：韵律词之间 (~200ms)</li>
-    <li><b>#3</b>：韵律短语之间 (~300ms，通常伴随换气)</li>
-    <li><b>#4</b>：句间停顿 (~400-500ms，语调下降)</li>
-  </ul>
+<section id="frontend">
+<h2>🔤 文本前端 · TTS 的"字典+语法书"</h2>
+<p>TTS 不是直接把字喂给模型——在进入声学模型之前，必须经过<strong>文本前端（Text Frontend）</strong>处理，把文字变成语言学特征。</p>
+<div class="grid-3">
+  <div class="card"><h4>1️⃣ 文本归一化 TN</h4><p style="font-size:.85rem;margin:.25rem 0 0">"192.168.1.1"→"一百九十二点一六八点一点一"；"2024年"→"二零二四年"或"两千二十四年"；"$5"→"五美元"。处理数字、日期、货币、缩写、符号。</p></div>
+  <div class="card"><h4>2️⃣ 分词 / G2P</h4><p style="font-size:.85rem;margin:.25rem 0 0">中文分词 + 多音字消歧（"行"=xíng/háng）；英文 Grapheme-to-Phoneme 转成音素（CMUdict 词典 + 模型预测未登录词）。</p></div>
+  <div class="card"><h4>3️⃣ 韵律预测 Prosody</h4><p style="font-size:.85rem;margin:.25rem 0 0">预测韵律层级：韵律词（PW）→ 韵律短语（PPH）→ 语调短语（IPH）→ 句（S）。决定哪里停顿、停多久，是自然度的关键。</p></div>
+</div>
+<div class="callout callout-w"><span class="ic">⚠️</span><span>前端处理不好，后面模型再强也读不对。中文 TTS 最常见的"读错字"问题，80% 出在前端（多音字/数字/缩写），而不是声学模型。端到端 TTS 试图跳过前端，但数字/符号/英文混读仍是痛点。</span></div>
 </section>
 
 <section id="source-filter">
-  <h2>🔬 源-滤波器模型：语音产生的物理模型</h2>
-  <p>理解TTS绕不开源-滤波器模型（Source-Filter Model），这是1960年代Fant提出的语音产生经典理论：</p>
-  
-  <div class="architecture-diagram">┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  激励源 e(n) │ ──→ │ 声道滤波器 V(z) │ ──→ │ 辐射特性 R(z) │ ──→ 语音 s(n)
-│  (声门脉冲/  │     │ (共振峰)     │     │ (嘴唇辐射)   │
-│   白噪声)   │     │              │     │              │
-└─────────────┘     └─────────────┘     └─────────────┘
+<h2>🎺 源-滤波模型 · 语音产生的物理直觉</h2>
+<p>1960 年 Fant 提出 <b>源-滤波理论（Source-Filter Model）</b>，把语音产生拆成两个独立部分——这是所有 TTS 的物理基础。</p>
+<div class="grid-2">
+<div class="card" style="border-left:3px solid var(--org)"><h4 style="color:var(--org-d)">🔊 声源 Source（声带振动）</h4>
+<p style="font-size:.9rem;margin:.25rem 0 0">
+  <b>浊音（元音）</b>：声带周期性振动，产生脉冲序列，周期 = 1/F0（基频）<br>
+  <b>清音（辅音/s/sh/）</b>：声带不振动，气流摩擦产生湍流噪声<br>
+  <b>爆破音</b>：成阻-持阻-除阻，瞬间释放气流
+</p>
+</div>
+<div class="card" style="border-left:3px solid var(--sky)"><h4 style="color:var(--sky-d)">🎺 滤波器 Filter（声道/口腔）</h4>
+<p style="font-size:.9rem;margin:.25rem 0 0">口腔+舌头+嘴唇的形状构成谐振腔，对声源频谱进行"调制"，形成若干个能量峰值——<b>共振峰 Formant (F1, F2, F3…)</b>。不同元音对应不同的 F1/F2 组合。</p>
+</div>
+</div>
 
-浊音: 周期脉冲串 (由基频F0控制周期)
-清音: 随机白噪声</div>
-
-  <p>这个模型极其优美地解释了语音产生：<b>激励源</b>决定音高和清浊，<b>声道滤波器</b>决定音色（元音），二者独立控制。这就是为什么你可以用同一个声道形状（口型）唱出不同的音高，也可以用同一个音高发出不同元音。</p>
-  
-  <div class="grid md:grid-cols-2 gap-4">
-    <div class="card">
-      <h4>浊音 (Voiced)</h4>
-      <p class="text-sm mb-0">声带周期性振动产生，如元音/a/e/i/o/u/、鼻音m/n/l，时域呈周期性波形，频域有明显的谐波结构。</p>
-    </div>
-    <div class="card">
-      <h4>清音 (Unvoiced)</h4>
-      <p class="text-sm mb-0">声带不振动，气流通过声道狭窄处产生湍流噪声，如s/sh/f/h，波形类似白噪声，无明显周期性。</p>
-    </div>
-  </div>
+<h3>🎛️ 互动：元音 /a/ /i/ /u/ 的共振峰区别</h3>
+<div class="lab">
+<p style="font-size:.88rem;margin-bottom:.75rem">点击不同元音，观察其共振峰位置：F1 与舌位高低负相关（舌越高 F1 越低），F2 与舌位前后正相关（舌越前 F2 越高）。</p>
+<div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+  <button class="btn btn-p vowel-btn" data-v="a">/a/ 爸（低、后）</button>
+  <button class="btn btn-pl vowel-btn" data-v="i">/i/ 衣（高、前）</button>
+  <button class="btn btn-pl vowel-btn" data-v="u">/u/ 乌（高、后）</button>
+  <button class="btn btn-pl vowel-btn" data-v="e">/e/ 鹅（中、中）</button>
+</div>
+<canvas id="fmt-cv" width="800" height="200" style="height:200px"></canvas>
+<div id="fmt-desc" style="margin-top:.6rem;font-size:.88rem;color:#475569"></div>
+</div>
 </section>
 
-<section id="concat">
-  <h2>🧩 单元拼接合成</h2>
-  <p>拼接合成（Concatenative TTS）的思路非常直接：<b>录大量真人语音，切成小单元，合成时挑选最合适的单元拼接起来</b>。</p>
-  
-  <ul class="styled-list">
-    <li><b>语料库</b>：专业播音员录制几小时到几十小时语音，覆盖所有音素上下文</li>
-    <li><b>单元选择</b>：根据目标音素序列+韵律特征，从语料库中搜索最优单元序列（考虑目标代价+拼接代价）</li>
-    <li><b>波形拼接</b>：在拼接点做交叉淡入淡出，保证平滑过渡</li>
+<section id="concatenative">
+<h2>✂️ 单元拼接合成 · 2000 年代的主流</h2>
+<p><b>单元拼接合成（Concatenative TTS）</b>的思路非常朴素：预先录制大量语音，切成小单元（音素/双音素 diphone/音节），合成时选最合适的单元拼接起来。</p>
+<div class="grid-2">
+<div class="card"><h4>✅ 优点</h4>
+  <ul style="font-size:.9rem;margin-top:.25rem">
+    <li>音质高（都是真人录音）</li>
+    <li>在录音覆盖范围内自然度不错</li>
   </ul>
-
-  <div class="callout">
-    <div class="callout-title">✅ 优点 vs ❌ 缺点</div>
-    <p class="mb-0 text-sm"><b>优点</b>：使用真人录音片段，自然度上限高，没有模型预测的"机械感"<br>
-    <b>缺点</b>：需要超大语料库，无法改变音色/情感/风格，拼接点不连续时会有"咔哒"声，无法合成语料库外的韵律，构建新说话人成本极高（需重新录音）。</p>
-  </div>
+</div>
+<div class="card"><h4>❌ 缺点</h4>
+  <ul style="font-size:.9rem;margin-top:.25rem">
+    <li>需要巨大音库（几小时到几十小时）</li>
+    <li>拼接边界有"咔哒"声</li>
+    <li>韵律不自然，像机器人</li>
+    <li>无法换声音/情感/风格</li>
+    <li>遇到未登录词必崩</li>
+  </ul>
+</div>
+</div>
+<div class="callout callout-i"><span class="ic">💡</span><span>你听过的早期导航（"前方-五百米-右转"）、老 Siri 早期版本、银行客服机器人，都是拼接合成。那种一个字一个字蹦出来的感觉，就是它。</span></div>
 </section>
 
 <section id="parametric">
-  <h2>📊 统计参数合成 HTS</h2>
-  <p>基于HMM的参数合成（HTS, HMM-based Speech Synthesis System）通过统计模型预测声学参数，再用声码器合成波形。</p>
-  
-  <div class="architecture-diagram">文本 → 前端特征 → HMM时序模型 → 声学参数(MCC+F0+BAP) → 声码器(WORLD/STRAIGHT) → 波形</div>
-
-  <ul class="styled-list">
-    <li>预测的参数包括：梅尔倒谱(MCC)、基频F0、非周期成分(BAP)</li>
-    <li>决策树聚类上下文，支持说话人自适应、情感变换、语速调整</li>
-    <li><b>最大问题：过平滑(Over-smoothing)</b>，模型预测的参数过于平滑，丢失细节，声音发闷、"机器味"重，MOS通常只有3.5左右</li>
-  </ul>
-</section>
-
-<section id="am-overview">
-  <h2>🧠 声学模型：深度学习时代</h2>
-  <p>神经网络声学模型的任务是：输入前端语言学特征（或直接输入字符序列），输出<b>梅尔频谱图</b>（Mel-spectrogram），再由声码器将梅尔谱转换成最终波形。</p>
-  
-  <div class="architecture-diagram">文本 → Encoder → (Attention对齐) → Decoder → 梅尔频谱 → 声码器 → 音频波形</div>
-
-  <p>声学模型分为两大阵营：<b>自回归模型</b>（逐帧生成，慢但效果好）和<b>非自回归模型</b>（并行生成，快且稳定）。</p>
-
-  <div class="compare-grid">
-    <div class="compare-card compare-ar">
-      <h4 class="text-amber-800 mb-2">🔄 自回归 (Autoregressive)</h4>
-      <p class="text-sm mb-2">逐帧生成，每一帧依赖之前生成的帧</p>
-      <ul class="text-sm space-y-1 mb-0">
-        <li>• 代表：Tacotron2, DeepVoice3</li>
-        <li>• 优点：音质好、韵律自然</li>
-        <li>• 缺点：推理慢、容易丢字重复、难以稳定控制时长</li>
-      </ul>
-    </div>
-    <div class="compare-card compare-nar">
-      <h4 class="text-green-800 mb-2">⚡ 非自回归 (Non-AR)</h4>
-      <p class="text-sm mb-2">一次性并行生成所有帧，时长显式预测</p>
-      <ul class="text-sm space-y-1 mb-0">
-        <li>• 代表：FastSpeech2, ParaNet</li>
-        <li>• 优点：推理极快、鲁棒不重复、时长可控</li>
-        <li>• 缺点：音质略逊于自回归（但差距已很小）</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<section id="tacotron">
-  <h2>📦 经典模型：Tacotron2</h2>
-  <div class="model-card" style="border-color: #fed7aa;">
-    <div class="model-header">
-      <div>
-        <span class="tag tag-orange">2017</span>
-        <b>Tacotron 2 (Google)</b>
-      </div>
-      <span class="text-sm text-slate-500">Seq2Seq 自回归</span>
-    </div>
-    <div class="model-body">
-      <p>Tacotron2是第一个真正实现"自然度媲美真人"的端到端TTS系统，MOS达到4.53（真人基准4.58），是TTS领域里程碑式的工作。</p>
-      
-      <h4>架构组成</h4>
-      <ol class="styled-list text-sm">
-        <li><b>Encoder</b>：字符嵌入 → 3层1D卷积 → BiLSTM，编码字符序列</li>
-        <li><b>Attention</b>：Location-Sensitive Attention，加入累积位置权重解决重复/漏字问题</li>
-        <li><b>Decoder</b>：2层LSTM自回归生成，每帧预测一帧80维梅尔谱，同时预测停止token判断是否结束</li>
-        <li><b>Post-Net</b>：5层1D卷积，对预测的梅尔谱做残差修正，提升细节</li>
-        <li><b>WaveNet声码器</b>：将梅尔谱转换为最终波形</li>
-      </ol>
-
-      <div class="callout callout-orange">
-        <div class="callout-title">🎯 关键创新</div>
-        <p class="mb-0 text-sm">Location-Sensitive Attention在注意力计算中加入之前注意力权重的累积，避免模型反复关注同一位置（重复字）或跳过某些位置（漏字），显著改善了端到端TTS的稳定性。</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="fastspeech">
-  <h2>📦 经典模型：FastSpeech 2</h2>
-  <div class="model-card">
-    <div class="model-header">
-      <div>
-        <span class="tag tag-green">2020</span>
-        <b>FastSpeech 2 (Microsoft)</b>
-      </div>
-      <span class="text-sm text-slate-500">非自回归 并行生成</span>
-    </div>
-    <div class="model-body">
-      <p>FastSpeech2是非自回归TTS的代表作，解决了Tacotron2自回归慢、不稳定的问题，是工业界部署的主流选择。</p>
-      
-      <h4>核心思想</h4>
-      <ul class="styled-list text-sm">
-        <li><b>显式时长预测</b>：用时长预测器(Duration Predictor)预测每个音素对应多少帧，通过长度调节器(Length Regulator)扩展音素序列到帧级别</li>
-        <li><b>更多方差信息</b>：除时长外，显式预测基频F0（连续+V/UV决策）和能量(Energy)，提升韵律表现力</li>
-        <li><b>前馈Transformer(FFT Block)</b>：编码器和解码器都是纯Transformer的自注意力+1D卷积结构，完全并行计算</li>
-      </ul>
-
-      <div class="architecture-diagram">音素嵌入
-    ↓
-┌─────────────────────────────────────────┐
-│  FFT Block × N (Encoder)                │
-└───────────┬─────────────────────────────┘
-            ↓
-┌───────────┴─────────────┐
-│  时长预测器 / F0预测器  │   ← 从教师模型对齐获取时长作为训练目标
-│  / 能量预测器           │
-└───────────┬─────────────┘
-            ↓
-长度调节器 (按预测时长扩展)
-            ↓
-┌─────────────────────────┐
-│  FFT Block × N (Decoder)│
-└───────────┬─────────────┘
-            ↓
-         梅尔频谱输出</div>
-
-      <div class="callout callout-green">
-        <div class="callout-title">⚡ 性能对比</div>
-        <p class="mb-0 text-sm">FastSpeech2在音质与Tacotron2相当（MOS 4.48 vs 4.53）的前提下，<b>推理速度提升270倍</b>（GPU上0.04秒生成1秒语音），彻底解决了自回归模型难以实时部署的问题。</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="vocoder-overview">
-  <h2>🎛️ 神经声码器：从频谱到波形</h2>
-  <p>声码器（Vocoder）的任务是：将声学模型输出的梅尔频谱/声学特征，<b>转换为最终的音频波形</b>。声码器的质量直接决定合成语音的音质上限。</p>
-  
-  <div id="vocoderChart" style="height: 350px; min-height: 350px;" class="card"><div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fdba74;font-size:0.875rem;">正在加载声码器对比图...</div></div>
+<h2>📐 参数合成 · HMM/STRAIGHT 时代</h2>
+<p>统计参数合成（Statistical Parametric Speech Synthesis, SPSS）的代表是 <b>HTS（HMM-based Speech Synthesis System）</b>：不直接拼接波形，而是先预测声学参数（基频 F0、频谱包络、非周期分量），再用声码器（vocoder，如 STRAIGHT、WORLD）合成波形。</p>
+<div class="math-b">
+  文本 → 前端 → HMM 序列 → 决策树聚类 → 参数生成 (MLPG) → 声码器 → 波形
+</div>
+<div class="grid-3">
+<div class="card"><h4>参数化</h4><p style="font-size:.85rem;margin:.25rem 0 0">不存储波形，存均值方差，模型小</p></div>
+<div class="card"><h4>灵活</h4><p style="font-size:.85rem;margin:.25rem 0 0">可通过改 HMM 参数变换说话人/情感（说话人自适应、MLLR/CMLLR）</p></div>
+<div class="card"><h4> buzzy 问题</h4><p style="font-size:.85rem;margin:.25rem 0 0">声码器过于平滑，合成语音有"闷/电子"感，MOS 普遍 3 分左右</p></div>
+</div>
 </section>
 
 <section id="wavenet">
-  <h3>WaveNet：神经声码器的开山之作</h3>
-  <p>DeepMind在2016年提出的WaveNet是首个能生成高保真语音的神经声码器，开创了神经声码器时代。</p>
-  
-  <div class="card">
-    <h4>核心技术：因果空洞卷积 (Causal Dilated Convolution)</h4>
-    <ul class="styled-list text-sm">
-      <li><b>自回归</b>：逐采样点生成，每个点依赖之前所有点</li>
-      <li><b>因果卷积</b>：保证生成t时刻时看不到未来信息</li>
-      <li><b>空洞卷积</b>：卷积核步长指数增长，感受野呈指数级扩大，用很少层数就能覆盖几毫秒到几秒的上下文</li>
-      <li><b>门控激活 + 残差连接</b>：类似PixelCNN的门控残差块</li>
-      <li><b>μ律压缩</b>：将16-bit采样压到256类做分类预测，更稳定</li>
-    </ul>
-    <div class="callout">
-      <p class="mb-0 text-sm"><b>致命缺点</b>：完全自回归逐采样点生成，生成1秒24kHz音频需要前向传播24000次，<b>速度极慢，无法实时</b>。因此WaveNet更多是作为"教师模型"生成训练目标，实际部署需要更快的声码器。</p>
-    </div>
-  </div>
+<h2>🌊 WaveNet · 神经网络生成语音的开山之作</h2>
+<p>2016 年 DeepMind 的 WaveNet 是神经 TTS 的里程碑。它用<strong>自回归 + 扩张因果卷积</strong>逐样本生成波形，第一次让神经网络合成的语音 MOS 达到 4 分+。</p>
+<h3>核心创新</h3>
+<ul>
+  <li><b>因果卷积 Causal Conv</b>：预测 t 时刻样本只能看 t 之前，保证自回归</li>
+  <li><b>扩张卷积 Dilated Conv</b>：卷积核带空洞（如 1,2,4,8,16,…,512），以少量层数获得指数级感受野，建模长程依赖</li>
+  <li><b>门控激活 Gated Activation</b>：<code class="math">z = tanh(W<sub>f</sub>*x) ⊙ σ(W<sub>g</sub>*x)</code>，类似 LSTM 的门控</li>
+  <li><b>μ-law 量化 + Softmax</b>：把 16bit 样本量化到 256 个值，做 256 分类</li>
+  <li><b>残差+跳连接</b>：堆叠 30 层仍能训练</li>
+</ul>
+<pre class="code"><span style="color:#94a3b8"># WaveNet 核心块的简化 PyTorch 实现</span>
+<span style="color:#7dd3fc">class</span> WaveNetBlock(nn.Module):
+  <span style="color:#7dd3fc">def</span> __init__(self, channels, dilation):
+    super().__init__()
+    self.filter_conv = nn.Conv1d(channels, channels, <span style="color:#fde68a">2</span>, dilation=dilation, padding=0)
+    self.gate_conv   = nn.Conv1d(channels, channels, <span style="color:#fde68a">2</span>, dilation=dilation, padding=0)
+    self.res_proj    = nn.Conv1d(channels, channels, <span style="color:#fde68a">1</span>)
+    self.skip_proj   = nn.Conv1d(channels, channels, <span style="color:#fde68a">1</span>)
+
+  <span style="color:#7dd3fc">def</span> forward(self, x):
+    <span style="color:#94a3b8"># 因果 + 门控 + tanh · sigmoid</span>
+    f = torch.tanh(self.filter_conv(x))
+    g = torch.sigmoid(self.gate_conv(x))
+    z = f * g
+    skip = self.skip_proj(z)
+    res  = self.res_proj(z) + x[:, :, -z.size(2):]  <span style="color:#94a3b8"># 残差（裁剪对齐）</span>
+    <span style="color:#7dd3fc">return</span> res, skip</pre>
+<div class="callout callout-w"><span class="ic">⚠️</span><span>WaveNet 的致命问题：<b>太慢</b>。逐样本自回归生成 1 秒音频需要几分钟——不能用于产品。所以它后来退化成"声码器"（把梅尔谱转波形），被 Parallel WaveNet / WaveRNN / HiFi-GAN 等更快的方法取代。</span></div>
 </section>
 
-<section id="gan-vocoder">
-  <h3>GAN声码器：HiFi-GAN 一统天下</h3>
-  <p>基于GAN的声码器实现了<b>高保真+实时推理</b>的完美平衡，其中HiFi-GAN是目前工业界最主流的通用声码器。</p>
-  
-  <div class="model-card">
-    <div class="model-header">
-      <div>
-        <span class="tag tag-purple">2020</span>
-        <b>HiFi-GAN</b>
-      </div>
-      <span class="text-sm text-slate-500">Generative Adversarial Network</span>
-    </div>
-    <div class="model-body">
-      <h4>三大核心设计</h4>
-      <ul class="styled-list text-sm">
-        <li><b>多感受野融合生成器</b>：多尺度卷积核同时捕捉长周期（基频振动）和短周期（谐波细节）模式</li>
-        <li><b>多周期判别器(MPD)</b>：多个判别器分别看间隔1/2/3/5/7/11个采样点的采样，捕捉不同周期的周期性结构</li>
-        <li><b>多尺度判别器(MSD)</b>：对原始波形、2倍下采样、4倍下采样三个尺度做判别，捕捉不同尺度特征</li>
-      </ul>
+<section id="tacotron">
+<h2>🎼 Tacotron 2 · 现代神经 TTS 的标准范式</h2>
+<p>2018 年 Google 的 Tacotron 2 确立了现代 TTS 的"两段式"标准流水线：<b>声学模型（文本 → 梅尔谱） + 神经声码器（梅尔谱 → 波形）</b>。</p>
+<div class="math-b">字符/音素 → 编码器 Encoder → 注意力 Attention → 解码器 Decoder → 梅尔谱 → WaveNet/Griffin-Lim → 波形</div>
+<h3>架构拆解</h3>
+<div class="grid-3">
+  <div class="card"><h4>📥 编码器</h4><p style="font-size:.85rem;margin:.25rem 0 0">3 层 1D Conv + BiLSTM，把字符序列编码成隐表征</p></div>
+  <div class="card"><h4>🎯 Location-Sensitive Attention</h4><p style="font-size:.85rem;margin:.25rem 0 0">在注意力打分中加入"累积注意力权重"，防止重复/漏字——是 Tacotron2 训练稳定的关键</p></div>
+  <div class="card"><h4>📤 自回归解码器</h4><p style="font-size:.85rem;margin:.25rem 0 0">2 层 LSTM PreNet + 2 层 LSTM AttentionRNN + 投影到 80 维梅尔谱；最后一个"stop token"预测什么时候结束</p></div>
+</div>
+<pre class="code"><span style="color:#94a3b8"># Tacotron 2 解码核心伪代码</span>
+<span style="color:#7dd3fc">def</span> decode(encoder_out, inputs):
+    dec_input = &lt;GO_FRAME&gt;
+    dec_hidden, ctx, attn_weights = init()
+    mel_frames = []; stop_flags = []
+    <span style="color:#7dd3fc">for</span> step <span style="color:#7dd3fc">in</span> range(max_steps):
+        prenet_out = PreNet(dec_input)                     <span style="color:#94a3b8"># 2层FC + dropout，关键！</span>
+        dec_hidden = DecoderLSTM(prenet_out, ctx, dec_hidden)
+        ctx, attn_weights = LocationSensitiveAttention(
+            dec_hidden, encoder_out, attn_weights_cum)     <span style="color:#94a3b8"># 位置敏感！</span>
+        mel_frame = Linear(concat(dec_hidden, ctx))
+        stop_prob = StopTokenLinear(concat(dec_hidden, ctx))
+        mel_frames.append(mel_frame); stop_flags.append(stop_prob)
+        <span style="color:#7dd3fc">if</span> stop_prob > 0.5: <span style="color:#7dd3fc">break</span>
+        dec_input = mel_frame  <span style="color:#94a3b8"># 自回归：上一帧当下一帧输入</span>
+    <span style="color:#7dd3fc">return</span> PostNet(mel_frames)   <span style="color:#94a3b8"># 5层CNN残差修正</span></pre>
+<div class="callout callout-i"><span class="ic">💡</span><span>Tacotron 2 MOS 4.5，几乎与录音难以分辨。但它<strong>自回归逐帧生成</strong>梅尔谱，还是慢；而且注意力对长文本不稳定，会漏字重复。这催生了 FastSpeech 系列非自回归模型。</span></div>
+</section>
 
-      <h4>损失函数组合</h4>
-      <div class="formula-box">
-        <div class="math-block">$$ \mathcal{L}_G = \lambda_{adv}\mathcal{L}_{adv} + \lambda_{fm}\mathcal{L}_{fm} + \lambda_{mel}\mathcal{L}_{mel} $$</div>
-        <p class="text-sm text-center text-slate-600 mb-0">对抗损失+特征匹配损失+梅尔谱重构损失三者结合</p>
-      </div>
+<section id="fastspeech">
+<h2>⚡ FastSpeech 2 · 非自回归工业之王</h2>
+<p>2019/2020 年微软的 FastSpeech / FastSpeech 2 提出<strong>非自回归（Non-Autoregressive, NAR）</strong>架构：一次并行生成所有梅尔帧，推理速度比 Tacotron 2 快 270 倍（GPU 上 RTF ≈ 0.003，即生成 1 秒音频只需 3 毫秒）。</p>
+<h3>关键创新：时长预测器 + 长度规整器</h3>
+<p>非自回归最大的难点是<strong>音素到声学帧的对齐</strong>（每个音素对应几帧）。FastSpeech 的解决方案：</p>
+<ol>
+  <li>先用一个<strong>教师模型</strong>（Tacotron 2）训练好，用它的注意力权重或 Montreal Forced Alignment（MFA）提取每个音素的时长</li>
+  <li>训练一个 <b>Duration Predictor</b>（2 层 Conv + 1 层 Linear）从音素隐状态预测时长</li>
+  <li><b>Length Regulator</b>：根据预测的时长把每个音素的隐状态复制 N 份，扩展到帧级别</li>
+</ol>
+<div class="math-b">音素序列 H<sub>p</sub> = [h<sub>1</sub>, h<sub>2</sub>, ..., h<sub>n</sub>]  
+→ LengthRegulator(H<sub>p</sub>, d) = [h<sub>1</sub>×d<sub>1</sub>, h<sub>2</sub>×d<sub>2</sub>, ..., h<sub>n</sub>×d<sub>n</sub>]  
+→ Feed-Forward Transformer → 梅尔谱</div>
+<p>FastSpeech 2 进一步加入了 <b>音高 F0 预测器</b>和 <b>能量预测器</b>，把 Tacotron 隐式学到的韵律信息显式建模，自然度追平 Tacotron 2（MOS 4.6），同时保持极高速度。</p>
+<div class="callout callout-tip"><span class="ic">🏭</span><span>FastSpeech 2 至今是<b>工业部署首选</b>：微软 Azure TTS、阿里 CosyVoice 编码器部分、字节豆包 TTS 都基于类似架构。</span></div>
+</section>
 
-      <div class="callout callout-green">
-        <div class="callout-title">🌟 为什么HiFi-GAN这么成功？</div>
-        <p class="mb-0 text-sm">MOS达到4.4以上，与WaveNet相当；完全并行，GPU上比实时快1000倍以上，CPU上也能实时；对不同说话人、不同梅尔谱生成模型泛化性好，几乎是"万能声码器"。目前大部分开源TTS项目默认使用HiFi-GAN。</p>
-      </div>
-    </div>
-  </div>
+<section id="vocoder">
+<h2>🎛️ 声码器家族 · 从波形到波形</h2>
+<p>声码器（Vocoder）负责把梅尔谱转成波形——这一步的音质直接决定 TTS 最终效果。声码器经历了几代演进：</p>
+<table>
+<thead><tr><th>声码器</th><th>年份</th><th>方式</th><th>MOS</th><th>RTF (GPU)</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td>Griffin-Lim</td><td>1984</td><td>相位重建（迭代）</td><td>~3.5</td><td>0.05</td><td>无需训练，但音质发闷</td></tr>
+<tr><td>WORLD</td><td>2016</td><td>源-滤波参数</td><td>~3.2</td><td>0.1</td><td>传统声码器，F0/频谱/非周期</td></tr>
+<tr><td>WaveNet</td><td>2016</td><td>AR dilated conv</td><td>4.2</td><td><b>~50（慢）</b></td><td>高自然度但极慢</td></tr>
+<tr><td>WaveRNN</td><td>2018</td><td>AR RNN + 稀疏</td><td>4.2</td><td>~5（CPU实时）</td><td>第一个能在手机跑的神经声码器</td></tr>
+<tr><td>Parallel WaveNet</td><td>2018</td><td>IAF 流（Parallel）</td><td>4.0</td><td>0.05</td><td>用教师 WaveNet 蒸馏，并行生成</td></tr>
+<tr><td>MelGAN</td><td>2019</td><td>GAN</td><td>4.0</td><td>0.01</td><td>第一个 GAN 声码器，极快</td></tr>
+<tr><td><b>HiFi-GAN</b></td><td>2020</td><td>GAN + 多感受野</td><td><b>4.4+</b></td><td><b>0.003</b></td><td>当前最常用，速度质量兼顾</td></tr>
+<tr><td>BigVGAN</td><td>2022</td><td>GAN + Anti-aliased MPD</td><td>4.6</td><td>0.008</td><td>HiFi-GAN 升级版，泛化性更好</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="hifigan">
+<h2>🔥 HiFi-GAN · 当前声码器的事实标准</h2>
+<p>HiFi-GAN（2020，Kong et al.）用一个巧妙的多感受野设计，同时保证高频细节和长程连贯性，成为开源社区最广泛使用的声码器。</p>
+<h3>核心设计</h3>
+<ul>
+  <li><b>多感受野模块 MRF</b>：每个残差块内并联 3 组不同 kernel/dilation 的卷积，同时看不同尺度的上下文</li>
+  <li><b>多周期判别器 MPD</b>：对输入按 [2,3,5,7,11] 等间隔采样，分别判别，捕捉不同周期的谐波</li>
+  <li><b>多尺度判别器 MSD</b>：在原始 / 2×下采样 / 4×下采样上分别判别，捕捉整体+细节</li>
+  <li>Generator 是纯 CNN（上采样 + MRF），一次前向出波形，无自回归</li>
+</ul>
+<pre class="code"><span style="color:#94a3b8"># HiFi-GAN Generator 核心上采样块（简化）</span>
+<span style="color:#7dd3fc">class</span> ResBlock(nn.Module):
+  <span style="color:#7dd3fc">def</span> __init__(self, ch, kernel, dilations):
+    self.convs = nn.ModuleList([
+      nn.LeakyReLU(0.1),
+      nn.utils.weight_norm(nn.Conv1d(ch, ch, kernel, dilation=d, padding=...))
+      <span style="color:#7dd3fc">for</span> d <span style="color:#7dd3fc">in</span> dilations
+    ])
+  <span style="color:#7dd3fc">def</span> forward(self, x):
+    <span style="color:#7dd3fc">for</span> c <span style="color:#7dd3fc">in</span> self.convs: x = x + c(x)  <span style="color:#94a3b8"># 残差</span>
+    <span style="color:#7dd3fc">return</span> x
+
+<span style="color:#94a3b8"># 生成器：一系列转置卷积上采样 + MRF 多感受野</span>
+upsample_rates = [8,8,2,2]      <span style="color:#94a3b8"># 总上采样 8*8*2*2 = 256 = hop_size</span>
+upsample_kernels = [16,16,4,4]
+<span style="color:#7dd3fc">for</span> i <span style="color:#7dd3fc">in</span> range(len(upsample_rates)):
+    self.ups.append(weight_norm(ConvTranspose1d(ch/2, ch/2, k, stride=r, padding=...)))
+    self.mrf.append(MRF(ch/2, kernels=[3,7,11], dilations=[[1,3,5],[1,3,5],[1,3,5]]))</pre>
 </section>
 
 <section id="vits">
-  <h2>🎭 VITS：端到端TTS的统一者</h2>
-  <div class="model-card" style="border-color: #8b5cf6;">
-    <div class="model-header" style="background: linear-gradient(90deg, #faf5ff, white);">
-      <div>
-        <span class="tag tag-purple">2021</span>
-        <b>VITS (Conditional VAE + GAN)</b>
-      </div>
-      <span class="text-sm text-slate-500">完全端到端</span>
-    </div>
-    <div class="model-body">
-      <p>VITS (Variational Inference with adversarial learning for end-to-end Text-to-Speech) 是TTS领域的集大成之作，它<b>首次把文本前端→声学模型→声码器整个流水线统一到一个端到端模型中</b>，直接从文本生成波形，不再需要两阶段训练。</p>
-
-      <h4>关键创新</h4>
-      <ul class="styled-list text-sm">
-        <li><b>条件VAE架构</b>：用变分自编码器将文本到波形建模为隐变量生成问题</li>
-        <li><b>归一化流(Flow)</b>：通过单调对齐搜索(MAS)做对齐，比注意力更稳定</li>
-        <li><b>对抗训练</b>：在波形域引入多周期判别器，直接端到端优化感知质量</li>
-        <li><b>随机时长建模</b>：预测时长分布而非确定值，合成语音有自然的时长变化（不会每次都一模一样）</li>
-      </ul>
-
-      <div class="callout callout-green">
-        <div class="callout-title">✨ VITS的优势</div>
-        <p class="mb-0 text-sm">两阶段TTS（声学模型+声码器）存在信息损失（梅尔谱丢失相位信息）和分布不匹配问题。VITS直接端到端训练波形，音质比Tacotron2+HiFi-GAN更好；同时支持随机采样，同一文本多次合成结果略有不同（真人说话每次也不一样），自然度更高。VITS是当前开源TTS的SOTA基础框架。</p>
-      </div>
-    </div>
-  </div>
+<h2>🎭 VITS · 端到端 TTS 的开源标杆</h2>
+<p>2021 年 Kakao 的 VITS（Variational Inference with adversarial learning for end-to-end Text-to-Speech）把<strong>声学模型 + 声码器</strong>合并成一个端到端模型，一个 VITS 直接从音素生成波形，无需两阶段训练。</p>
+<h3>三大支柱</h3>
+<div class="grid-3">
+<div class="card"><h4>1️⃣ VAE（变分推断）</h4><p style="font-size:.85rem;margin:.25rem 0 0">用变分自编码器把语音隐变量建模为分布，训练时用真实语音做 posterior encoder 得到 z，推理时从 prior predictor 采样。这让 VITS 有"一对多"的多样性（同一句话每次说的不一样）。</p></div>
+<div class="card"><h4>2️⃣ Normalizing Flow</h4><p style="font-size:.85rem;margin:.25rem 0 0">用若干层可逆仿射耦合层（Residual Coupling）把先验分布变得更复杂，建模语音的复杂分布。</p></div>
+<div class="card"><h4>3️⃣ GAN 对抗训练</h4><p style="font-size:.85rem;margin:.25rem 0 0">把 HiFi-GAN 的判别器搬过来直接对波形做对抗训练，省去了单独的声码器训练。</p></div>
+</div>
+<div class="math-b">
+  音素 → Text Encoder → Prior Predictor (Flow) → z → Decoder (HiFi-GAN 风格) → 波形  
+  <span style="color:var(--muted);font-size:.8rem">训练时：Posterior Encoder 从真实梅尔谱提取 z，与先验对齐；MAS (Monotonic Alignment Search) 自动找对齐</span>
+</div>
+<div class="callout callout-tip"><span class="ic">⭐</span><span>VITS 是目前中文开源 TTS 的绝对主力：Bert-VITS2、GPT-SoVITS、FishSpeech 等知名项目都基于 VITS 架构扩展（加入 BERT 韵律、LLM 先验、SDP 随机时长等）。</span></div>
 </section>
 
 <section id="valle">
-  <h2>🔮 VALL-E：零样本语音克隆</h2>
-  <div class="model-card">
-    <div class="model-header">
-      <div>
-        <span class="tag tag-red">2023</span>
-        <b>VALL-E (Microsoft)</b>
-      </div>
-      <span class="text-sm text-slate-500">语言模型式TTS</span>
-    </div>
-    <div class="model-body">
-      <p>VALL-E标志着TTS正式进入大模型时代。它完全抛弃了之前的TTS架构思路，把语音合成就当做<b>"音频语言模型"</b>来做，和GPT生成文本的方式一样。</p>
-      
-      <h4>核心思想</h4>
-      <ul class="styled-list text-sm">
-        <li><b>音频Tokenizer</b>：用神经音频编解码器(EnCodec)将语音量化为离散token序列（类似"文字"）</li>
-        <li><b>第一阶段</b>：给定文本和3秒prompt，自回归生成声学token（决定内容和说话人音色）</li>
-        <li><b>第二阶段</b>：用非自回归模型生成细粒度声学code</li>
-        <li><b>解码</b>：用EnCodec解码器将离散token解码回波形</li>
-      </ul>
-
-      <div class="callout callout-orange">
-        <div class="callout-title">🚀 零样本克隆能力</div>
-        <p class="mb-0 text-sm">VALL-E只需要<b>3秒的说话人录音</b>（prompt），就能克隆出该说话人的音色，并且可以生成任意文本的语音，连说话人的语气、情感、背景环境都能保持。它在6万小时（后来VALL-E X是7万+小时多语言）语料上训练，涌现出了之前TTS系统完全不具备的上下文学习能力。</p>
-      </div>
-    </div>
-  </div>
+<h2>🤖 VALL-E · 零样本语音克隆的新纪元</h2>
+<p>2023 年微软的 VALL-E 把 TTS 从"声学模型"变成了"语言模型"——用 6 万小时语音训练一个 codec 语言模型，只需 3 秒未见过的说话人录音，就能克隆其声音、语调、情感。</p>
+<h3>核心思想：语音 = 离散 codec token</h3>
+<ol>
+  <li>用预训练好的神经音频 codec（EnCodec，3 层量化，共 1024 个 token/layer）把波形压缩成离散 token 序列</li>
+  <li>第一阶段：<b>AR 语言模型</b>根据音素和 3 秒提示，自回归预测第一层 codec token（捕捉语义和说话人身份）</li>
+  <li>第二阶段：<b>NAR 模型</b>根据第一层预测其他 7 层 codec token（捕捉声学细节）</li>
+  <li>把 8 层 token 喂回 EnCodec 解码器，得到波形</li>
+</ol>
+<div class="callout callout-i"><span class="ic">🧠</span><span>VALL-E 的革命性在于：它把 TTS 当成了"语音版 GPT"——in-context learning 能力让它不微调就能克隆新声音。随后出现的 Voicebox（Meta，Flow Matching）、NaturalSpeech 2/3（微软）、Speak Foreign、FishSpeech-1.5、Seed-TTS 等都是这个方向的延伸。</span></div>
+<div class="grid-2">
+<div class="card"><h4>✅ 优点</h4><ul style="font-size:.9rem;margin-top:.25rem"><li>零样本 3 秒克隆</li><li>声音/情感/韵律多样性高</li><li>跨语种、代码混读能力强</li><li>可自然重复、犹豫、笑声（在 prompt 中有）</li></ul></div>
+<div class="card"><h4>⚠️ 问题</h4><ul style="font-size:.9rem;margin-top:.25rem"><li>稳定性差：可能漏字、重复、怪音</li><li>长文本连贯性不足</li><li>算力要求高</li><li>伦理风险：声音伪造滥用</li></ul></div>
+</div>
 </section>
 
-<section id="chattts">
-  <h2>💬 ChatTTS：对话式TTS新范式</h2>
-  <div class="model-card">
-    <div class="model-header">
-      <div>
-        <span class="tag tag-blue">2024</span>
-        <b>ChatTTS</b>
-      </div>
-      <span class="text-sm text-slate-500">专为对话场景优化</span>
-    </div>
-    <div class="model-body">
-      <p>ChatTTS是2024年开源的对话式TTS模型，专门为LLM对话场景优化，是目前最"像真人聊天"的开源TTS之一。</p>
-      
-      <ul class="styled-list text-sm">
-        <li><b>自然口语化</b>：训练数据包含大量真实对话，会自然添加笑声、停顿、语气词、呼吸声</li>
-        <li><b>细粒度韵律控制</b>：通过特殊token控制笑声[uv_break]、停顿[lbreak]、叹气等口语现象</li>
-        <li><b>多说话人</b>：内置说话人embedding，支持切换不同音色</li>
-        <li><b>非自回归架构</b>：基于LLaMA-style Transformer，推理速度快</li>
-        <li><b>中文为主</b>：中英文双语，中文效果特别出色</li>
-      </ul>
-    </div>
-  </div>
+<section id="papers">
+<h2>📄 经典论文精读</h2>
 
-  <p>后续代表性工作还有Voicebox（Meta，流匹配）、Bark（Suno）、MusicGen（音频生成）等，语音大模型正在快速演进中。</p>
+<div class="paper"><div class="ti">📘 WaveNet: A Generative Model for Raw Audio</div><div class="me">van den Oord et al., DeepMind, 2016 · SSW 2016</div><div class="ab">首次用扩张因果卷积自回归生成原始波形，MOS 从 3.x 跃升到 4.x，打破"神经网络合成不好"的偏见。但推理极慢，后被用作声码器或被 Parallel/HiFi-GAN 替代。</div></div>
+
+<div class="paper"><div class="ti">📗 Natural TTS Synthesis by Conditioning WaveNet on Mel Spectrogram Predictions (Tacotron 2)</div><div class="me">Shen et al., Google, 2017 · ICASSP 2018</div><div class="ab">确立"Seq2Seq 梅尔谱生成 + WaveNet 声码器"两段式范式，Location-Sensitive Attention 解决对齐稳定性，MOS 4.5 接近真人。</div></div>
+
+<div class="paper"><div class="ti">📙 FastSpeech 2: Fast and High-Quality End-to-End TTS</div><div class="me">Ren et al., Microsoft, 2020 · ICLR 2021</div><div class="ab">非自回归 + 时长/音高/能量方差适配器，速度比 Tacotron2 快 270 倍，MOS 持平。推动了 TTS 的工业化落地。</div></div>
+
+<div class="paper"><div class="ti">📕 HiFi-GAN: Generative Adversarial Networks for Efficient and High Fidelity Speech Synthesis</div><div class="me">Kong et al., Kakao, 2020 · NeurIPS 2020</div><div class="ab">多感受野生成器 + 多周期/多尺度判别器，速度极快、音质极好，至今仍是声码器首选。</div></div>
+
+<div class="paper"><div class="ti">📔 VITS: Conditional Variational Autoencoder with Adversarial Learning for End-to-End Text-to-Speech</div><div class="me">Kim et al., Kakao, 2021 · ICML 2021</div><div class="ab">VAE + Flow + GAN 端到端单模型，MAS 自动对齐，生成多样性强、音质极高。开源中文 TTS 的基座。</div></div>
+
+<div class="paper"><div class="ti">📓 Neural Codec Language Models are Zero-Shot Text to Speech Synthesizers (VALL-E)</div><div class="me">Wang et al., Microsoft, 2023</div><div class="ab">把 EnCodec 离散 token 当"语音单词"，用类 GPT 的语言模型做零样本 TTS，3 秒提示即可克隆声音。开启"语音 LLM"时代。</div></div>
 </section>
 
-<section id="quickstart">
-  <h2>⚡ 快速开始：5分钟合成语音</h2>
-  
-  <h3>使用 Coqui TTS</h3>
-  <div class="code-block">
-<span class="code-comment"># 安装</span>
-pip install TTS
+<section id="code">
+<h2>💻 源码走读 · Tacotron2 注意力机制</h2>
+<p>Tacotron 2 的 <b>Location-Sensitive Attention</b> 是它能稳定对齐的关键——区别于普通 Bahdanau 注意力，它加入了"累积注意力权重"作为额外特征，防止注意力反复看同一个位置：</p>
+<pre class="code"><span style="color:#94a3b8"># Location-Sensitive Attention 打分（Tacotron 2）</span>
+<span style="color:#7dd3fc">class</span> LocationSensitiveAttention(nn.Module):
+  <span style="color:#7dd3fc">def</span> __init__(self, attn_rnn_ch, enc_ch, attn_ch, attn_conv_n=32, attn_conv_w=15):
+    self.query_proj = nn.Linear(attn_rnn_ch, attn_ch, bias=<span style="color:#fde68a">False</span>)
+    self.loc_proj   = nn.Linear(attn_conv_n, attn_ch, bias=<span style="color:#fde68a">False</span>)
+    self.v          = nn.Linear(attn_ch, 1, bias=<span style="color:#fde68a">False</span>)
+    self.loc_conv   = nn.Conv1d(2, attn_conv_n, attn_conv_w, padding=attn_conv_w//2, bias=<span style="color:#fde68a">False</span>)
+    <span style="color:#94a3b8"># memory 是 encoder 输出，提前投影一次</span>
+    self.memory_proj = nn.Linear(enc_ch, attn_ch, bias=<span style="color:#fde68a">False</span>)
 
-<span class="code-comment"># 命令行一键合成（自动下载模型）</span>
-tts --text "你好，欢迎来到语音合成的世界！" \
-    --model_name tts_models/zh-CN/baker/tacotron2-DDC-GST \
-    --out_path output.wav
-
-<span class="code-comment"># Python API</span>
-<span class="code-keyword">from</span> TTS.api <span class="code-keyword">import</span> TTS
-
-<span class="code-comment"># 列出所有可用模型</span>
-<span class="code-comment"># print(TTS().list_models())</span>
-
-tts = TTS(model_name=<span class="code-string">"tts_models/en/ljspeech/tacotron2-DDC"</span>, progress_bar=<span class="code-keyword">False</span>)
-tts.tts_to_file(text=<span class="code-string">"Hello, this is a neural TTS demo."</span>, file_path=<span class="code-string">"hello.wav"</span>)</div>
-
-  <h3>使用 ChatTTS</h3>
-  <div class="code-block">
-<span class="code-comment"># 安装</span>
-pip install chattts
-
-<span class="code-comment"># Python使用</span>
-<span class="code-keyword">import</span> ChatTTS
-<span class="code-keyword">import</span> torch
-
-chat = ChatTTS.Chat()
-chat.load_models()
-
-<span class="code-comment"># 合成</span>
-texts = [<span class="code-string">"你好呀[lbreak]，我是AI语音助手，有什么可以帮你的吗？[uv_break]哈哈[uv_break]。"</span>]
-wavs = chat.infer(texts, use_decoder=<span class="code-keyword">True</span>)
-
-<span class="code-comment"># 保存</span>
-<span class="code-keyword">import</span> torchaudio
-torchaudio.save(<span class="code-string">"chat_output.wav"</span>, torch.from_numpy(wavs[0]), <span class="code-func">24000</span>)</div>
+  <span style="color:#7dd3fc">def</span> forward(self, query, memory, prev_attn, prev_attn_cum):
+    <span style="color:#94a3b8"># query: [B, attn_rnn_ch]; memory: [B, T, enc_ch]</span>
+    cat_prev = torch.cat([prev_attn.unsqueeze(1), prev_attn_cum.unsqueeze(1)], dim=1) <span style="color:#94a3b8"># [B,2,T]</span>
+    loc_feat = self.loc_conv(cat_prev).transpose(1,2)                             <span style="color:#94a3b8"># [B,T,C]</span>
+    scores = self.v(torch.tanh(
+        self.query_proj(query).unsqueeze(1)    <span style="color:#94a3b8"># [B,1,C]</span>
+      + self.memory_proj(memory)               <span style="color:#94a3b8"># [B,T,C]</span>
+      + self.loc_proj(loc_feat)                <span style="color:#94a3b8"># [B,T,C] ← 关键位置特征</span>
+    )).squeeze(-1)                              <span style="color:#94a3b8"># [B,T]</span>
+    weights = F.softmax(scores, dim=-1)
+    context = torch.bmm(weights.unsqueeze(1), memory).squeeze(1)
+    <span style="color:#7dd3fc">return</span> context, weights</pre>
 </section>
 
 <section id="tools">
-  <h2>🛠️ 工具框架推荐</h2>
-  <table>
-    <thead><tr><th>工具</th><th>机构</th><th>特点</th><th>推荐场景</th></tr></thead>
-    <tbody>
-      <tr><td><b>Coqui TTS</b></td><td>Coqui AI</td><td>模型丰富、支持多语言、易于微调</td><td>入门学习、快速原型</td></tr>
-      <tr><td><b>ESPnet-TTS</b></td><td>CMU</td><td>学术导向、VITS/FastSpeech2等实现完整</td><td>科研、训练自定义模型</td></tr>
-      <tr><td><b>Matcha-TTS</b></td><td>社区</td><td>基于ODE流匹配、速度快音质好</td><td>高质量部署</td></tr>
-      <tr><td><b>Bark</b></td><td>Suno</td><td>支持生成音乐、音效、多语言、情感丰富</td><td>创意内容生成</td></tr>
-      <tr><td><b>ChatTTS</b></td><td>社区开源</td><td>中文对话场景最优、自然口语化</td><td>LLM对话助手</td></tr>
-      <tr><td><b>Edge-TTS</b></td><td>Microsoft</td><td>免费调用微软在线TTS接口</td><td>免费使用、无需训练</td></tr>
-      <tr><td><b>CosyVoice</b></td><td>阿里通义</td><td>中文零样本克隆、跨语言复刻</td><td>中文语音克隆</td></tr>
-      <tr><td><b>F5-TTS</b></td><td>社区</td><td>流匹配架构、零样本克隆效果优秀</td><td>零样本TTS</td></tr>
-    </tbody>
-  </table>
+<h2>🛠️ 工具与框架</h2>
+<table>
+<thead><tr><th>框架</th><th>机构</th><th>特点</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td><b>ESPnet-TTS</b></td><td>CMU/名古屋</td><td>PyTorch、Tacotron2/FastSpeech2/VITS 齐全、Recipe 完善</td><td>研究、复现</td></tr>
+<tr><td><b>Coqui TTS</b></td><td>Coqui</td><td>开源 PyTorch，支持多语言、声音迁移、命令行简单</td><td>快速原型、英文首选</td></tr>
+<tr><td><b>VITS / VITS2</b></td><td>Kakao</td><td>端到端单模型、音质顶级</td><td>产品级部署</td></tr>
+<tr><td><b>Bert-VITS2</b></td><td>开源社区</td><td>中文优化、BERT 韵律、情感控制、clone 效果好</td><td>中文 TTS / 声音克隆</td></tr>
+<tr><td><b>GPT-SoVITS</b></td><td>开源社区</td><td>少样本克隆、跨语种、中文效果极佳</td><td>少样本中文克隆</td></tr>
+<tr><td><b>CosyVoice</b></td><td>阿里</td><td>多语言、跨语种复刻、流式、自然度高</td><td>中文工业产品</td></tr>
+<tr><td><b>ChatTTS</b></td><td>开源</td><td>对话式 TTS、加笑声/停顿/口癖，自然度极高</td><td>对话场景</td></tr>
+<tr><td><b>Edge-TTS</b></td><td>微软</td><td>免费在线调用、中文女声（晓晓）效果极好</td><td>不想训模型时的首选</td></tr>
+</tbody>
+</table>
+
+<div class="cross" style="margin-top:2rem">
+<div class="ico">🎤</div>
+<div class="bd">
+<h4>学完"说"，再学"听" →</h4>
+<p>从 MFCC 特征到 GMM-HMM 解码，从 CTC 对齐到 Whisper 大规模预训练——ASR 子站同样的四层结构带你走完"让机器听懂"的全流程，和 TTS 互为镜像。</p>
+<div class="btns">
+<a href="../asr/" class="btn btn-p">🎤 进入 ASR 子站</a>
+<a href="../asr/#ctc" class="btn btn-pl">⚡ 直奔 CTC</a>
+<a href="../asr/#whisper" class="btn btn-pl">🌐 直奔 Whisper</a>
+<a href="../index.html" class="btn btn-pl">🏠 返回首页</a>
+</div>
+</div>
+</div>
 </section>
 
-<section id="datasets">
-  <h2>📊 常用TTS数据集</h2>
-  <div class="grid md:grid-cols-2 gap-4">
-    <div class="card">
-      <h4>🌍 英文数据集</h4>
-      <ul class="styled-list text-sm">
-        <li><b>LJSpeech</b> - 13100句，单说话人女性，英文TTS标准基准</li>
-        <li><b>VCTK</b> - 109个说话人，多说话人TTS</li>
-        <li><b>LibriTTS</b> - 585小时多说话人，源自LibriSpeech</li>
-        <li><b>Librilight</b> - 6万小时未标注，适合大模型预训练</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h4>🇨🇳 中文数据集</h4>
-      <ul class="styled-list text-sm">
-        <li><b>BZNSYP (标贝)</b> - 1万句单说话人女性，中文TTS基准</li>
-        <li><b>AISHELL-3</b> - 85小时218个说话人，多说话人中文TTS</li>
-        <li><b>Opencpop</b> - 中文歌声合成</li>
-        <li><b>WenetSpeech4TTS</b> - 大规模中文TTS派生数据集</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- 下一站：ASR 引导卡片 -->
-<section class="mt-12">
-  <div class="rounded-2xl overflow-hidden border-2 border-sky-200 shadow-lg shadow-sky-100/50 bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-50 p-8 md:p-10">
-    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
-      <div class="w-20 h-20 asr-gradient rounded-2xl flex items-center justify-center text-4xl text-white shadow-lg shrink-0">🎤</div>
-      <div class="flex-1">
-        <div class="text-xs font-semibold text-sky-600 uppercase tracking-wider mb-1">下一站 · Next</div>
-        <h3 class="text-2xl md:text-3xl font-bold text-slate-900 mb-2">继续学习：ASR 语音识别</h3>
-        <p class="text-slate-700 leading-relaxed mb-4">
-          你已经掌握了让机器"开口说话"的 TTS 技术。接下来去看看让机器"听懂人话"的另一半——
-          <b>ASR</b>：从 MFCC/FBANK 特征提取、GMM-HMM 经典统计建模，到 CTC、Attention、RNN-T 三大端到端范式，
-          再到 Conformer 与 Whisper 大模型，完整覆盖语音识别技术演进全貌。
-        </p>
-        <div class="flex flex-wrap gap-2 mb-5">
-          <span class="text-xs px-2 py-1 bg-white/70 text-sky-700 rounded border border-sky-200">MFCC/FBANK</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-sky-700 rounded border border-sky-200">GMM-HMM + Viterbi</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-sky-700 rounded border border-sky-200">CTC 对齐</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-sky-700 rounded border border-sky-200">Attention Seq2Seq</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-sky-700 rounded border border-sky-200">Conformer</span>
-          <span class="text-xs px-2 py-1 bg-white/70 text-sky-700 rounded border border-sky-200">Whisper 大模型</span>
-        </div>
-        <div class="flex flex-wrap gap-3">
-          <a href="../asr/index.html" class="asr-gradient text-white font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 transition shadow-md shadow-sky-500/30 inline-flex items-center gap-2">
-            进入 ASR 子站 <span>→</span>
-          </a>
-          <a href="../asr/index.html#ctc" class="bg-white text-sky-700 border border-sky-300 font-medium px-5 py-2.5 rounded-lg hover:bg-sky-50 transition text-sm">直奔 CTC</a>
-          <a href="../asr/index.html#whisper" class="bg-white text-sky-700 border border-sky-300 font-medium px-5 py-2.5 rounded-lg hover:bg-sky-50 transition text-sm">直奔 Whisper</a>
-          <a href="../index.html" class="bg-white text-slate-600 border border-slate-300 font-medium px-5 py-2.5 rounded-lg hover:bg-slate-50 transition text-sm">← 返回首页</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div style="height: 100px;"></div>
+</main>
 </div>
 
+<footer><div class="wrap">TTS · 语音合成研究站 · agent-speech · 受 agent-cv / agent-yolo 启发</div></footer>
+
+<script src="../main.js"></script>
 <script>
-// KaTeX渲染
-document.addEventListener("DOMContentLoaded", function() {
-  if (window.renderMathInElement) {
-    renderMathInElement(document.body, {
-      delimiters: [
-        {left: "$$", right: "$$", display: true},
-        {left: "$", right: "$", display: false}
-      ]
-    });
-  }
+document.addEventListener("DOMContentLoaded", function(){
+// override TOC highlight color to orange (the CSS !important in inline <style> handles .on state)
 
-  // 等待 ECharts 加载完成后初始化图表
-  function initCharts() {
-    if (typeof echarts === 'undefined') {
-      setTimeout(initCharts, 100);
-      return;
+// ===== Formant demo =====
+(function(){
+  const cv=document.getElementById('fmt-cv'),ctx=cv.getContext('2d');
+  const vowels={
+    a:{f1:800,f2:1200,label:'/a/ 爸（低舌位、后舌位）',desc:'F1 高 = 嘴张得大（舌位低），F2 低 = 舌位靠后，类似"啊"的发音'},
+    i:{f1:300,f2:2300,label:'/i/ 衣（高舌位、前舌位）',desc:'F1 低 = 嘴张得小（舌位高），F2 很高 = 舌位靠前，类似"一"的发音'},
+    u:{f1:350,f2:800, label:'/u/ 乌（高舌位、后舌位）',desc:'F1 低 = 嘴小，F2 很低 = 舌位靠后+圆唇，类似"乌"的发音'},
+    e:{f1:500,f2:1700,label:'/e/ 鹅（中舌位、中舌位）',desc:'F1 中、F2 中，舌位半高半低不前不后，类似"鹅"的发音'},
+  };
+  function resize(){const r=cv.getBoundingClientRect();cv.width=r.width*(devicePixelRatio||1);cv.height=r.height*(devicePixelRatio||1);ctx.setTransform(devicePixelRatio||1,0,0,devicePixelRatio||1,0,0);}
+  function draw(v){
+    const w=cv.clientWidth,h=cv.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    // background
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+    // source harmonics slope (-12dB/oct, modeled as decreasing envelope)
+    // draw a simplified source spectrum (flat after -6dB/oct glottal)
+    ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
+    for(let x=0;x<w;x+=50){ctx.beginPath();ctx.moveTo(x,h);ctx.lineTo(x,h-10);ctx.stroke();}
+    // vocal tract transfer function: 3 formants modeled as Gaussians
+    const fs=[v.f1,v.f2,v.f2*1.8];
+    const bw=[80,110,160];
+    // freq axis: 0-4000Hz
+    const fMax=4000;
+    function px(f){return f/fMax*w;}
+    function py(db){return h-30-db/60*(h-50);}
+    // base envelope
+    ctx.beginPath();
+    for(let x=0;x<w;x++){
+      const f=x/w*fMax;
+      // lip radiation + glottal gives approx +6dB/oct
+      let db=40 - 6*Math.log2(fMax/(f+100));
+      for(let k=0;k<fs.length;k++){
+        const d=(f-fs[k])/bw[k];db+=25*Math.exp(-d*d*0.5);
+      }
+      if(db<0)db=0;if(db>60)db=60;
+      if(x===0)ctx.moveTo(x,py(db));else ctx.lineTo(x,py(db));
     }
-    // MOS趋势图
-    const mosChart = echarts.init(document.getElementById('mosChart'));
-    mosChart.setOption({
-      tooltip: { trigger: 'axis' },
-      legend: { data: ['拼接合成', 'HTS参数合成', 'WaveNet', 'Tacotron2+WaveNet', 'FastSpeech2+HiFi-GAN', 'VITS', '真人'], top: 0 },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: ['2005', '2010', '2016', '2018', '2020', '2022', '基准'] },
-      yAxis: { type: 'value', name: 'MOS', min: 2.5, max: 5 },
-      series: [
-        { name: '拼接合成', type: 'line', data: [3.8, 3.9, null, null, null, null, null], lineStyle: {type:'dashed'}, itemStyle:{color:'#94a3b8'} },
-        { name: 'HTS参数合成', type: 'line', data: [null, 3.3, 3.5, null, null, null, null], lineStyle: {type:'dashed'}, itemStyle:{color:'#64748b'} },
-        { name: 'WaveNet', type: 'line', data: [null, null, 4.0, null, null, null, null], itemStyle:{color:'#8b5cf6'} },
-        { name: 'Tacotron2+WaveNet', type: 'line', data: [null, null, null, 4.53, null, null, null], itemStyle:{color:'#f97316'} },
-        { name: 'FastSpeech2+HiFi-GAN', type: 'line', data: [null, null, null, null, 4.48, null, null], itemStyle:{color:'#22c55e'} },
-        { name: 'VITS', type: 'line', data: [null, null, null, null, null, 4.6, null], itemStyle:{color:'#0ea5e9'}, lineStyle:{width:3} },
-        { name: '真人', type: 'line', data: [null, null, null, null, null, null, 4.7], lineStyle:{type:'dashed', color:'#ef4444'}, itemStyle:{color:'#ef4444'}, markLine:{data:[{yAxis:4.7}],silent:true, lineStyle:{color:'#ef4444',type:'dashed'}}}
-      ]
+    ctx.strokeStyle='#f97316';ctx.lineWidth=2.5;ctx.stroke();
+    // mark F1/F2
+    fs.slice(0,2).forEach((F,i)=>{
+      const x=px(F);
+      ctx.fillStyle='#c2410c';
+      ctx.beginPath();ctx.arc(x,py(40+25*Math.exp(0))-5,5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#c2410c';ctx.font='bold 12px inherit';ctx.textAlign='center';
+      ctx.fillText('F'+(i+1)+'='+F+'Hz',x,py(65));
     });
-
-    // 声码器性能对比图
-    const vocoderChart = echarts.init(document.getElementById('vocoderChart'));
-    vocoderChart.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { data: ['MOS', 'RTF (GPU, 越低越快)'], top: 0 },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: ['Griffin-Lim', 'WaveNet', 'WaveGlow', 'MelGAN', 'HiFi-GAN', 'BigVGAN'] },
-      yAxis: [
-        { type: 'value', name: 'MOS', min: 3, max: 5 },
-        { type: 'value', name: 'RTF(实时率)', min: 0, max: 20 }
-      ],
-      series: [
-        { name: 'MOS', type: 'bar', data: [3.5, 4.3, 4.2, 3.9, 4.45, 4.55], itemStyle: { color: '#f97316' }, label: { show: true, position: 'top' } },
-        { name: 'RTF (GPU, 越低越快)', type: 'line', yAxisIndex: 1, data: [0.05, 20, 0.2, 0.01, 0.003, 0.005], itemStyle: { color: '#0ea5e9' }, lineStyle: { width: 3 } }
-      ]
-    });
-
-    window.addEventListener('resize', () => { mosChart.resize(); vocoderChart.resize(); });
+    // axis
+    ctx.strokeStyle='#94a3b8';ctx.beginPath();ctx.moveTo(0,h-20);ctx.lineTo(w,h-20);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='10px inherit';ctx.textAlign='center';
+    [0,1000,2000,3000,4000].forEach(f=>ctx.fillText(f+'Hz',px(f),h-5));
+    document.getElementById('fmt-desc').innerHTML='<b style="color:var(--org-d)">'+v.label+'</b> — '+v.desc;
   }
-  initCharts();
-
-  // 侧边栏滚动高亮
-  const sections = document.querySelectorAll('section[id]');
-  const links = document.querySelectorAll('.sidebar a');
-  window.addEventListener('scroll', () => {
-    let current = '';
-    sections.forEach(s => {
-      const top = s.offsetTop - 100;
-      if (window.scrollY >= top) current = s.id;
-    });
-    links.forEach(l => {
-      l.classList.remove('active');
-      if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+  document.querySelectorAll('.vowel-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.vowel-btn').forEach(x=>{x.classList.remove('btn-p');x.classList.add('btn-pl');});
+      b.classList.remove('btn-pl');b.classList.add('btn-p');
+      draw(vowels[b.dataset.v]);
     });
   });
+  window.addEventListener('resize',()=>{resize();draw(current);});
+  let current=vowels.a;
+  resize();draw(current);
+})();
 });
 </script>
-
 </body>
 </html>
