@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent-Speech · ASR & TTS 语音技术学习研究站</title>
+<script src="https://aisearch-task.bj.bcebos.com/static/tailwindcss/3.4.17/tailwind.min.js"></script>
+<script src="https://aisearch-task.bj.bcebos.com/static/echarts/5.6.0/echarts.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --asr-color: #0ea5e9;
+  --tts-color: #f97316;
+  --bg: #ffffff;
+  --text: #1f2937;
+  --text-light: #6b7280;
+  --border: #e5e7eb;
+  --code-bg: #f8fafc;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+.nav-link { transition: all 0.2s; }
+.nav-link:hover { color: var(--primary); }
+.sidebar-link {
+  display: block;
+  padding: 0.5rem 1rem;
+  border-left: 3px solid transparent;
+  color: var(--text-light);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+.sidebar-link:hover, .sidebar-link.active {
+  border-left-color: var(--primary);
+  color: var(--primary);
+  background: #eff6ff;
+}
+.card {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  background: white;
+  transition: box-shadow 0.3s, transform 0.2s;
+}
+.card:hover {
+  box-shadow: 0 10px 40px -10px rgba(37, 99, 235, 0.15);
+  transform: translateY(-2px);
+}
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  font-family: "SF Mono", "Menlo", "Monaco", Consolas, monospace;
+  font-size: 0.875rem;
+  overflow-x: auto;
+  line-height: 1.7;
+}
+.tag {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.tag-asr { background: #e0f2fe; color: #0369a1; }
+.tag-tts { background: #ffedd5; color: #c2410c; }
+.tag-both { background: #dcfce7; color: #15803d; }
+.hero-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.asr-gradient {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+}
+.tts-gradient {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+}
+.timeline-item {
+  position: relative;
+  padding-left: 2rem;
+  padding-bottom: 2rem;
+  border-left: 2px solid var(--border);
+}
+.timeline-item:last-child { border-left-color: transparent; }
+.timeline-dot {
+  position: absolute;
+  left: -7px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid white;
+}
+.math-block { margin: 1rem 0; text-align: center; }
+.tab-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  background: white;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+</style>
+</head>
+<body class="bg-white">
+
+<!-- 顶部导航 -->
+<nav class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur border-b border-gray-100 z-50">
+<div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+  <a href="index.html" class="flex items-center gap-2 text-xl font-bold text-gray-900">
+    <span class="text-2xl">🎙️</span>
+    <span>Agent-Speech</span>
+  </a>
+  <div class="hidden md:flex items-center gap-8">
+    <a href="index.html" class="nav-link font-medium text-blue-600">首页</a>
+    <a href="asr/index.html" class="nav-link font-medium">🎤 ASR 语音识别</a>
+    <a href="tts/index.html" class="nav-link font-medium">📢 TTS 语音合成</a>
+    <a href="#learning-path" class="nav-link">学习路径</a>
+    <a href="#resources" class="nav-link">资源</a>
+  </div>
+  <a href="https://github.com" aria-label="GitHub repository" class="text-gray-500 hover:text-gray-900 transition">
+    <svg class="w-6 h-6" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+  </a>
+</div>
+</nav>
+
+<!-- Hero 区域 -->
+<section class="pt-32 pb-20 hero-gradient text-white">
+<div class="max-w-7xl mx-auto px-6">
+  <div class="max-w-4xl">
+    <div class="inline-block px-4 py-1 bg-white/20 rounded-full text-sm font-medium mb-6 backdrop-blur">
+      语音技术 · 从原理到实践 · 深度学习时代
+    </div>
+    <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+      Agent-Speech
+      <span class="block text-3xl md:text-4xl mt-2 font-normal text-blue-100">ASR & TTS 语音技术学习研究站</span>
+    </h1>
+    <p class="text-xl text-blue-100 mb-8 leading-relaxed max-w-3xl">
+      系统学习语音识别(ASR)与语音合成(TTS)的完整知识体系，从信号处理基础到深度学习前沿，从经典论文到工程实践，
+      覆盖 HMM、CTC、Attention、Transformer、Whisper、VALL-E、VITS 等核心技术。
+    </p>
+    <div class="flex flex-wrap gap-4">
+      <a href="asr/index.html" class="group asr-gradient px-8 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition shadow-lg shadow-blue-500/30 inline-flex items-center gap-2">
+        🎤 开始学习 ASR（听）<span class="group-hover:translate-x-1 transition-transform">→</span>
+      </a>
+      <a href="tts/index.html" class="group tts-gradient px-8 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition shadow-lg shadow-orange-500/30 inline-flex items-center gap-2">
+        📢 开始学习 TTS（说）<span class="group-hover:translate-x-1 transition-transform">→</span>
+      </a>
+    </div>
+    <p class="text-sm text-blue-100/80 mt-3">两个子站互通互联：导航栏顶部可随时切换，每章结尾有"下一站"跳转引导。</p>
+  </div>
+</div>
+</section>
+
+<!-- 双轨导航卡片 -->
+<section class="py-20 -mt-10">
+<div class="max-w-7xl mx-auto px-6">
+  <div class="grid md:grid-cols-2 gap-8">
+    <!-- ASR 卡片 -->
+    <a href="asr/index.html" class="card block group">
+      <div class="flex items-start gap-4">
+        <div class="w-14 h-14 asr-gradient rounded-xl flex items-center justify-center text-2xl text-white shrink-0">
+          🎤
+        </div>
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-2xl font-bold">ASR 语音识别</h2>
+            <span class="tag tag-asr">Automatic Speech Recognition</span>
+          </div>
+          <p class="text-gray-600 mb-4 leading-relaxed">
+            将人类语音转换为文本的技术，从GMM-HMM到端到端深度学习，从传统特征提取到Whisper大模型，完整覆盖语音识别技术演进。
+          </p>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">MFCC/FBANK</span>
+            <span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">GMM-HMM</span>
+            <span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">CTC</span>
+            <span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">Attention</span>
+            <span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">Conformer</span>
+            <span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">Whisper</span>
+          </div>
+          <div class="flex items-center text-blue-600 font-medium group-hover:gap-2 gap-1 transition-all">
+            进入学习 <span>→</span>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- TTS 卡片 -->
+    <a href="tts/index.html" class="card block group">
+      <div class="flex items-start gap-4">
+        <div class="w-14 h-14 tts-gradient rounded-xl flex items-center justify-center text-2xl text-white shrink-0">
+          📢
+        </div>
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-2xl font-bold">TTS 语音合成</h2>
+            <span class="tag tag-tts">Text to Speech</span>
+          </div>
+          <p class="text-gray-600 mb-4 leading-relaxed">
+            将文本转换为自然语音的技术，从拼接合成到神经声码器，从Tacotron到VITS端到端，覆盖从零样本克隆到对话式TTS前沿。
+          </p>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">文本前端</span>
+            <span class="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">Tacotron2</span>
+            <span class="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">FastSpeech</span>
+            <span class="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">WaveNet/HiFi-GAN</span>
+            <span class="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">VITS</span>
+            <span class="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">VALL-E</span>
+          </div>
+          <div class="flex items-center text-orange-600 font-medium group-hover:gap-2 gap-1 transition-all">
+            进入学习 <span>→</span>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+</section>
+
+<!-- 语音技术全景 -->
+<section id="overview" class="py-16 bg-gray-50">
+<div class="max-w-7xl mx-auto px-6">
+  <div class="text-center mb-12">
+    <h2 class="text-3xl font-bold mb-4">语音技术全景演进</h2>
+    <p class="text-gray-600 max-w-2xl mx-auto">
+      从统计建模到深度学习，语音技术经历了数次范式变革，每一次突破都推动着人机交互的边界
+    </p>
+  </div>
+  <div class="grid lg:grid-cols-3 gap-8">
+    <div class="card">
+      <div class="text-3xl mb-4">📊</div>
+      <h3 class="text-xl font-bold mb-3">传统统计时代</h3>
+      <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+        GMM-HMM框架主导数十年，ASR依赖手工设计特征(MFCC)和声学/语言模型解耦；TTS以单元拼接和参数合成为主，自然度有限。
+      </p>
+      <div class="text-xs text-gray-500">1980s - 2010</div>
+    </div>
+    <div class="card border-blue-200 bg-blue-50/30">
+      <div class="text-3xl mb-4">🧠</div>
+      <h3 class="text-xl font-bold mb-3">深度学习革命</h3>
+      <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+        DNN替代GMM，端到端框架(CTC/Attention/RNN-T)打破HMM束缚；Tacotron+WaveNet让TTS自然度首次接近真人。
+      </p>
+      <div class="text-xs text-gray-500">2012 - 2020</div>
+    </div>
+    <div class="card border-purple-200 bg-purple-50/30">
+      <div class="text-3xl mb-4">🚀</div>
+      <h3 class="text-xl font-bold mb-3">大模型时代</h3>
+      <p class="text-gray-600 mb-4 text-sm leading-relaxed">
+        Whisper展示大规模预训练的威力，ASR走向通用多语言；VALL-E实现3秒零样本克隆，VITS一统端到端TTS，语音大模型正在涌现。
+      </p>
+      <div class="text-xs text-gray-500">2020 - 至今</div>
+    </div>
+  </div>
+
+  <div class="mt-12 card">
+    <h3 class="text-lg font-bold mb-4">📈 语音识别词错率(WER) 与 语音合成MOS分 演进</h3>
+    <div id="evolutionChart" style="height: 400px; min-height: 400px;"><div style="display:flex;align-items:center;justify-content:center;height:400px;color:#94a3b8;font-size:0.875rem;">正在加载技术演进图表...</div></div>
+  </div>
+</div>
+</section>
+
+<!-- 技术路线对比 -->
+<section id="tech-compare" class="py-16">
+<div class="max-w-7xl mx-auto px-6">
+  <h2 class="text-3xl font-bold mb-8 text-center">ASR vs TTS 技术栈对比</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="bg-gray-50">
+          <th class="p-4 text-left font-semibold border">维度</th>
+          <th class="p-4 text-left font-semibold border text-sky-700">🎤 ASR 语音识别</th>
+          <th class="p-4 text-left font-semibold border text-orange-700">📢 TTS 语音合成</th>
+        </tr>
+      </thead>
+      <tbody class="text-sm">
+        <tr>
+          <td class="p-4 border font-medium bg-gray-50">核心任务</td>
+          <td class="p-4 border">语音波形 → 文本序列</td>
+          <td class="p-4 border">文本序列 → 语音波形</td>
+        </tr>
+        <tr>
+          <td class="p-4 border font-medium bg-gray-50">核心挑战</td>
+          <td class="p-4 border">时序对齐、噪声鲁棒、口音/方言、多说话人</td>
+          <td class="p-4 border">韵律自然度、情感表达、说话人相似度、实时性</td>
+        </tr>
+        <tr>
+          <td class="p-4 border font-medium bg-gray-50">前端处理</td>
+          <td class="p-4 border">预加重→分帧加窗→STFT→FBANK/MFCC特征</td>
+          <td class="p-4 border">文本归一化→分词→词性标注→字音转换→韵律预测</td>
+        </tr>
+        <tr>
+          <td class="p-4 border font-medium bg-gray-50">经典框架</td>
+          <td class="p-4 border">GMM-HMM → DNN-HMM → CTC/Attention/RNN-T → Transducer</td>
+          <td class="p-4 border">拼接合成 → 参数合成(HTS) → Tacotron2 + WaveNet → VITS</td>
+        </tr>
+        <tr>
+          <td class="p-4 border font-medium bg-gray-50">评估指标</td>
+          <td class="p-4 border">WER(词错率)、CER(字错率)、SER(句错率)</td>
+          <td class="p-4 border">MOS(平均意见分)、MCD、说话人相似度CMOS</td>
+        </tr>
+        <tr>
+          <td class="p-4 border font-medium bg-gray-50">代表模型</td>
+          <td class="p-4 border">DeepSpeech, Listen-Attend-Spell, Conformer, Whisper, Paraformer</td>
+          <td class="p-4 border">Tacotron2, FastSpeech2, WaveNet, HiFi-GAN, VITS, VALL-E, ChatTTS</td>
+        </tr>
+        <tr>
+          <td class="p-4 border font-medium bg-gray-50">常用工具</td>
+          <td class="p-4 border">Kaldi, ESPnet, WeNet, OpenAI Whisper, FunASR</td>
+          <td class="p-4 border">ESPnet-TTS, Coqui TTS, Parallel WaveGAN, Matcha-TTS</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</section>
+
+<!-- 学习路径 -->
+<section id="learning-path" class="py-16 bg-gray-50">
+<div class="max-w-7xl mx-auto px-6">
+  <div class="text-center mb-12">
+    <h2 class="text-3xl font-bold mb-4">📚 循序渐进学习路径</h2>
+    <p class="text-gray-600">从零基础到掌握前沿，推荐按以下四个阶段系统学习</p>
+  </div>
+
+  <div class="max-w-4xl mx-auto">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="card">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="tag tag-both">阶段 1</span>
+          <h3 class="text-xl font-bold">数学与信号基础</h3>
+        </div>
+        <p class="text-gray-600 mb-3 text-sm">
+          打好基础是理解语音技术的前提，这一阶段重点掌握必要的数学和信号处理知识。
+        </p>
+        <ul class="text-sm space-y-1 text-gray-700">
+          <li>• 微积分、线性代数、概率统计（贝叶斯、隐马尔可夫模型）</li>
+          <li>• 傅里叶变换、短时傅里叶变换(STFT)、数字信号处理基础</li>
+          <li>• 语音学基础：发音机制、音素、共振峰、基频F0</li>
+          <li>• Python基础 + NumPy + PyTorch/TensorFlow 深度学习框架</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background: var(--asr-color);"></div>
+      <div class="card">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="tag tag-asr">阶段 2</span>
+          <h3 class="text-xl font-bold">ASR 基础：从特征到HMM</h3>
+        </div>
+        <p class="text-gray-600 mb-3 text-sm">
+          理解传统语音识别的完整流水线，为理解端到端方法建立对比基准。
+        </p>
+        <ul class="text-sm space-y-1 text-gray-700">
+          <li>• 预处理：预加重、分帧、加窗、快速傅里叶变换</li>
+          <li>• 特征提取：梅尔滤波器组、FBANK、MFCC 原理与实现</li>
+          <li>• GMM-HMM框架：声学模型、发音词典、语言模型、Viterbi解码</li>
+          <li>• Kaldi工具入门：跑通第一个识别脚本，理解HCLG解码图</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background: var(--tts-color);"></div>
+      <div class="card">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="tag tag-tts">阶段 3</span>
+          <h3 class="text-xl font-bold">TTS 基础：前端与传统合成</h3>
+        </div>
+        <p class="text-gray-600 mb-3 text-sm">
+          掌握语音合成的前端处理流程和传统合成方法的核心思想。
+        </p>
+        <ul class="text-sm space-y-1 text-gray-700">
+          <li>• 文本前端：文本归一化、分词、G2P、韵律边界预测</li>
+          <li>• 源-滤波器模型：声门源、声道滤波、线性预测LPC</li>
+          <li>• 单元拼接合成与统计参数合成(HTS)的原理与局限</li>
+          <li>• STRAIGHT、WORLD等经典声码器原理</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background: #8b5cf6;"></div>
+      <div class="card">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="tag" style="background: #ede9fe; color: #7c3aed;">阶段 4</span>
+          <h3 class="text-xl font-bold">深度学习前沿：端到端语音技术</h3>
+        </div>
+        <p class="text-gray-600 mb-3 text-sm">
+          深入学习基于深度学习的端到端方法，掌握当前主流模型架构。
+        </p>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <div class="font-semibold text-sky-700 mb-2">ASR 方向</div>
+            <ul class="text-sm space-y-1 text-gray-700">
+              <li>• CTC损失函数与RNN-T序列转换</li>
+              <li>• Attention序列到序列模型(LAS)</li>
+              <li>• Transformer/Conformer 主干网络</li>
+              <li>• OpenAI Whisper 大规模预训练模型</li>
+              <li>• WeNet / ESPnet / FunASR 实战</li>
+            </ul>
+          </div>
+          <div>
+            <div class="font-semibold text-orange-700 mb-2">TTS 方向</div>
+            <ul class="text-sm space-y-1 text-gray-700">
+              <li>• Seq2Seq自回归：Tacotron2 / DeepVoice</li>
+              <li>• 非自回归：FastSpeech2 / VITS 端到端</li>
+              <li>• 神经声码器：WaveNet / MelGAN / HiFi-GAN</li>
+              <li>• 零样本克隆：VALL-E / Voicebox</li>
+              <li>• 对话TTS：ChatTTS / Bark / SpeechT5</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 核心数学概念 -->
+<section id="math" class="py-16">
+<div class="max-w-7xl mx-auto px-6">
+  <h2 class="text-3xl font-bold mb-8 text-center">🧮 核心数学基础</h2>
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="card">
+      <h3 class="text-lg font-bold mb-3">短时傅里叶变换 (STFT)</h3>
+      <p class="text-gray-600 text-sm mb-3">
+        语音是时变信号，需要通过短时傅里叶变换获取时频表示，这是所有语音特征提取的基础。
+      </p>
+      <div class="math-block">
+        $$ X(t, \omega) = \int_{-\infty}^{\infty} x(\tau) w(\tau - t) e^{-j\omega\tau} d\tau $$
+      </div>
+      <p class="text-xs text-gray-500">其中 w(·) 是窗函数（常用汉明窗），t 是帧位置，ω 是角频率</p>
+    </div>
+
+    <div class="card">
+      <h3 class="text-lg font-bold mb-3">梅尔频率倒谱系数 (MFCC)</h3>
+      <p class="text-gray-600 text-sm mb-3">
+        模拟人耳听觉特性的特征表示，曾是GMM-HMM时代ASR的标准特征。
+      </p>
+      <div class="math-block">
+        $$ f_{mel} = 2595 \cdot \log_{10}\left(1 + \frac{f}{700}\right) $$
+      </div>
+      <p class="text-xs text-gray-500">将线性频率映射到梅尔刻度，模拟人耳对低频更敏感的特性</p>
+    </div>
+
+    <div class="card">
+      <h3 class="text-lg font-bold mb-3">CTC 目标函数</h3>
+      <p class="text-gray-600 text-sm mb-3">
+        引入空白符(blank)解决输入输出长度不一致问题，无需逐帧对齐标注。
+      </p>
+      <div class="math-block">
+        $$ P(y|x) = \sum_{\pi \in \mathcal{B}^{-1}(y)} \prod_{t=1}^{T} P(\pi_t | x_t) $$
+      </div>
+      <p class="text-xs text-gray-500">B是去重去blank映射，将所有可能对齐路径求和</p>
+    </div>
+
+    <div class="card">
+      <h3 class="text-lg font-bold mb-3">神经声码器 (HiFi-GAN)</h3>
+      <p class="text-gray-600 text-sm mb-3">
+        使用生成对抗网络从梅尔谱图重建高保真语音波形。
+      </p>
+      <div class="math-block">
+        $$ \min_G \max_D \mathcal{L}_{adv}(G,D) + \lambda_{fm}\mathcal{L}_{fm} + \lambda_{mel}\mathcal{L}_{mel} $$
+      </div>
+      <p class="text-xs text-gray-500">多周期判别器+多尺度判别器，结合对抗损失、特征匹配损失和梅尔谱损失</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 学习资源 -->
+<section id="resources" class="py-16 bg-gray-50">
+<div class="max-w-7xl mx-auto px-6">
+  <h2 class="text-3xl font-bold mb-8 text-center">📖 精选学习资源</h2>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="card">
+      <h3 class="font-bold mb-3 flex items-center gap-2"><span>📘</span>经典教材</h3>
+      <ul class="space-y-2 text-sm text-gray-700">
+        <li>• 《语音信号处理》- 胡航</li>
+        <li>• 《自动语音识别》- 俞栋/邓力</li>
+        <li>• 《统计自然语言处理》- 宗成庆</li>
+        <li>• Speech and Language Processing - Jurafsky</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 class="font-bold mb-3 flex items-center gap-2"><span>📄</span>必读论文</h3>
+      <ul class="space-y-2 text-sm text-gray-700">
+        <li>• Connectionist Temporal Classification (2006)</li>
+        <li>• WaveNet: A Generative Model for Raw Audio (2016)</li>
+        <li>• Listen, Attend and Spell (2015)</li>
+        <li>• Tacotron 2 / Natural TTS (2017)</li>
+        <li>• Conformer / FastSpeech2 / VITS</li>
+        <li>• Robust Speech Recognition via Large-Scale Weak Supervision (Whisper, 2022)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 class="font-bold mb-3 flex items-center gap-2"><span>🛠️</span>开源工具</h3>
+      <ul class="space-y-2 text-sm text-gray-700">
+        <li>• <b>Kaldi</b> - 传统ASR经典工具包</li>
+        <li>• <b>ESPnet</b> - 端到端语音处理工具包</li>
+        <li>• <b>WeNet</b> - 工业级端到端ASR</li>
+        <li>• <b>Whisper</b> - OpenAI多语言ASR</li>
+        <li>• <b>Coqui TTS</b> - 深度学习TTS</li>
+        <li>• <b>FunASR</b> - 阿里语音识别框架</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6 mt-6">
+    <div class="card">
+      <h3 class="font-bold mb-3 flex items-center gap-2"><span>🎓</span>公开课</h3>
+      <ul class="space-y-2 text-sm text-gray-700">
+        <li>• 清华大学 - 语音信号处理课程</li>
+        <li>• 约翰霍普金斯大学 - CLSP 语音识别课程</li>
+        <li>• Stanford CS224S - Spoken Language Processing</li>
+        <li>• CMU 11-751 - Speech Recognition and Understanding</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 class="font-bold mb-3 flex items-center gap-2"><span>📊</span>标准数据集</h3>
+      <ul class="space-y-2 text-sm text-gray-700">
+        <li>• <b>LibriSpeech</b> - 1000小时英文朗读ASR</li>
+        <li>• <b>AISHELL-1/2</b> - 中文普通话ASR</li>
+        <li>• <b>LJSpeech</b> - 单说话人英文TTS (13k句)</li>
+        <li>• <b>AISHELL-3 / BZNSYP</b> - 中文TTS数据集</li>
+        <li>• <b>VCTK</b> - 多说话人英文TTS (109人)</li>
+        <li>• <b>Common Voice</b> - Mozilla多语言众包数据集</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 快速开始 -->
+<section class="py-16">
+<div class="max-w-7xl mx-auto px-6">
+  <h2 class="text-3xl font-bold mb-8 text-center">⚡ 5分钟快速上手</h2>
+  <div class="card max-w-4xl mx-auto">
+    <div class="flex gap-2 mb-4">
+      <button class="tab-btn active" data-tab="asr-quick" onclick="switchQuickTab(this)">🎤 ASR 识别</button>
+      <button class="tab-btn" data-tab="tts-quick" onclick="switchQuickTab(this)">📢 TTS 合成</button>
+    </div>
+
+    <div id="asr-quick" class="tab-content active">
+      <p class="text-gray-600 mb-4 text-sm">使用 OpenAI Whisper 进行语音识别，只需3行代码：</p>
+      <div class="code-block">
+        <pre><span style="color: #94a3b8;"># 安装依赖</span>
+pip install openai-whisper ffmpeg-python
+
+<span style="color: #94a3b8;"># Python 代码</span>
+import whisper
+model = whisper.load_model("base")
+result = model.transcribe("audio.wav")
+print(result["text"])</pre>
+      </div>
+    </div>
+
+    <div id="tts-quick" class="tab-content">
+      <p class="text-gray-600 mb-4 text-sm">使用 Coqui TTS 进行语音合成，快速生成自然语音：</p>
+      <div class="code-block">
+        <pre><span style="color: #94a3b8;"># 安装依赖</span>
+pip install TTS
+
+<span style="color: #94a3b8;"># Python 代码</span>
+from TTS.api import TTS
+tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=False)
+tts.tts_to_file(text="Hello, welcome to Agent Speech world!", file_path="output.wav")</pre>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-gray-400 py-12">
+<div class="max-w-7xl mx-auto px-6">
+  <div class="grid md:grid-cols-4 gap-8">
+    <div>
+      <div class="flex items-center gap-2 text-xl font-bold text-white mb-4">
+        <span>🎙️</span> Agent-Speech
+      </div>
+      <p class="text-sm leading-relaxed">
+        ASR & TTS 语音技术学习研究站，致力于构建系统、深入、易懂的语音技术知识体系。
+      </p>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-4">ASR 学习</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="asr/index.html#basics" class="hover:text-white">基础概念</a></li>
+        <li><a href="asr/index.html#features" class="hover:text-white">特征提取</a></li>
+        <li><a href="asr/index.html#hmm" class="hover:text-white">GMM-HMM</a></li>
+        <li><a href="asr/index.html#e2e" class="hover:text-white">端到端ASR</a></li>
+        <li><a href="asr/index.html#whisper" class="hover:text-white">Whisper</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-4">TTS 学习</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="tts/index.html#front" class="hover:text-white">文本前端</a></li>
+        <li><a href="tts/index.html#tacotron" class="hover:text-white">Tacotron2</a></li>
+        <li><a href="tts/index.html#fastspeech" class="hover:text-white">FastSpeech2</a></li>
+        <li><a href="tts/index.html#vocoder" class="hover:text-white">神经声码器</a></li>
+        <li><a href="tts/index.html#vits" class="hover:text-white">VITS</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-4">实践资源</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#learning-path" class="hover:text-white">学习路径</a></li>
+        <li><a href="#resources" class="hover:text-white">论文/工具/数据集</a></li>
+        <li><a href="#math" class="hover:text-white">数学基础</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+    <p>Agent-Speech · 语音技术学习研究站 · 参考 agent-cv / agent-yolo 风格构建</p>
+  </div>
+</div>
+</footer>
+
+<script>
+// 快速开始标签切换 - 全局可访问
+function switchQuickTab(btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+}
+
+// KaTeX 自动渲染
+document.addEventListener("DOMContentLoaded", function() {
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: "$$", right: "$$", display: true},
+        {left: "$", right: "$", display: false}
+      ]
+    });
+  }
+
+  // 等待 ECharts 加载完成
+  function initCharts() {
+    if (typeof echarts === 'undefined') {
+      setTimeout(initCharts, 100);
+      return;
+    }
+    // ECharts 技术演进图
+    const evolutionChart = echarts.init(document.getElementById('evolutionChart'));
+    evolutionChart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['ASR WER(%)', 'TTS MOS'], top: 0 },
+      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['2010', '2012', '2014', '2016', '2018', '2020', '2022', '2024']
+      },
+      yAxis: [
+        { type: 'value', name: 'WER(%)', min: 0, max: 30, position: 'left' },
+        { type: 'value', name: 'MOS', min: 1, max: 5, position: 'right' }
+      ],
+      series: [
+        {
+          name: 'ASR WER(%)',
+          type: 'line',
+          yAxisIndex: 0,
+          data: [23.6, 18.5, 14.2, 8.7, 6.8, 5.2, 4.5, 3.8],
+          smooth: true,
+          lineStyle: { color: '#0ea5e9', width: 3 },
+          itemStyle: { color: '#0ea5e9' },
+          areaStyle: { color: 'rgba(14,165,233,0.1)' }
+        },
+        {
+          name: 'TTS MOS',
+          type: 'line',
+          yAxisIndex: 1,
+          data: [2.8, 3.0, 3.3, 3.8, 4.2, 4.4, 4.55, 4.65],
+          smooth: true,
+          lineStyle: { color: '#f97316', width: 3 },
+          itemStyle: { color: '#f97316' },
+          areaStyle: { color: 'rgba(249,115,22,0.1)' },
+          markLine: {
+            data: [{ yAxis: 4.7, name: '真人水平', lineStyle: { color: '#94a3b8', type: 'dashed' } }],
+            label: { formatter: '真人 MOS ≈ 4.7' }
+          }
+        }
+      ]
+    });
+    window.addEventListener('resize', () => evolutionChart.resize());
+  }
+  initCharts();
+});
+</script>
+
+</body>
+</html>
