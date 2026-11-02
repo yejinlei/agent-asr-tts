@@ -140,3 +140,44 @@ footer{border-top:1px solid var(--border);padding:1.8rem 0;color:var(--muted);fo
   .grid-3,.grid-4{grid-template-columns:1fr}
   .hero{padding:2.5rem 0}
 }
+
+/* ===== 算法四步结构样式（图示→原理→公式→手搓代码） ===== */
+.algo-block {margin:1.5rem 0;padding:1.25rem 1.5rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.75rem;}
+.algo-block h3 {font-size:1.05rem;color:#0f172a;margin:0 0 .75rem;display:flex;align-items:center;gap:.5rem;}
+.algo-step {margin:1rem 0;padding:1rem;background:#fff;border:1px solid #e2e8f0;border-radius:.5rem;}
+.algo-step.step-svg {background:#fff;}
+.algo-step.step-code {background:#0f172a;border-color:#0f172a;color:#e2e8f0;}
+.algo-step.step-code h4 {color:#7dd3fc;}
+.algo-step h4 {margin:0 0 .75rem;font-size:.95rem;display:flex;align-items:center;gap:.5rem;color:#334155;font-weight:600;}
+.algo-step h4 .num {display:inline-flex;align-items:center;justify-content:center;width:1.4rem;height:1.4rem;background:var(--c-sky);color:#fff;border-radius:50%;font-size:.75rem;font-weight:700;flex-shrink:0;}
+.algo-step.step-formula h4 .num {background:#8b5cf6;}
+.algo-step.step-code h4 .num {background:#22d3ee;background:#0ea5e9;}
+.algo-step.step-principle h4 .num {background:#10b981;}
+.algo-svg-wrap {background:#fff;border:1px solid #e2e8f0;border-radius:.5rem;padding:1rem;overflow-x:auto;display:flex;justify-content:center;}
+.algo-svg-wrap svg {max-width:100%;height:auto;}
+.formula-block {background:#faf5ff;border:1px solid #e9d5ff;border-radius:.4rem;padding:.75rem 1rem;margin:.5rem 0;text-align:center;}
+.formula-desc {font-size:.85rem;color:#6b7280;margin-top:.5rem;line-height:1.7;}
+.formula-desc b {color:#7c3aed;font-weight:600;}
+.algo-explain {font-size:.9rem;line-height:1.75;color:#334155;}
+.algo-explain b {color:#0369a1;font-weight:600;}
+.algo-step.step-code pre {margin:0;padding:0;background:transparent;color:#e2e8f0;font-size:.82rem;line-height:1.55;overflow-x:auto;}
+.algo-step.step-code pre .cmt {color:#64748b;}
+.algo-step.step-code pre .kw {color:#c084fc;}
+.algo-step.step-code pre .fn {color:#7dd3fc;}
+.algo-step.step-code pre .str {color:#86efac;}
+.algo-step.step-code pre .num {color:#fbbf24;}
+.algo-step.step-code pre .op {color:#f472b6;}
+.code-run-tip {margin-top:.5rem;font-size:.78rem;color:#94a3b8;}
+.symbol-table {width:100%;border-collapse:collapse;font-size:.85rem;margin:.75rem 0;}
+.symbol-table td {padding:.35rem .6rem;border-bottom:1px solid #f1f5f9;vertical-align:top;}
+.symbol-table td:first-child {font-family:KaTeX_Main,'Times New Roman',serif;color:#7c3aed;font-weight:600;width:80px;white-space:nowrap;}
+/* SVG 通用样式 */
+.s-algo .box{fill:#eff6ff;stroke:#3b82f6;stroke-width:1.5;}
+.s-algo .box-out{fill:#fff7ed;stroke:#f97316;stroke-width:1.5;}
+.s-algo .box-done{fill:#ecfdf5;stroke:#10b981;stroke-width:1.5;}
+.s-algo .box-key{fill:#faf5ff;stroke:#8b5cf6;stroke-width:1.5;}
+.s-algo .arrow{stroke:#64748b;stroke-width:1.5;fill:none;marker-end:url(#arrow);}
+.s-algo .arrow-key{stroke:#8b5cf6;stroke-width:2;fill:none;marker-end:url(#arrow-p);}
+.s-algo .label{font-size:12px;fill:#334155;font-family:inherit;}
+.s-algo .label-key{font-size:12px;fill:#6b21a8;font-weight:600;font-family:inherit;}
+.s-algo .title{font-size:13px;fill:#0f172a;font-weight:700;font-family:inherit;}

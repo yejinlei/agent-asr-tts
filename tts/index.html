@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TTS · 语音合成研究站 | Agent-Speech</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <link rel="stylesheet" href="../style.css">
 <style>
-/* TTS 主题色（橙色） */
 :root{--primary:var(--org);--primary-d:var(--org-d);--primary-l:var(--org-l)}
 .hero{background:linear-gradient(135deg,#9a3412,#ea580c)}
 .hero h1 em{background:linear-gradient(120deg,#fdba74,#fed7aa);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -23,6 +27,33 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);bord
 .btn-pl{background:var(--org-l);color:var(--org-d)}.btn-pl:hover{background:#fed7aa}
 .callout-i{background:var(--org-l);border-left-color:var(--org);color:var(--org-d)}
 .paper{border-left-color:var(--org)}.paper:hover{background:var(--org-l);border-left-color:var(--org-d)}
+.algo-block{background:#fff;border:1px solid #fde68a;border-radius:12px;padding:1.25rem 1.5rem;margin:1.25rem 0;box-shadow:0 2px 8px rgba(249,115,22,0.08)}
+.algo-block h3{font-size:1.25rem;font-weight:700;color:#9a3412;margin:0 0 1rem;padding-bottom:.6rem;border-bottom:2px dashed #fed7aa}
+.algo-step{margin:1rem 0;padding:1rem;background:#fffbeb;border-radius:8px;border-left:4px solid #f97316}
+.algo-step h4{font-size:1rem;font-weight:600;color:#7c2d12;margin:0 0 .75rem;display:flex;align-items:center;gap:.5rem}
+.algo-step .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#f97316;color:#fff;font-size:.8rem;font-weight:700}
+.algo-svg-wrap{background:#fafafa;border-radius:6px;padding:.5rem;text-align:center;overflow-x:auto}
+.algo-svg-wrap svg{max-width:100%;height:auto}
+.box{fill:#eff6ff;stroke:#3b82f6;stroke-width:1.5;rx:6}
+.box-out{fill:#fff7ed;stroke:#f97316;stroke-width:2;rx:6}
+.box-key{fill:#faf5ff;stroke:#8b5cf6;stroke-width:2;rx:6}
+.box-done{fill:#f0fdf4;stroke:#22c55e;stroke-width:1.5;rx:6}
+.arrow{stroke:#64748b;stroke-width:1.5;fill:none;marker-end:url(#arrow)}
+.arrow-key{stroke:#8b5cf6;stroke-width:2;fill:none;marker-end:url(#arrow-p)}
+.label{font-size:11px;fill:#475569}
+.label-key{font-size:11px;fill:#6b21a8;font-weight:600}
+.title{font-size:12px;fill:#1e293b;font-weight:600}
+.formula-block{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:1rem;margin:.5rem 0;text-align:center;overflow-x:auto}
+.symbol-table{width:100%;margin-top:.5rem;border-collapse:collapse;font-size:.88rem}
+.symbol-table td{padding:.4rem .75rem;border-bottom:1px solid #f1f5f9}
+.symbol-table td:first-child{font-family:ui-monospace,monospace;color:#7c3aed;font-weight:600;width:120px}
+pre.code{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:1rem;overflow-x:auto;font-size:.85rem;line-height:1.6}
+.cmt{color:#64748b}
+.kw{color:#c4b5fd}
+.fn{color:#67e8f9}
+.str{color:#86efac}
+.num{color:#fde047}
+.code-run-tip{margin-top:.5rem;font-size:.8rem;color:#64748b;text-align:right}
 </style>
 </head>
 <body>
@@ -53,7 +84,7 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);bord
     <div class="stat"><div class="n">19</div><div class="l">核心章节</div></div>
     <div class="stat"><div class="n">10</div><div class="l">经典模型精读</div></div>
     <div class="stat"><div class="n">5</div><div class="l">互动 Demo</div></div>
-    <div class="stat"><div class="n">5</div><div class="l">段源码走读</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">段手搓源码</div></div>
   </div>
 </div></header>
 
@@ -64,6 +95,9 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);bord
   <a href="#mos">📊 MOS 评分体系</a>
   <a href="#frontend">🔤 文本前端</a>
   <a href="#source-filter">🎺 源-滤波模型</a>
+  <a href="#yin">🎚️ YIN 基频提取</a>
+  <a href="#lpc">📐 LPC 共振峰</a>
+  <a href="#griffinlim">🔄 Griffin-Lim</a>
   <a href="#concatenative">✂️ 拼接合成</a>
   <a href="#parametric">📐 参数合成</a>
   <a href="#wavenet">🌊 WaveNet</a>
@@ -74,7 +108,6 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);bord
   <a href="#vits">🎭 VITS</a>
   <a href="#valle">🤖 VALL-E 零样本</a>
   <a href="#papers">📄 经典论文</a>
-  <a href="#code">💻 源码走读</a>
   <a href="#tools">🛠️ 工具框架</a>
 </nav></aside>
 
@@ -164,6 +197,382 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);bord
 </div>
 </section>
 
+<section id="yin">
+<h2>🎚️ YIN 基频提取 · 找到声带振动频率</h2>
+<p><b>基频 F0（Fundamental Frequency）</b> 是声带每秒振动次数，决定音高。男声约 80–200Hz，女声约 160–400Hz。YIN 算法（2002, de Cheveigné）是 WORLD、Pyin 等主流声码器的核心。</p>
+
+<div class="algo-block">
+  <h3>🎼 YIN：从差分函数找周期</h3>
+
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 260" width="760" height="260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+          <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/></marker>
+        </defs>
+        <rect class="box" x="20" y="30" width="110" height="50"/><text class="title" x="75" y="52" text-anchor="middle">原始波形 x[t]</text><text class="label" x="75" y="68" text-anchor="middle">一段浊音帧</text>
+        <line class="arrow" x1="130" y1="55" x2="170" y2="55"/>
+
+        <rect class="box-key" x="170" y="30" width="120" height="50"/><text class="title" x="230" y="52" text-anchor="middle">① 分帧</text><text class="label-key" x="230" y="68" text-anchor="middle">取窗长N帧</text>
+        <line class="arrow-key" x1="290" y1="55" x2="320" y2="55"/>
+
+        <rect class="box" x="320" y="30" width="130" height="50"/><text class="title" x="385" y="52" text-anchor="middle">② 差分函数</text><text class="label" x="385" y="68" text-anchor="middle">d_t(τ) 比 ACF 抗幅变</text>
+        <line class="arrow" x1="450" y1="55" x2="480" y2="55"/>
+
+        <rect class="box" x="480" y="30" width="130" height="50"/><text class="title" x="545" y="52" text-anchor="middle">③ CMNDF 归一化</text><text class="label" x="545" y="68" text-anchor="middle">累积均值除法</text>
+        <line class="arrow" x1="610" y1="55" x2="640" y2="55"/>
+
+        <rect class="box-out" x="640" y="30" width="100" height="50"/><text class="title" x="690" y="52" text-anchor="middle" fill="#9a3412">F0</text><text class="label" x="690" y="68" text-anchor="middle">F0 = Fs / τ*</text>
+
+        <rect class="box" x="80" y="130" width="200" height="110"/>
+        <text class="title" x="180" y="150" text-anchor="middle">相邻脉冲间隔 = 周期 T</text>
+        <polyline points="100,210 115,160 130,210 145,200 160,160 175,210 190,200 205,160 220,210 235,200 250,160 265,210" fill="none" stroke="#f97316" stroke-width="1.5"/>
+        <line x1="115" y1="140" x2="115" y2="225" stroke="#94a3b8" stroke-dasharray="3,2"/>
+        <line x1="160" y1="140" x2="160" y2="225" stroke="#94a3b8" stroke-dasharray="3,2"/>
+        <line x1="205" y1="140" x2="205" y2="225" stroke="#94a3b8" stroke-dasharray="3,2"/>
+        <text class="label-key" x="137" y="137" text-anchor="middle">T₀</text>
+        <text class="label-key" x="182" y="137" text-anchor="middle">T₀</text>
+
+        <rect class="box-done" x="360" y="130" width="340" height="110"/>
+        <text class="title" x="530" y="155" text-anchor="middle">为什么不用自相关 ACF？</text>
+        <text class="label" x="380" y="180">• ACF 在振幅缓慢变化时，第一个谷不在真实周期</text>
+        <text class="label" x="380" y="200">• YIN 差分函数 d_t(τ) 在 τ=T₀ 处恒为 0（理想周期信号）</text>
+        <text class="label" x="380" y="220">• CMNDF 归一化后，用绝对阈值（如 0.1）选 τ*</text>
+        <text class="label-key" x="380" y="235">• 抛物线插值把整数 τ 精化到亚采样精度</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      <p>想象你在听一段"啊——"的元音：声带每秒开合 200 次，波形看起来像一串等间隔的"尖峰"。<b>基频 F0 就是这串尖峰的间隔的倒数</b>：间隔 5ms → F0 = 1/0.005 = 200Hz。</p>
+      <p>最直接的想法是"自相关函数"——把信号平移 τ，看它和自己有多像；最像的 τ 就是周期。但声音会慢慢变大变小（振幅调制），ACF 会被"骗"。<b>YIN 的核心改进</b>：用<b>差分函数</b> <code>d_t(τ) = Σ(x[t+j]−x[t+j+τ])²</code>，它在 τ 恰好是一个周期时等于 0（因为周期信号 x[t+j] = x[t+j+T₀]），不受振幅整体缩放影响；再除以 1..τ 的平均差分做<b>累积均值归一化</b>，把谷压到 1 以下，用绝对阈值（0.1~0.15）找第一个过阈值的 τ*，最后做抛物线插值得到亚采样精度，F0 = Fs/τ*。</p>
+    </div>
+  </div>
+
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="yin-f">
+      $$d_t(\tau) = \sum_{j=1}^{W}\big(x[t+j] - x[t+j+\tau]\big)^2$$
+      $$d'_t(\tau) = \begin{cases} 1, &amp; \tau=0 \\ \dfrac{d_t(\tau)}{\frac{1}{\tau}\sum_{k=1}^{\tau}d_t(k)}, &amp; \tau&gt;0 \end{cases}$$
+      $$\tau^* = \min\{\tau \mid d'_t(\tau) &lt; \theta\}, \quad F_0 = \dfrac{F_s}{\tau^* + \delta}$$
+    </div>
+    <div class="formula-desc"><b>符号说明：</b></div>
+    <table class="symbol-table">
+      <tr><td>x[t]</td><td>语音波形采样点</td></tr>
+      <tr><td>W</td><td>差分计算窗口长度（通常取帧长的一半）</td></tr>
+      <tr><td>τ</td><td>延迟（候选周期，单位采样点）</td></tr>
+      <tr><td>d_t(τ)</td><td>差分函数（YIN 核心）</td></tr>
+      <tr><td>d'_t(τ)</td><td>累积均值归一化差分函数（CMNDF）</td></tr>
+      <tr><td>θ</td><td>绝对阈值（默认 0.1~0.15）</td></tr>
+      <tr><td>δ</td><td>抛物线插值修正量（亚采样精度）</td></tr>
+      <tr><td>F_s</td><td>采样率（如 16000Hz）</td></tr>
+    </table>
+  </div>
+
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（NumPy，不调 librosa/pyin）</h4>
+<pre class="code"><span class="cmt"># ============ YIN 基频提取（纯 NumPy 实现） ============</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">yin_pitch</span>(x, fs=<span class="num">16000</span>, frame_len=<span class="num">1024</span>, hop=<span class="num">256</span>,
+              f0_min=<span class="num">60</span>, f0_max=<span class="num">500</span>, threshold=<span class="num">0.1</span>):
+    <span class="cmt"># 搜索范围：周期 τ 对应 [fs/f0_max, fs/f0_min] 采样点</span>
+    tau_min = <span class="fn">int</span>(fs / f0_max)
+    tau_max = <span class="fn">int</span>(fs / f0_min)
+    f0s = []
+    <span class="kw">for</span> start <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, <span class="fn">len</span>(x) - frame_len, hop):
+        frame = x[start : start + frame_len].astype(np.float64)
+        frame -= frame.mean()
+        W = frame_len // <span class="num">2</span>
+
+        <span class="cmt"># ① 差分函数 d(τ) = Σ (x[j]-x[j+τ])²  等价展开加速</span>
+        ac = np.correlate(frame[:W+tau_max], frame[:W+tau_max], <span class="str">'full'</span>)
+        ac = ac[W+tau_max-1 : W+tau_max-1 + tau_max+1]   <span class="cmt"># 自相关 r(τ)</span>
+        d = ac[<span class="num">0</span>] + ac[<span class="num">0</span>] - <span class="num">2</span>*ac                          <span class="cmt"># d(τ) = r(0)+r(0)-2r(τ)</span>
+
+        <span class="cmt"># ② 累积均值归一化 CMNDF</span>
+        dnorm = np.ones_like(d)
+        cumsum = <span class="num">0.0</span>
+        <span class="kw">for</span> tau <span class="kw">in</span> <span class="fn">range</span>(tau_min, tau_max+<span class="num">1</span>):
+            cumsum += d[tau]
+            dnorm[tau] = d[tau] * tau / (cumsum + <span class="num">1e-10</span>)
+
+        <span class="cmt"># ③ 绝对阈值搜索：找 dnorm 第一个低于阈值的谷</span>
+        tau_est = -<span class="num">1</span>
+        <span class="kw">for</span> tau <span class="kw">in</span> <span class="fn">range</span>(tau_min, tau_max):
+            <span class="kw">if</span> dnorm[tau] &lt; threshold <span class="kw">and</span> dnorm[tau] &lt; dnorm[tau+<span class="num">1</span>] <span class="kw">and</span> dnorm[tau] &lt; dnorm[tau-<span class="num">1</span>]:
+                tau_est = tau; <span class="kw">break</span>
+        <span class="kw">if</span> tau_est == -<span class="num">1</span>:
+            f0s.append(<span class="num">0.0</span>); <span class="kw">continue</span>                   <span class="cmt"># 清音/无声</span>
+
+        <span class="cmt"># ④ 抛物线插值获得亚采样精度</span>
+        a, b, c = dnorm[tau_est-<span class="num">1</span>], dnorm[tau_est], dnorm[tau_est+<span class="num">1</span>]
+        delta = <span class="num">0.5</span>*(a - c)/(a - <span class="num">2</span>*b + c + <span class="num">1e-10</span>)
+        f0s.append(fs / (tau_est + delta))
+    <span class="kw">return</span> np.array(f0s)
+
+<span class="cmt"># ============ 测试：合成一段 220Hz 正弦，反推 F0 ============</span>
+fs = <span class="num">16000</span>; t = np.arange(<span class="num">0</span>, <span class="num">1.0</span>, <span class="num">1</span>/fs)
+x = np.sin(<span class="num">2</span>*np.pi*<span class="num">220</span>*t)                              <span class="cmt"># 220Hz 纯音</span>
+f0 = <span class="fn">yin_pitch</span>(x, fs)
+<span class="fn">print</span>(<span class="str">"估出 F0 = %.1f Hz (真值 220)"</span> % np.median(f0[f0&gt;<span class="num">0</span>]))</pre>
+    <div class="code-run-tip">💡 复制到 Python 环境直接运行，控制台应打印 ≈220Hz。</div>
+  </div>
+</div>
+</section>
+
+<section id="lpc">
+<h2>📐 LPC 线性预测 · 声道滤波器与共振峰</h2>
+<p><b>LPC（Linear Predictive Coding）</b> 是源-滤波理论的经典实现：用过去 p 个采样点线性预测当前点，预测系数就是声道包络；从系数求根即可得到 F1/F2/F3 共振峰。</p>
+
+<div class="algo-block">
+  <h3>🎼 LPC + Levinson-Durbin 递推求共振峰</h3>
+
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 260" width="760" height="260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+          <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/></marker>
+        </defs>
+        <rect class="box" x="20" y="40" width="100" height="50"/><text class="title" x="70" y="62" text-anchor="middle">语音帧 x[n]</text>
+        <text class="label" x="70" y="78" text-anchor="middle">加窗、预加重</text>
+        <line class="arrow" x1="120" y1="65" x2="155" y2="65"/>
+
+        <rect class="box-key" x="155" y="40" width="110" height="50"/><text class="title" x="210" y="62" text-anchor="middle">① 自相关 r[k]</text>
+        <line class="arrow-key" x1="265" y1="65" x2="300" y2="65"/>
+
+        <rect class="box-key" x="300" y="40" width="140" height="50"/><text class="title" x="370" y="62" text-anchor="middle">② Levinson-Durbin</text>
+        <text class="label-key" x="370" y="78" text-anchor="middle">递推求 a₁…a_p</text>
+        <line class="arrow-key" x1="440" y1="65" x2="480" y2="45"/>
+        <line class="arrow-key" x1="440" y1="65" x2="480" y2="85"/>
+
+        <rect class="box-out" x="480" y="20" width="120" height="50"/><text class="title" x="540" y="42" text-anchor="middle" fill="#9a3412">LPC 系数 a</text>
+        <text class="label" x="540" y="58" text-anchor="middle">声道滤波器 1/A(z)</text>
+
+        <rect class="box" x="480" y="80" width="120" height="50"/><text class="title" x="540" y="102" text-anchor="middle">残差 e[n]</text>
+        <text class="label" x="540" y="118" text-anchor="middle">= 激励源（脉冲/噪声）</text>
+
+        <line class="arrow" x1="600" y1="45" x2="640" y2="45"/>
+        <rect class="box-key" x="640" y="20" width="100" height="50"/><text class="title" x="690" y="42" text-anchor="middle">③ 求 A(z)=0 的根</text>
+        <line class="arrow-key" x1="690" y1="70" x2="690" y2="150"/>
+        <rect class="box-out" x="600" y="150" width="180" height="50"/><text class="title" x="690" y="172" text-anchor="middle" fill="#9a3412">④ 角度 → F1, F2, F3</text>
+        <text class="label" x="690" y="190" text-anchor="middle">F_k = angle(z_k)·Fs/(2π)</text>
+
+        <rect class="box-done" x="80" y="150" width="480" height="80"/>
+        <text class="title" x="320" y="172" text-anchor="middle">全极点声道模型 H(z) = G / A(z)，A(z) = 1 − Σ a_k z⁻ᵏ</text>
+        <text class="label" x="100" y="195">• 预测：x̂[n] = a₁x[n-1] + … + a_p x[n-p]</text>
+        <text class="label" x="100" y="213">• 逆滤波：e[n] = x[n] − x̂[n] 即为声门激励</text>
+        <text class="label-key" x="100" y="228">• A(z) 的根对应共振峰极点，角度=频率，半径=带宽</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      <p>声道是一根"管子"，声音在里面来回反射形成共振峰。从数学上看，这种谐振系统可以用<b>全极点模型</b>（只含分母极点的滤波器）很好地近似，而<b>"过去 p 个点线性组合预测当前点"</b>正好对应一个全极点 IIR 滤波器。</p>
+      <p>具体做法：对一帧加窗语音算它的<b>自相关</b> r[k]，再用<b>Levinson-Durbin 递推</b>（O(p²) 复杂度）解 Toeplitz 线性方程组，得到 LPC 系数 a₁…a_p。把 a 组成多项式 A(z) = 1 − Σ a_k z⁻ᵏ，求根后保留单位圆附近的共轭对，每个根的角度对应一个共振峰频率 <code>F = angle·Fs/(2π)</code>，半径对应带宽。这就是老派声码器（STRAIGHT/WORLD 早期）提取频谱包络与共振峰的标准做法。</p>
+    </div>
+  </div>
+
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="lpc-f">
+      $$\hat{x}[n] = \sum_{k=1}^{p} a_k\, x[n-k], \qquad e[n] = x[n] - \hat{x}[n]$$
+      $$\min_{\mathbf{a}}\sum_n e[n]^2 \;\Longleftrightarrow\; \mathbf{R}\mathbf{a} = \mathbf{r}\quad(\text{Yule-Walker})$$
+      $$A(z) = 1 - \sum_{k=1}^{p} a_k z^{-k},\qquad z_k = r_k e^{j\theta_k},\quad F_k = \dfrac{\theta_k}{2\pi}\,F_s$$
+    </div>
+    <div class="formula-desc"><b>符号说明：</b></div>
+    <table class="symbol-table">
+      <tr><td>p</td><td>LPC 阶数（通常 2+采样率kHz，16k 取 12~16）</td></tr>
+      <tr><td>a_k</td><td>LPC 系数（声道滤波器分母系数）</td></tr>
+      <tr><td>r[k]</td><td>自相关函数 r[k]=Σ x[n]x[n−k]</td></tr>
+      <tr><td>E</td><td>预测残差能量（Levinson 递推里的 E）</td></tr>
+      <tr><td>A(z)</td><td>逆滤波器（分析滤波器），H(z)=G/A(z) 是合成滤波器</td></tr>
+      <tr><td>z_k, θ_k</td><td>A(z)=0 的根及其辐角</td></tr>
+      <tr><td>F_k</td><td>第 k 个共振峰频率</td></tr>
+    </table>
+  </div>
+
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（NumPy 手搓 Levinson-Durbin）</h4>
+<pre class="code"><span class="cmt"># ============ LPC + 共振峰提取（纯 NumPy） ============</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">lpc</span>(frame, order):
+    <span class="cmt"># 自相关</span>
+    x = frame - frame.mean()
+    r = np.correlate(x, x, <span class="str">'full'</span>)[<span class="fn">len</span>(x)-<span class="num">1</span>:]
+    r = r[: order+<span class="num">1</span>]
+    <span class="cmt"># Levinson-Durbin 递推（手搓 E/k/a 迭代）</span>
+    a = np.zeros(order+<span class="num">1</span>); a[<span class="num">0</span>] = <span class="num">1.0</span>
+    E = r[<span class="num">0</span>]
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, order+<span class="num">1</span>):
+        k = (r[i] - np.dot(a[<span class="num">1</span>:i], r[i-<span class="num">1</span>:<span class="num">0</span>:-<span class="num">1</span>])) / E   <span class="cmt"># 反射系数</span>
+        a[i] = k
+        a[<span class="num">1</span>:i] -= k * a[i-<span class="num">1</span>:<span class="num">0</span>:-<span class="num">1</span>]
+        E *= (<span class="num">1</span> - k*k)
+    <span class="kw">return</span> a, E
+
+<span class="kw">def</span> <span class="fn">formants_from_lpc</span>(a, fs, n_formants=<span class="num">3</span>):
+    <span class="cmt"># 求 A(z) 多项式的根</span>
+    roots = np.roots(a)
+    <span class="cmt"># 取上半平面（正频率）、单位圆内</span>
+    roots = roots[np.imag(roots) &gt; <span class="num">1e-3</span>]
+    <span class="cmt"># 辐角 → 频率；带宽 = -ln|r|·Fs/π</span>
+    freqs = np.angle(roots) * fs / (<span class="num">2</span>*np.pi)
+    bws   = -np.log(np.abs(roots)) * fs / np.pi
+    <span class="cmt"># 按频率排序，只留合理带宽的（&lt;500Hz）</span>
+    order_idx = np.argsort(freqs)
+    F = []
+    <span class="kw">for</span> i <span class="kw">in</span> order_idx:
+        <span class="kw">if</span> bws[i] &lt; <span class="num">500</span> <span class="kw">and</span> <span class="num">90</span> &lt; freqs[i] &lt; fs/<span class="num">2</span>-<span class="num">100</span>:
+            F.append(freqs[i])
+        <span class="kw">if</span> <span class="fn">len</span>(F) &gt;= n_formants: <span class="kw">break</span>
+    <span class="kw">return</span> F
+
+<span class="cmt"># ============ 测试：合成 /a/ 元音（F1=730, F2=1090, F3=2440） ============</span>
+fs = <span class="num">16000</span>; dur = <span class="num">0.05</span>; t = np.arange(<span class="num">0</span>, dur, <span class="num">1</span>/fs)
+x = np.zeros_like(t)
+<span class="kw">for</span> F, bw <span class="kw">in</span> [(<span class="num">730</span>,<span class="num">80</span>),(<span class="num">1090</span>,<span class="num">90</span>),(<span class="num">2440</span>,<span class="num">150</span>)]:
+    x += np.exp(-bw*t) * np.sin(<span class="num">2</span>*np.pi*F*t)
+x *= <span class="num">0.5</span>*(<span class="num">1</span>+np.sin(<span class="num">2</span>*np.pi*t/dur))                 <span class="cmt"># 简单窗</span>
+win = np.hanning(<span class="fn">len</span>(x)); x *= win
+a, E = <span class="fn">lpc</span>(x, order=<span class="num">12</span>)
+F = <span class="fn">formants_from_lpc</span>(a, fs)
+<span class="fn">print</span>(<span class="str">"估出共振峰 F1/F2/F3 = "</span>, [<span class="fn">round</span>(f,<span class="num">0</span>) <span class="kw">for</span> f <span class="kw">in</span> F])</pre>
+    <div class="code-run-tip">💡 复制运行应输出接近 730/1090/2440Hz 的 F1/F2/F3。</div>
+  </div>
+</div>
+</section>
+
+<section id="griffinlim">
+<h2>🔄 Griffin-Lim 声码器 · 相位迭代重建</h2>
+<p>最简单的"声码器"不需要训练——给定幅度谱（或 Mel 谱反变换得到的线性谱幅度），通过<b>反复在时域/频域投影</b>就能重建波形，这就是 Griffin-Lim（1984）算法。它是无数 TTS 项目入门的"基线声码器"。</p>
+
+<div class="algo-block">
+  <h3>🎼 Griffin-Lim：反复 STFT ↔ ISTFT 找回相位</h3>
+
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 280" width="760" height="280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+          <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/></marker>
+        </defs>
+        <rect class="box-key" x="30" y="40" width="140" height="50"/><text class="title" x="100" y="62" text-anchor="middle">已知：目标幅度 |S|</text>
+        <text class="label-key" x="100" y="78" text-anchor="middle">（Mel反推的线性谱）</text>
+
+        <rect class="box" x="230" y="40" width="140" height="50"/><text class="title" x="300" y="62" text-anchor="middle">初始化随机相位 φ₀</text>
+        <line class="arrow" x1="170" y1="65" x2="230" y2="65"/>
+
+        <rect class="box-key" x="430" y="40" width="130" height="50"/><text class="title" x="495" y="62" text-anchor="middle">Xₙ = |S|·e^{jφₙ}</text>
+        <text class="label-key" x="495" y="78" text-anchor="middle">幅度强制替换</text>
+        <line class="arrow-key" x1="370" y1="65" x2="430" y2="65"/>
+
+        <rect class="box" x="620" y="40" width="120" height="50"/><text class="title" x="680" y="62" text-anchor="middle">xₙ = ISTFT(Xₙ)</text>
+        <line class="arrow" x1="560" y1="65" x2="620" y2="65"/>
+
+        <path d="M 680 90 L 680 150 L 300 150 L 300 90" class="arrow-key" fill="none"/>
+        <text class="label-key" x="490" y="175" text-anchor="middle">迭代 N 次：X'ₙ₊₁ = STFT(xₙ) → φₙ₊₁ = ∠X'ₙ₊₁</text>
+
+        <rect class="box-out" x="300" y="200" width="160" height="50"/><text class="title" x="380" y="222" text-anchor="middle" fill="#9a3412">输出波形 x_N</text>
+        <text class="label" x="380" y="238" text-anchor="middle">收敛后合成语音</text>
+        <line class="arrow" x1="680" y1="110" x2="680" y2="200"/>
+        <line class="arrow" x1="680" y1="225" x2="460" y2="225"/>
+
+        <rect class="box-done" x="30" y="150" width="230" height="110"/>
+        <text class="title" x="145" y="172" text-anchor="middle">为什么有效？</text>
+        <text class="label" x="45" y="195">• 相位未知但有结构约束：</text>
+        <text class="label" x="45" y="213">• 相邻帧/相邻频带相位要一致</text>
+        <text class="label" x="45" y="231">• 交替投影 = 凸集投影 POCS</text>
+        <text class="label-key" x="45" y="249">• 迭代 30~100 次即可听清</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      <p>STFT 把一段波形切成很多帧，每帧做 FFT 得到"幅度 + 相位"两个信息。<b>人耳对相位不敏感，但对幅度极度敏感</b>——所以 TTS 模型通常只预测 Mel 幅度谱。问题来了：只有幅度怎么反推回波形？缺少相位！</p>
+      <p>Griffin-Lim 的思路非常"工程师"：<b>随便给一个初始相位，反复在时域和频域之间来回跑</b>——每次到频域就把幅度替换成已知的真实幅度（只保留刚算出来的相位），每次到时域就用 ISTFT 合成。反复迭代之后，相位会逐渐"自洽"（相邻帧相位连续、STFT 一致性约束被满足），得到一个听起来还不错的波形。它不需要训练、没有参数，是最朴素但最通用的基线。缺点是音质发闷、有"金属感"，迭代次数多了也慢。</p>
+    </div>
+  </div>
+
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="gl-f">
+      $$\mathbf{X}^{(0)} = |\mathbf{S}|\odot e^{j\phi_0},\qquad \phi_0\sim\mathcal{U}(-\pi,\pi)$$
+      $$\mathbf{x}^{(n)} = \mathrm{iSTFT}\!\big(\mathbf{X}^{(n)}\big)$$
+      $$\phi^{(n+1)} = \angle\,\mathrm{STFT}\!\big(\mathbf{x}^{(n)}\big),\quad \mathbf{X}^{(n+1)} = |\mathbf{S}|\odot e^{j\phi^{(n+1)}}$$
+      $$\mathbf{x}^{*} = \mathrm{iSTFT}\!\big(\mathbf{X}^{(N)}\big)$$
+    </div>
+    <div class="formula-desc"><b>符号说明：</b></div>
+    <table class="symbol-table">
+      <tr><td>|S|</td><td>已知目标幅度谱（如线性谱，形状 F×T）</td></tr>
+      <tr><td>φ₀</td><td>初始随机相位</td></tr>
+      <tr><td>X⁽ⁿ⁾</td><td>第 n 次迭代的复频谱</td></tr>
+      <tr><td>⊙</td><td>逐元素相乘</td></tr>
+      <tr><td>N</td><td>迭代次数（通常 32~100）</td></tr>
+      <tr><td>∠(·)</td><td>取相位角（复数 → angle）</td></tr>
+    </table>
+  </div>
+
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（NumPy 手写 STFT/ISTFT，不调 librosa）</h4>
+<pre class="code"><span class="cmt"># ============ Griffin-Lim（纯 NumPy） ============</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">stft</span>(x, n_fft=<span class="num">1024</span>, hop=<span class="num">256</span>, win=None):
+    <span class="kw">if</span> win <span class="kw">is</span> None: win = np.hanning(n_fft)
+    T = <span class="num">1</span> + (<span class="fn">len</span>(x) - n_fft) // hop
+    X = np.zeros((n_fft//<span class="num">2</span>+<span class="num">1</span>, T), dtype=np.complex128)
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(T):
+        seg = x[t*hop : t*hop+n_fft] * win
+        X[:, t] = np.fft.rfft(seg)
+    <span class="kw">return</span> X
+
+<span class="kw">def</span> <span class="fn">istft</span>(X, n_fft=<span class="num">1024</span>, hop=<span class="num">256</span>, win=None):
+    <span class="kw">if</span> win <span class="kw">is</span> None: win = np.hanning(n_fft)
+    T = X.shape[<span class="num">1</span>]; L = (T-<span class="num">1</span>)*hop + n_fft
+    x = np.zeros(L); wsum = np.zeros(L)
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(T):
+        seg = np.fft.irfft(X[:, t], n=n_fft) * win
+        x[t*hop : t*hop+n_fft] += seg
+        wsum[t*hop : t*hop+n_fft] += win*win
+    <span class="kw">return</span> x / (wsum + <span class="num">1e-8</span>)                   <span class="cmt"># 归一化去窗影响</span>
+
+<span class="kw">def</span> <span class="fn">griffin_lim</span>(mag, n_fft=<span class="num">1024</span>, hop=<span class="num">256</span>, n_iter=<span class="num">60</span>):
+    <span class="cmt"># mag: (F, T) 幅度谱。随机相位初始化</span>
+    phase = np.exp(<span class="num">2j</span>*np.pi * np.random.rand(*mag.shape))
+    X = mag * phase
+    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n_iter):
+        x = <span class="fn">istft</span>(X, n_fft, hop)
+        X_hat = <span class="fn">stft</span>(x, n_fft, hop)
+        <span class="cmt"># 保留新相位，幅度强制替换为目标</span>
+        phase = X_hat / (np.abs(X_hat) + <span class="num">1e-8</span>)
+        X = mag * phase
+    <span class="kw">return</span> <span class="fn">istft</span>(X, n_fft, hop)
+
+<span class="cmt"># ============ 测试：对一段正弦做 STFT→只保留幅度→GL 重建 ============</span>
+fs=<span class="num">16000</span>; t=np.arange(<span class="num">0</span>,<span class="num">1.0</span>,<span class="num">1</span>/fs)
+x = <span class="num">0.5</span>*np.sin(<span class="num">2</span>*np.pi*<span class="num">440</span>*t)
+X = <span class="fn">stft</span>(x); mag = np.abs(X)
+x_r = <span class="fn">griffin_lim</span>(mag, n_iter=<span class="num">60</span>)
+snr = <span class="num">10</span>*np.log10(np.sum(x[:<span class="fn">len</span>(x_r)]**<span class="num">2</span>) / np.sum((x[:<span class="fn">len</span>(x_r)]-x_r)**<span class="num">2</span>))
+<span class="fn">print</span>(<span class="str">f"重建 SNR = {snr:.1f} dB（越高越好）"</span>)</pre>
+    <div class="code-run-tip">💡 复制运行，60 次迭代后 SNR 一般 &gt;15dB，已能清晰听出原音。</div>
+  </div>
+</div>
+</section>
+
 <section id="concatenative">
 <h2>✂️ 单元拼接合成 · 2000 年代的主流</h2>
 <p><b>单元拼接合成（Concatenative TTS）</b>的思路非常朴素：预先录制大量语音，切成小单元（音素/双音素 diphone/音节），合成时选最合适的单元拼接起来。</p>
@@ -196,7 +605,7 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);bord
 <div class="grid-3">
 <div class="card"><h4>参数化</h4><p style="font-size:.85rem;margin:.25rem 0 0">不存储波形，存均值方差，模型小</p></div>
 <div class="card"><h4>灵活</h4><p style="font-size:.85rem;margin:.25rem 0 0">可通过改 HMM 参数变换说话人/情感（说话人自适应、MLLR/CMLLR）</p></div>
-<div class="card"><h4> buzzy 问题</h4><p style="font-size:.85rem;margin:.25rem 0 0">声码器过于平滑，合成语音有"闷/电子"感，MOS 普遍 3 分左右</p></div>
+<div class="card"><h4>buzzy 问题</h4><p style="font-size:.85rem;margin:.25rem 0 0">声码器过于平滑，合成语音有"闷/电子"感，MOS 普遍 3 分左右</p></div>
 </div>
 </section>
 
@@ -211,302 +620,653 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--org);bord
   <li><b>μ-law 量化 + Softmax</b>：把 16bit 样本量化到 256 个值，做 256 分类</li>
   <li><b>残差+跳连接</b>：堆叠 30 层仍能训练</li>
 </ul>
-<pre class="code"><span style="color:#94a3b8"># WaveNet 核心块的简化 PyTorch 实现</span>
-<span style="color:#7dd3fc">class</span> WaveNetBlock(nn.Module):
-  <span style="color:#7dd3fc">def</span> __init__(self, channels, dilation):
-    super().__init__()
-    self.filter_conv = nn.Conv1d(channels, channels, <span style="color:#fde68a">2</span>, dilation=dilation, padding=0)
-    self.gate_conv   = nn.Conv1d(channels, channels, <span style="color:#fde68a">2</span>, dilation=dilation, padding=0)
-    self.res_proj    = nn.Conv1d(channels, channels, <span style="color:#fde68a">1</span>)
-    self.skip_proj   = nn.Conv1d(channels, channels, <span style="color:#fde68a">1</span>)
+<pre class="code"><span class="cmt"># WaveNet 核心块的简化 PyTorch 实现</span>
+<span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn
 
-  <span style="color:#7dd3fc">def</span> forward(self, x):
-    <span style="color:#94a3b8"># 因果 + 门控 + tanh · sigmoid</span>
+<span class="kw">class</span> <span class="fn">WaveNetBlock</span>(nn.Module):
+  <span class="kw">def</span> <span class="fn">__init__</span>(self, channels, dilation):
+    <span class="fn">super</span>().__init__()
+    self.filter_conv = nn.Conv1d(channels, channels, <span class="num">2</span>, dilation=dilation, padding=<span class="num">0</span>)
+    self.gate_conv   = nn.Conv1d(channels, channels, <span class="num">2</span>, dilation=dilation, padding=<span class="num">0</span>)
+    self.res_proj    = nn.Conv1d(channels, channels, <span class="num">1</span>)
+    self.skip_proj   = nn.Conv1d(channels, channels, <span class="num">1</span>)
+
+  <span class="kw">def</span> <span class="fn">forward</span>(self, x):
     f = torch.tanh(self.filter_conv(x))
     g = torch.sigmoid(self.gate_conv(x))
     z = f * g
     skip = self.skip_proj(z)
-    res  = self.res_proj(z) + x[:, :, -z.size(2):]  <span style="color:#94a3b8"># 残差（裁剪对齐）</span>
-    <span style="color:#7dd3fc">return</span> res, skip</pre>
+    res  = self.res_proj(z) + x[:, :, -z.size(<span class="num">2</span>):]
+    <span class="kw">return</span> res, skip</pre>
 <div class="callout callout-w"><span class="ic">⚠️</span><span>WaveNet 的致命问题：<b>太慢</b>。逐样本自回归生成 1 秒音频需要几分钟——不能用于产品。所以它后来退化成"声码器"（把梅尔谱转波形），被 Parallel WaveNet / WaveRNN / HiFi-GAN 等更快的方法取代。</span></div>
 </section>
 
 <section id="tacotron">
 <h2>🎼 Tacotron 2 · 现代神经 TTS 的标准范式</h2>
-<p>2018 年 Google 的 Tacotron 2 确立了现代 TTS 的"两段式"标准流水线：<b>声学模型（文本 → 梅尔谱） + 神经声码器（梅尔谱 → 波形）</b>。</p>
-<div class="math-b">字符/音素 → 编码器 Encoder → 注意力 Attention → 解码器 Decoder → 梅尔谱 → WaveNet/Griffin-Lim → 波形</div>
-<h3>架构拆解</h3>
-<div class="grid-3">
-  <div class="card"><h4>📥 编码器</h4><p style="font-size:.85rem;margin:.25rem 0 0">3 层 1D Conv + BiLSTM，把字符序列编码成隐表征</p></div>
-  <div class="card"><h4>🎯 Location-Sensitive Attention</h4><p style="font-size:.85rem;margin:.25rem 0 0">在注意力打分中加入"累积注意力权重"，防止重复/漏字——是 Tacotron2 训练稳定的关键</p></div>
-  <div class="card"><h4>📤 自回归解码器</h4><p style="font-size:.85rem;margin:.25rem 0 0">2 层 LSTM PreNet + 2 层 LSTM AttentionRNN + 投影到 80 维梅尔谱；最后一个"stop token"预测什么时候结束</p></div>
+<p>2018 年 Google 的 Tacotron 2 确立了现代 TTS 的"两段式"标准流水线：<b>声学模型（文本 → 梅尔谱） + 神经声码器（梅尔谱 → 波形）</b>。编码器把字符/音素读成"记忆"，解码器<b>自回归</b>地一帧一帧生成 Mel 谱，每步通过<b>位置敏感注意力（Location-Sensitive Attention）</b>决定"当前在读哪个字"。</p>
+
+<div class="algo-block">
+  <h3>🎼 Mini-Tacotron 2：Seq2Seq + LSA 注意力</h3>
+
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 280" width="760" height="280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+          <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/></marker>
+        </defs>
+        <rect class="box" x="20" y="30" width="100" height="45"/><text class="title" x="70" y="50" text-anchor="middle">字符/音素</text><text class="label" x="70" y="66" text-anchor="middle">"你好世界"</text>
+        <line class="arrow" x1="120" y1="52" x2="150" y2="52"/>
+
+        <rect class="box-key" x="150" y="25" width="100" height="55"/><text class="title" x="200" y="45" text-anchor="middle">Encoder</text><text class="label-key" x="200" y="62" text-anchor="middle">Embed+Conv+BiLSTM</text><text class="label-key" x="200" y="75" text-anchor="middle">→ Memory H</text>
+        <line class="arrow-key" x1="250" y1="52" x2="285" y2="52"/>
+
+        <rect class="box-key" x="285" y="25" width="130" height="55"/><text class="title" x="350" y="45" text-anchor="middle">LSA Attention</text><text class="label-key" x="350" y="62" text-anchor="middle">加累积权重 α_cum</text><text class="label-key" x="350" y="75" text-anchor="middle">→ 上下文 c_t</text>
+        <line class="arrow-key" x1="415" y1="52" x2="455" y2="52"/>
+
+        <rect class="box-key" x="455" y="25" width="110" height="55"/><text class="title" x="510" y="45" text-anchor="middle">Decoder LSTM</text><text class="label-key" x="510" y="62" text-anchor="middle">2 层 LSTM</text><text class="label-key" x="510" y="75" text-anchor="middle">+ PreNet</text>
+        <line class="arrow-key" x1="565" y1="52" x2="600" y2="52"/>
+
+        <rect class="box-out" x="600" y="25" width="140" height="55"/><text class="title" x="670" y="45" text-anchor="middle" fill="#9a3412">Mel 帧 + Stop</text><text class="label" x="670" y="62" text-anchor="middle">投影→80 维 Mel</text><text class="label" x="670" y="75" text-anchor="middle">stop token 决定结束</text>
+
+        <path d="M 670 80 L 670 130 L 510 130" fill="none" class="arrow"/>
+        <text class="label" x="590" y="125" text-anchor="middle">自回归：上一帧当下一帧输入</text>
+
+        <rect class="box-done" x="60" y="160" width="640" height="90"/>
+        <text class="title" x="380" y="182" text-anchor="middle">Location-Sensitive Attention 打分</text>
+        <text class="label-key" x="80" y="205">e_{t,i} = v^T tanh(W·h_i + V·s_t + U·f_{t,i} + b)</text>
+        <text class="label" x="80" y="225">• f_{t,i} = Conv1d(Σ_{k&lt;t} α_{k,i})，"之前注意力累积到哪里了"</text>
+        <text class="label" x="80" y="242">• α_{t,i} = softmax(e_t)_i；c_t = Σ α_{t,i}·h_i（软对齐）</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      <p>Tacotron 2 像一个"看着稿子逐句念"的朗读者：</p>
+      <ul>
+        <li><b>编码器 Encoder</b> 先把整段文字读一遍，把每个字/音素变成一个向量（Memory），存在"脑子里"；</li>
+        <li><b>解码器 Decoder</b> 每次生成一帧 Mel（12.5ms 语音），生成前先用<b>注意力</b>"看一眼稿子当前念到哪里"，取对应位置的文字向量（上下文向量），结合上一帧自己生成的内容，吐出下一帧；</li>
+        <li><b>位置敏感注意力 LSA</b> 的关键是给注意力加"已经读过哪里"的累计信息，防止朗读者"反复读同一个字"或"跳字"——这是 Tacotron2 训练稳定的秘诀。</li>
+        <li>最后一个特殊的 <b>Stop Token</b> 头预测"这段话念完了"，停止生成。再经过一个 5 层 CNN 的 PostNet 残差修正，得到最终 Mel 谱。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="taco-f">
+      $$e_{t,i} = \mathbf{v}^\top\tanh\!\big(\mathbf{W}\mathbf{h}_i + \mathbf{V}\mathbf{s}_t + \mathbf{U}\mathbf{f}_{t,i} + \mathbf{b}\big)$$
+      $$\mathbf{f}_{t} = \mathbf{F}*\sum_{k&lt;t}\boldsymbol{\alpha}_{k},\qquad \alpha_{t,i} = \mathrm{softmax}_i(e_{t,i})$$
+      $$\mathbf{c}_t = \sum_{i}\alpha_{t,i}\mathbf{h}_i,\qquad P(\text{stop}\mid t)=\sigma(\mathbf{w}_s^\top[\mathbf{s}_t;\mathbf{c}_t])$$
+    </div>
+    <div class="formula-desc"><b>符号说明：</b></div>
+    <table class="symbol-table">
+      <tr><td>h_i</td><td>Encoder 第 i 个音素的隐向量（Memory）</td></tr>
+      <tr><td>s_t</td><td>Decoder 在 t 步的隐状态</td></tr>
+      <tr><td>f_{t,i}</td><td>位置特征（卷积累积注意力权重）</td></tr>
+      <tr><td>α_{t,i}</td><td>t 步对第 i 个音素的注意力权重</td></tr>
+      <tr><td>c_t</td><td>上下文向量（对 h_i 的加权和）</td></tr>
+      <tr><td>W, V, U, v</td><td>可学习参数</td></tr>
+    </table>
+  </div>
+
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（PyTorch 简化可运行 Mini-Tacotron）</h4>
+<pre class="code"><span class="cmt"># ============ Mini-Tacotron2（PyTorch 简化版） ============</span>
+<span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="fn">MiniTacotron</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, n_vocab=<span class="num">50</span>, emb_dim=<span class="num">64</span>, enc_dim=<span class="num">128</span>,
+                 dec_dim=<span class="num">256</span>, mel_dim=<span class="num">80</span>, attn_dim=<span class="num">128</span>, attn_n=<span class="num">32</span>, attn_k=<span class="num">15</span>):
+        <span class="fn">super</span>().__init__()
+        self.emb = nn.Embedding(n_vocab, emb_dim)
+        self.enc_conv = nn.Sequential(
+            nn.Conv1d(emb_dim, enc_dim, <span class="num">5</span>, padding=<span class="num">2</span>), nn.ReLU(),
+            nn.Conv1d(enc_dim, enc_dim, <span class="num">5</span>, padding=<span class="num">2</span>), nn.ReLU(),
+            nn.Conv1d(enc_dim, enc_dim, <span class="num">5</span>, padding=<span class="num">2</span>), nn.ReLU())
+        self.enc_lstm = nn.LSTM(enc_dim, enc_dim//<span class="num">2</span>, <span class="num">1</span>, batch_first=<span class="num">True</span>, bidirectional=<span class="num">True</span>)
+
+        self.prenet = nn.Sequential(nn.Linear(mel_dim, dec_dim), nn.ReLU(), nn.Dropout(<span class="num">0.5</span>),
+                                    nn.Linear(dec_dim, dec_dim), nn.ReLU(), nn.Dropout(<span class="num">0.5</span>))
+        self.dec_lstm = nn.LSTMCell(dec_dim+enc_dim, dec_dim)
+        self.loc_conv = nn.Conv1d(<span class="num">2</span>, attn_n, attn_k, padding=attn_k//<span class="num">2</span>, bias=<span class="num">False</span>)
+        self.q_proj = nn.Linear(dec_dim, attn_dim, bias=<span class="num">False</span>)
+        self.mem_proj = nn.Linear(enc_dim, attn_dim, bias=<span class="num">False</span>)
+        self.loc_proj = nn.Linear(attn_n, attn_dim, bias=<span class="num">False</span>)
+        self.v = nn.Linear(attn_dim, <span class="num">1</span>, bias=<span class="num">False</span>)
+        self.mel_proj = nn.Linear(dec_dim+enc_dim, mel_dim)
+        self.stop_proj = nn.Linear(dec_dim+enc_dim, <span class="num">1</span>)
+
+    <span class="kw">def</span> <span class="fn">encode</span>(self, tokens):
+        x = self.emb(tokens).transpose(<span class="num">1</span>,<span class="num">2</span>)           <span class="cmt"># [B,T,E]</span>
+        x = self.enc_conv(x).transpose(<span class="num">1</span>,<span class="num">2</span>)
+        h, _ = self.enc_lstm(x)
+        <span class="kw">return</span> h                                       <span class="cmt"># memory [B,T,enc_dim]</span>
+
+    <span class="kw">def</span> <span class="fn">attention</span>(self, s_t, mem, prev_a, prev_a_cum):
+        cat = torch.stack([prev_a, prev_a_cum], dim=<span class="num">1</span>)<span class="cmt"># [B,2,T]</span>
+        f = self.loc_conv(cat).transpose(<span class="num">1</span>,<span class="num">2</span>)        <span class="cmt"># [B,T,attn_n]</span>
+        e = self.v(torch.tanh(self.q_proj(s_t).unsqueeze(<span class="num">1</span>)
+                            + self.mem_proj(mem)
+                            + self.loc_proj(f))).squeeze(-<span class="num">1</span>)
+        a = F.softmax(e, dim=-<span class="num">1</span>)
+        ctx = torch.bmm(a.unsqueeze(<span class="num">1</span>), mem).squeeze(<span class="num">1</span>)
+        <span class="kw">return</span> ctx, a
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, tokens, max_frames=<span class="num">200</span>):
+        B = tokens.size(<span class="num">0</span>)
+        mem = self.encode(tokens)
+        T = mem.size(<span class="num">1</span>)
+        s = torch.zeros(B, self.dec_lstm.hidden_size, device=tokens.device)
+        c = torch.zeros_like(s)
+        hx, cx = torch.zeros_like(s), torch.zeros_like(s)
+        prev_a = torch.zeros(B, T, device=tokens.device); prev_a[:,<span class="num">0</span>] = <span class="num">1.0</span>
+        prev_a_cum = torch.zeros_like(prev_a)
+        mel_in = torch.zeros(B, self.mel_proj.out_features, device=tokens.device)
+        mels, stops, attns = [], [], []
+        <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(max_frames):
+            p = self.prenet(mel_in)
+            hx, cx = self.dec_lstm(torch.cat([p, c], dim=-<span class="num">1</span>), (hx, cx))
+            ctx, a = self.attention(hx, mem, prev_a, prev_a_cum)
+            out = torch.cat([hx, ctx], dim=-<span class="num">1</span>)
+            mel_frame = self.mel_proj(out)
+            stop = torch.sigmoid(self.stop_proj(out)).squeeze(-<span class="num">1</span>)
+            mels.append(mel_frame); stops.append(stop); attns.append(a)
+            prev_a_cum = prev_a_cum + a; prev_a = a; mel_in = mel_frame
+            <span class="kw">if</span> (stop &gt; <span class="num">0.5</span>).all(): <span class="kw">break</span>
+        <span class="kw">return</span> torch.stack(mels,<span class="num">1</span>), torch.stack(stops,<span class="num">1</span>), torch.stack(attns,<span class="num">1</span>)
+
+<span class="cmt"># 快速前向推理（不训练，展示流水线）</span>
+m = MiniTacotron(); m.eval()
+tokens = torch.randint(<span class="num">0</span>, <span class="num">50</span>, (<span class="num">1</span>, <span class="num">20</span>))
+<span class="kw">with</span> torch.no_grad():
+    mel, stop, attn = m(tokens)
+<span class="fn">print</span>(<span class="str">"mel shape:"</span>, mel.shape, <span class="str">"attn shape:"</span>, attn.shape)</pre>
+    <div class="code-run-tip">💡 复制可直接运行，输出 mel=(1, T, 80)、attn=(1, T, 20)；未训练所以输出是噪声，但数据流完整。</div>
+  </div>
 </div>
-<pre class="code"><span style="color:#94a3b8"># Tacotron 2 解码核心伪代码</span>
-<span style="color:#7dd3fc">def</span> decode(encoder_out, inputs):
-    dec_input = &lt;GO_FRAME&gt;
-    dec_hidden, ctx, attn_weights = init()
-    mel_frames = []; stop_flags = []
-    <span style="color:#7dd3fc">for</span> step <span style="color:#7dd3fc">in</span> range(max_steps):
-        prenet_out = PreNet(dec_input)                     <span style="color:#94a3b8"># 2层FC + dropout，关键！</span>
-        dec_hidden = DecoderLSTM(prenet_out, ctx, dec_hidden)
-        ctx, attn_weights = LocationSensitiveAttention(
-            dec_hidden, encoder_out, attn_weights_cum)     <span style="color:#94a3b8"># 位置敏感！</span>
-        mel_frame = Linear(concat(dec_hidden, ctx))
-        stop_prob = StopTokenLinear(concat(dec_hidden, ctx))
-        mel_frames.append(mel_frame); stop_flags.append(stop_prob)
-        <span style="color:#7dd3fc">if</span> stop_prob > 0.5: <span style="color:#7dd3fc">break</span>
-        dec_input = mel_frame  <span style="color:#94a3b8"># 自回归：上一帧当下一帧输入</span>
-    <span style="color:#7dd3fc">return</span> PostNet(mel_frames)   <span style="color:#94a3b8"># 5层CNN残差修正</span></pre>
-<div class="callout callout-i"><span class="ic">💡</span><span>Tacotron 2 MOS 4.5，几乎与录音难以分辨。但它<strong>自回归逐帧生成</strong>梅尔谱，还是慢；而且注意力对长文本不稳定，会漏字重复。这催生了 FastSpeech 系列非自回归模型。</span></div>
 </section>
 
 <section id="fastspeech">
 <h2>⚡ FastSpeech 2 · 非自回归工业之王</h2>
-<p>2019/2020 年微软的 FastSpeech / FastSpeech 2 提出<strong>非自回归（Non-Autoregressive, NAR）</strong>架构：一次并行生成所有梅尔帧，推理速度比 Tacotron 2 快 270 倍（GPU 上 RTF ≈ 0.003，即生成 1 秒音频只需 3 毫秒）。</p>
-<h3>关键创新：时长预测器 + 长度规整器</h3>
-<p>非自回归最大的难点是<strong>音素到声学帧的对齐</strong>（每个音素对应几帧）。FastSpeech 的解决方案：</p>
-<ol>
-  <li>先用一个<strong>教师模型</strong>（Tacotron 2）训练好，用它的注意力权重或 Montreal Forced Alignment（MFA）提取每个音素的时长</li>
-  <li>训练一个 <b>Duration Predictor</b>（2 层 Conv + 1 层 Linear）从音素隐状态预测时长</li>
-  <li><b>Length Regulator</b>：根据预测的时长把每个音素的隐状态复制 N 份，扩展到帧级别</li>
-</ol>
-<div class="math-b">音素序列 H<sub>p</sub> = [h<sub>1</sub>, h<sub>2</sub>, ..., h<sub>n</sub>]  
-→ LengthRegulator(H<sub>p</sub>, d) = [h<sub>1</sub>×d<sub>1</sub>, h<sub>2</sub>×d<sub>2</sub>, ..., h<sub>n</sub>×d<sub>n</sub>]  
-→ Feed-Forward Transformer → 梅尔谱</div>
-<p>FastSpeech 2 进一步加入了 <b>音高 F0 预测器</b>和 <b>能量预测器</b>，把 Tacotron 隐式学到的韵律信息显式建模，自然度追平 Tacotron 2（MOS 4.6），同时保持极高速度。</p>
-<div class="callout callout-tip"><span class="ic">🏭</span><span>FastSpeech 2 至今是<b>工业部署首选</b>：微软 Azure TTS、阿里 CosyVoice 编码器部分、字节豆包 TTS 都基于类似架构。</span></div>
-</section>
+<p>Tacotron 2 自回归慢、且对长文本注意力容易对齐失败。2019/2020 年微软提出 <b>FastSpeech / FastSpeech 2</b>：<b>非自回归（NAR）</b>一次并行生成所有 Mel 帧，速度比 Tacotron 2 快 270 倍（GPU 上 RTF≈0.003，1秒音频仅需 3ms），同时自然度追平（MOS≈4.6）。核心秘籍：<b>Variance Adaptor</b> 把时长、F0、能量这三个韵律方差显式预测并加到隐表征里。</p>
 
-<section id="vocoder">
-<h2>🎛️ 声码器家族 · 从波形到波形</h2>
-<p>声码器（Vocoder）负责把梅尔谱转成波形——这一步的音质直接决定 TTS 最终效果。声码器经历了几代演进：</p>
-<table>
-<thead><tr><th>声码器</th><th>年份</th><th>方式</th><th>MOS</th><th>RTF (GPU)</th><th>特点</th></tr></thead>
-<tbody>
-<tr><td>Griffin-Lim</td><td>1984</td><td>相位重建（迭代）</td><td>~3.5</td><td>0.05</td><td>无需训练，但音质发闷</td></tr>
-<tr><td>WORLD</td><td>2016</td><td>源-滤波参数</td><td>~3.2</td><td>0.1</td><td>传统声码器，F0/频谱/非周期</td></tr>
-<tr><td>WaveNet</td><td>2016</td><td>AR dilated conv</td><td>4.2</td><td><b>~50（慢）</b></td><td>高自然度但极慢</td></tr>
-<tr><td>WaveRNN</td><td>2018</td><td>AR RNN + 稀疏</td><td>4.2</td><td>~5（CPU实时）</td><td>第一个能在手机跑的神经声码器</td></tr>
-<tr><td>Parallel WaveNet</td><td>2018</td><td>IAF 流（Parallel）</td><td>4.0</td><td>0.05</td><td>用教师 WaveNet 蒸馏，并行生成</td></tr>
-<tr><td>MelGAN</td><td>2019</td><td>GAN</td><td>4.0</td><td>0.01</td><td>第一个 GAN 声码器，极快</td></tr>
-<tr><td><b>HiFi-GAN</b></td><td>2020</td><td>GAN + 多感受野</td><td><b>4.4+</b></td><td><b>0.003</b></td><td>当前最常用，速度质量兼顾</td></tr>
-<tr><td>BigVGAN</td><td>2022</td><td>GAN + Anti-aliased MPD</td><td>4.6</td><td>0.008</td><td>HiFi-GAN 升级版，泛化性更好</td></tr>
-</tbody>
-</table>
+<div class="algo-block">
+  <h3>🎼 Mini-FastSpeech2：FFT + Variance Adaptor</h3>
+
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 300" width="760" height="300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+          <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/></marker>
+        </defs>
+        <rect class="box" x="15" y="30" width="90" height="45"/><text class="title" x="60" y="50" text-anchor="middle">音素序列</text><text class="label" x="60" y="66" text-anchor="middle">"你好"</text>
+        <line class="arrow" x1="105" y1="52" x2="130" y2="52"/>
+
+        <rect class="box-key" x="130" y="25" width="100" height="55"/><text class="title" x="180" y="45" text-anchor="middle">Encoder</text><text class="label-key" x="180" y="62" text-anchor="middle">N×FFT Block</text><text class="label-key" x="180" y="75" text-anchor="middle">音素级 H_ph</text>
+        <line class="arrow-key" x1="230" y1="52" x2="260" y2="52"/>
+
+        <rect class="box-key" x="260" y="10" width="220" height="90"/>
+        <text class="title" x="370" y="30" text-anchor="middle">Variance Adaptor</text>
+        <rect x="275" y="40" width="60" height="25" fill="#faf5ff" stroke="#8b5cf6" rx="4"/><text class="label-key" x="305" y="57" text-anchor="middle" font-size="10">时长预测</text>
+        <line x1="335" y1="52" x2="350" y2="52" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow-p)"/>
+        <rect x="350" y="40" width="60" height="25" fill="#fff7ed" stroke="#f97316" rx="4"/><text class="title" x="380" y="57" text-anchor="middle" font-size="10" fill="#9a3412">长度扩展</text>
+        <text class="label" x="380" y="78" text-anchor="middle" font-size="9">repeat(h_p, d_p)</text>
+        <rect x="275" y="75" width="60" height="20" fill="#faf5ff" stroke="#8b5cf6" rx="4"/><text class="label-key" x="305" y="89" text-anchor="middle" font-size="10">F0+能量</text>
+        <line x1="335" y1="85" x2="410" y2="85" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow-p)"/>
+        <rect x="410" y="75" width="60" height="20" fill="#fff7ed" stroke="#f97316" rx="4"/><text class="title" x="440" y="89" text-anchor="middle" font-size="10" fill="#9a3412">加F0/E</text>
+
+        <line class="arrow-key" x1="480" y1="52" x2="510" y2="52"/>
+
+        <rect class="box-key" x="510" y="25" width="100" height="55"/><text class="title" x="560" y="45" text-anchor="middle">Decoder</text><text class="label-key" x="560" y="62" text-anchor="middle">N×FFT Block</text><text class="label-key" x="560" y="75" text-anchor="middle">帧级 H_frame</text>
+        <line class="arrow-key" x1="610" y1="52" x2="645" y2="52"/>
+
+        <rect class="box-out" x="645" y="25" width="100" height="55"/><text class="title" x="695" y="45" text-anchor="middle" fill="#9a3412">Mel 谱</text><text class="label" x="695" y="62" text-anchor="middle">(T_frames,80)</text><text class="label" x="695" y="75" text-anchor="middle">一次并行出</text>
+
+        <rect class="box-done" x="40" y="130" width="680" height="150"/>
+        <text class="title" x="380" y="155" text-anchor="middle">FFT Block = 多头自注意力(简化为Conv+LN) + Conv1d + Residual + LayerNorm</text>
+        <text class="title" x="380" y="180" text-anchor="middle">长度扩展（Length Regulator）核心：</text>
+        <text class="label-key" x="60" y="205">h_expanded[i] = repeat(h_phoneme[p], d_p)</text>
+        <text class="label" x="60" y="225">  • d_p 是时长预测器输出的"音素 p 占多少帧"（训练时用 MFA/教师对齐得到真值 d*_p）</text>
+        <text class="label" x="60" y="245">  • F0 用连续值（对数基频 + V/UV 判别），能量是帧 RMS；两者都作为额外偏置加到隐向量</text>
+        <text class="label" x="60" y="265">  • Encoder 和 Decoder 结构对称（Transformer-style），但 Decoder 在帧级而非音素级运行</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      <p>Tacotron 自回归一帧一帧念，像"用手指着字读"。FastSpeech 2 反其道而行：<b>先决定每个字念几帧（时长），把每个字的"标签"复制成对应长度的"卡片"拼成一长条，再一次性并行算出所有帧</b>。这就是非自回归，所以特别快。</p>
+      <p>但是直接把音素拉长成帧，韵律信息（音高起伏、音量大小）会丢。FastSpeech 2 加了三个"外挂"预测器：<b>时长预测器</b>预测每个音素多少帧、<b>F0 预测器</b>预测每帧的基频（音高曲线）、<b>能量预测器</b>预测每帧的能量（音量包络）。把 F0/能量投影成向量加到隐状态里，韵律就显式回来了。训练时，时长/F0/能量的"真值"从教师模型（Tacotron+MFA）+真实波形提取出来做监督，预测器用 MSE 训练。</p>
+    </div>
+  </div>
+
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="fs-f">
+      $$H_{ph} = \mathrm{Enc}(\text{Phonemes}),\quad \hat{d}_p = \mathrm{Dur}(H_{ph}[p])$$
+      $$H_{\text{frame}} = \mathrm{LR}(H_{ph}, \hat{d}) = [h_1\!\times\!\hat{d}_1,\;h_2\!\times\!\hat{d}_2,\;\ldots,\;h_P\!\times\!\hat{d}_P]$$
+      $$\hat{f}_t = \mathrm{Pitch}(H_{\text{frame}}[t]),\;\;\hat{e}_t = \mathrm{Energy}(H_{\text{frame}}[t])$$
+      $$H'_{\text{frame}}[t] = H_{\text{frame}}[t] + W_f\hat{f}_t + W_e\hat{e}_t$$
+      $$\hat{M} = \mathrm{Dec}(H'_{\text{frame}})\quad\text{(一次性并行输出所有帧)}$$
+    </div>
+    <div class="formula-desc"><b>符号说明：</b></div>
+    <table class="symbol-table">
+      <tr><td>H_ph</td><td>音素级 Encoder 输出（长度 P）</td></tr>
+      <tr><td>d̂_p</td><td>音素 p 预测帧数（对数域预测再 exp）</td></tr>
+      <tr><td>LR</td><td>长度规整器：把音素级隐状态重复扩展到帧级</td></tr>
+      <tr><td>f̂_t, ê_t</td><td>帧 t 预测的 F0（连续值）与能量</td></tr>
+      <tr><td>W_f, W_e</td><td>把标量 F0/能量投影到隐维度的线性层</td></tr>
+      <tr><td>M</td><td>输出 Mel 谱（长度 T=Σd̂_p）</td></tr>
+    </table>
+  </div>
+
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（PyTorch 简化版，不调 espnet/预实现）</h4>
+<pre class="code"><span class="cmt"># ============ Mini-FastSpeech2（PyTorch 简化版） ============</span>
+<span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="fn">FFTBlock</span>(nn.Module):
+    <span class="cmt"># 简化 FFT Block：Conv1d + LN + 残差（省略自注意力，用大核 Conv 近似局部依赖）</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, dim, kernel=<span class="num">9</span>):
+        <span class="fn">super</span>().__init__()
+        self.conv1 = nn.Conv1d(dim, dim*<span class="num">4</span>, kernel, padding=kernel//<span class="num">2</span>)
+        self.conv2 = nn.Conv1d(dim*<span class="num">4</span>, dim, kernel, padding=kernel//<span class="num">2</span>)
+        self.ln1 = nn.LayerNorm(dim); self.ln2 = nn.LayerNorm(dim)
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):         <span class="cmt"># x: [B,T,D]</span>
+        y = self.ln1(x)
+        y = self.conv2(F.gelu(self.conv1(y.transpose(-<span class="num">1</span>,-<span class="num">2</span>)))).transpose(-<span class="num">1</span>,-<span class="num">2</span>)
+        <span class="kw">return</span> self.ln2(x + y)
+
+<span class="kw">class</span> <span class="fn">VarPredictor</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, dim):
+        <span class="fn">super</span>().__init__()
+        self.net = nn.Sequential(
+            nn.Conv1d(dim,dim,<span class="num">3</span>,padding=<span class="num">1</span>),nn.ReLU(),nn.LayerNorm([dim]),
+            nn.Conv1d(dim,dim,<span class="num">3</span>,padding=<span class="num">1</span>),nn.ReLU(),nn.LayerNorm([dim]),
+            nn.Conv1d(dim,<span class="num">1</span>,<span class="num">1</span>))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):       <span class="cmt"># [B,T,D] -&gt; [B,T]</span>
+        <span class="kw">return</span> self.net(x.transpose(-<span class="num">1</span>,-<span class="num">2</span>)).squeeze(<span class="num">1</span>)
+
+<span class="kw">class</span> <span class="fn">MiniFastSpeech2</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, n_vocab=<span class="num">50</span>, dim=<span class="num">128</span>, mel_dim=<span class="num">80</span>, n_layers=<span class="num">4</span>):
+        <span class="fn">super</span>().__init__()
+        self.emb = nn.Embedding(n_vocab, dim)
+        self.enc = nn.Sequential(*[FFTBlock(dim) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(n_layers)])
+        self.dur_pred = VarPredictor(dim)
+        self.f0_pred  = VarPredictor(dim)
+        self.energy_pred = VarPredictor(dim)
+        self.f0_proj = nn.Linear(<span class="num">1</span>, dim); self.e_proj = nn.Linear(<span class="num">1</span>, dim)
+        self.dec = nn.Sequential(*[FFTBlock(dim) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(n_layers)])
+        self.out = nn.Linear(dim, mel_dim)
+
+    <span class="kw">def</span> <span class="fn">length_regulate</span>(self, h, d):
+        <span class="cmt"># h:[B,P,D], d:[B,P] 整数帧数，用 repeat_interleave 手搓扩展</span>
+        out = []
+        <span class="kw">for</span> b <span class="kw">in</span> <span class="fn">range</span>(h.size(<span class="num">0</span>)):
+            reps = d[b].clamp(min=<span class="num">1</span>).long().tolist()
+            out.append(torch.repeat_interleave(h[b], torch.tensor(reps,device=h.device), dim=<span class="num">0</span>))
+        <span class="kw">return</span> torch.nn.utils.rnn.pad_sequence(out, batch_first=<span class="num">True</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, tokens, durations=<span class="num">None</span>):
+        h = self.enc(self.emb(tokens))
+        log_dur = self.dur_pred(h)
+        <span class="kw">if</span> durations <span class="kw">is</span> None:
+            d = torch.clamp(torch.round(torch.exp(log_dur)-<span class="num">1</span>).long(), min=<span class="num">1</span>)
+        <span class="kw">else</span>:
+            d = durations.long()
+        hf = self.length_regulate(h, d)
+        f0 = self.f0_pred(hf); e = self.energy_pred(hf)
+        hf = hf + self.f0_proj(f0.unsqueeze(-<span class="num">1</span>)) + self.e_proj(e.unsqueeze(-<span class="num">1</span>))
+        mel = self.out(self.dec(hf))
+        <span class="kw">return</span> mel, log_dur, f0, e
+
+m = MiniFastSpeech2(); m.eval()
+tokens = torch.randint(<span class="num">0</span>,<span class="num">50</span>,(<span class="num">1</span>,<span class="num">20</span>))
+durs   = torch.randint(<span class="num">3</span>,<span class="num">12</span>,(<span class="num">1</span>,<span class="num">20</span>))
+<span class="kw">with</span> torch.no_grad():
+    mel, log_dur, f0, e = m(tokens, durs)
+<span class="fn">print</span>(<span class="str">"mel:"</span>, mel.shape, <span class="str">"总帧数:"</span>, durs.sum().item())</pre>
+    <div class="code-run-tip">💡 复制可运行；输出 mel = (1, Σd_p, 80)，一次前向并行得到所有帧。</div>
+  </div>
+</div>
 </section>
 
 <section id="hifigan">
-<h2>🔥 HiFi-GAN · 当前声码器的事实标准</h2>
-<p>HiFi-GAN（2020，Kong et al.）用一个巧妙的多感受野设计，同时保证高频细节和长程连贯性，成为开源社区最广泛使用的声码器。</p>
-<h3>核心设计</h3>
-<ul>
-  <li><b>多感受野模块 MRF</b>：每个残差块内并联 3 组不同 kernel/dilation 的卷积，同时看不同尺度的上下文</li>
-  <li><b>多周期判别器 MPD</b>：对输入按 [2,3,5,7,11] 等间隔采样，分别判别，捕捉不同周期的谐波</li>
-  <li><b>多尺度判别器 MSD</b>：在原始 / 2×下采样 / 4×下采样上分别判别，捕捉整体+细节</li>
-  <li>Generator 是纯 CNN（上采样 + MRF），一次前向出波形，无自回归</li>
-</ul>
-<pre class="code"><span style="color:#94a3b8"># HiFi-GAN Generator 核心上采样块（简化）</span>
-<span style="color:#7dd3fc">class</span> ResBlock(nn.Module):
-  <span style="color:#7dd3fc">def</span> __init__(self, ch, kernel, dilations):
-    self.convs = nn.ModuleList([
-      nn.LeakyReLU(0.1),
-      nn.utils.weight_norm(nn.Conv1d(ch, ch, kernel, dilation=d, padding=...))
-      <span style="color:#7dd3fc">for</span> d <span style="color:#7dd3fc">in</span> dilations
-    ])
-  <span style="color:#7dd3fc">def</span> forward(self, x):
-    <span style="color:#7dd3fc">for</span> c <span style="color:#7dd3fc">in</span> self.convs: x = x + c(x)  <span style="color:#94a3b8"># 残差</span>
-    <span style="color:#7dd3fc">return</span> x
+<h2>🔥 HiFi-GAN · 工业级 GAN 声码器之王</h2>
+<p>HiFi-GAN（Kong et al., 2020）是目前工业界最常用的神经声码器，兼顾<b>速度与音质</b>（MOS≈4.4、GPU RTF≈0.003）。核心创新：<b>多感受野融合（MRF）</b>——用多组不同 kernel + dilation 的残差块并联，让模型同时看大尺度包络与小尺度细节。</p>
 
-<span style="color:#94a3b8"># 生成器：一系列转置卷积上采样 + MRF 多感受野</span>
-upsample_rates = [8,8,2,2]      <span style="color:#94a3b8"># 总上采样 8*8*2*2 = 256 = hop_size</span>
-upsample_kernels = [16,16,4,4]
-<span style="color:#7dd3fc">for</span> i <span style="color:#7dd3fc">in</span> range(len(upsample_rates)):
-    self.ups.append(weight_norm(ConvTranspose1d(ch/2, ch/2, k, stride=r, padding=...)))
-    self.mrf.append(MRF(ch/2, kernels=[3,7,11], dilations=[[1,3,5],[1,3,5],[1,3,5]]))</pre>
+<div class="algo-block">
+  <h3>🎛️ HiFi-GAN 生成器：上采样 + 多感受野残差块</h3>
+
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 290" width="760" height="290" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+          <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/></marker>
+        </defs>
+        <text class="title" x="380" y="28" text-anchor="middle">HiFi-GAN 生成器 G：Mel → 波形</text>
+        <!-- 输入 -->
+        <rect class="box" x="20" y="60" width="90" height="46" rx="6"/>
+        <text class="label" x="65" y="82" text-anchor="middle">Mel 谱</text>
+        <text class="label" x="65" y="98" text-anchor="middle">[B,80,T_mel]</text>
+        <!-- Conv 前置 -->
+        <rect class="box" x="140" y="60" width="80" height="46" rx="6"/>
+        <text class="label" x="180" y="82" text-anchor="middle">Conv1d</text>
+        <text class="label" x="180" y="98" text-anchor="middle">k=7,→512ch</text>
+        <!-- 上采样块 -->
+        <rect class="box-key" x="250" y="50" width="86" height="66" rx="6"/>
+        <text class="label-key" x="293" y="72" text-anchor="middle">UpSample 1</text>
+        <text class="label" x="293" y="90" text-anchor="middle">TransConv</text>
+        <text class="label" x="293" y="105" text-anchor="middle">×8</text>
+        <rect class="box-key" x="370" y="50" width="86" height="66" rx="6"/>
+        <text class="label-key" x="413" y="72" text-anchor="middle">UpSample 2</text>
+        <text class="label" x="413" y="90" text-anchor="middle">TransConv</text>
+        <text class="label" x="413" y="105" text-anchor="middle">×8</text>
+        <rect class="box-key" x="490" y="50" width="86" height="66" rx="6"/>
+        <text class="label-key" x="533" y="72" text-anchor="middle">UpSample 3</text>
+        <text class="label" x="533" y="90" text-anchor="middle">TransConv</text>
+        <text class="label" x="533" y="105" text-anchor="middle">×2</text>
+        <rect class="box-key" x="610" y="50" width="86" height="66" rx="6"/>
+        <text class="label-key" x="653" y="72" text-anchor="middle">UpSample 4</text>
+        <text class="label" x="653" y="90" text-anchor="middle">TransConv</text>
+        <text class="label" x="653" y="105" text-anchor="middle">×2</text>
+        <!-- MRF 块在每个上采样后面 -->
+        <text class="label-key" x="293" y="140" text-anchor="middle">↓ MRF</text>
+        <text class="label-key" x="413" y="140" text-anchor="middle">↓ MRF</text>
+        <text class="label-key" x="533" y="140" text-anchor="middle">↓ MRF</text>
+        <text class="label-key" x="653" y="140" text-anchor="middle">↓ MRF</text>
+        <!-- MRF 内部 -->
+        <rect class="box-done" x="230" y="155" width="230" height="92" rx="6"/>
+        <text class="label-key" x="345" y="173" text-anchor="middle">MRF：多 ResBlock 并联</text>
+        <rect class="box" x="240" y="185" width="62" height="30" rx="4"/>
+        <text class="label" x="271" y="204" text-anchor="middle">Res[3,1,3]</text>
+        <rect class="box" x="314" y="185" width="62" height="30" rx="4"/>
+        <text class="label" x="345" y="204" text-anchor="middle">Res[7,1,7]</text>
+        <rect class="box" x="388" y="185" width="62" height="30" rx="4"/>
+        <text class="label" x="419" y="204" text-anchor="middle">Res[11,1,11]</text>
+        <text class="label" x="345" y="235" text-anchor="middle">输出 = Σ_k ResBlock_k(x) / |k|   各 dilated conv 结果相加</text>
+        <!-- ResBlock 内部 -->
+        <rect class="box" x="500" y="155" width="230" height="92" rx="6"/>
+        <text class="label-key" x="615" y="173" text-anchor="middle">ResBlock 内部（dilated conv 串联）</text>
+        <text class="label" x="615" y="192" text-anchor="middle">LeakyReLU → DilatedConv(d=1)</text>
+        <text class="label" x="615" y="208" text-anchor="middle">LeakyReLU → DilatedConv(d=3)</text>
+        <text class="label" x="615" y="224" text-anchor="middle">LeakyReLU → DilatedConv(d=5) + 残差</text>
+        <!-- 输出 -->
+        <rect class="box-out" x="300" y="260" width="160" height="25" rx="4"/>
+        <text class="label-key" x="380" y="277" text-anchor="middle">Conv1d → Tanh → 波形 x (22050Hz)</text>
+        <!-- 箭头 -->
+        <path class="arrow" d="M110 83 L140 83"/>
+        <path class="arrow" d="M220 83 L250 83"/>
+        <path class="arrow" d="M336 83 L370 83"/>
+        <path class="arrow" d="M456 83 L490 83"/>
+        <path class="arrow" d="M576 83 L610 83"/>
+        <path class="arrow-key" d="M380 116 L380 155"/>
+        <path class="arrow-key" d="M380 247 L380 260"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      <p>波形的生成像"搭金字塔"：<b>先粗后细</b>。输入的 Mel 谱是低时间分辨率的（100帧/秒），要生成波形（22050采样点/秒），需要 220× 上采样——HiFi-GAN 用<b>4 个转置卷积</b>逐级放大（8×8×2×2 = 256×，接近 hop_length=256）。</p>
+      <p>难点在于：<b>同时看得到全局包络和局部脉冲</b>。如果卷积核太小，看不到音素级别的起伏；如果太大，细节锯齿又处理不好。HiFi-GAN 的解法很妙——把 <b>3 个不同 kernel（3/7/11）的 ResBlock 并联起来</b>，每个 ResBlock 内部用 dilated conv 扩大感受野，最后<b>把它们的输出加起来</b>（MRF），这样模型既能听到元音那样的长结构，也能发出清脆的辅音脉冲。</p>
+      <p>对抗训练方面用<b>两个判别器</b>：<b>MPD（Multi-Period Discriminator）</b>把波形按不同周期折叠后看，能抓到周期性伪影；<b>MSD（Multi-Scale Discriminator）</b>在不同下采样尺度上看，兼顾长短期结构。生成器和判别器互相博弈，最终生成的波形 MOS 可达 4.4+。</p>
+    </div>
+  </div>
+
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="hifigan-f">
+      $$G(s) = \text{Tanh}\big(\text{Conv}(\text{MRF}_4(\text{Up}_4(\cdots\text{MRF}_1(\text{Up}_1(\text{Conv}(s))))))\big)$$
+      $$\text{MRF}(x) = \sum_{k} \frac{\text{ResBlock}_k(x)}{|\{k\}|}, \quad k\in\{3,7,11\}$$
+      $$\mathcal{L}_G = \sum_{k}\mathbb{E}\big[(D_k(G(s))-1)^2\big] + \lambda_{fm}\mathcal{L}_{fm}$$
+    </div>
+    <div class="formula-desc"><b>符号说明：</b></div>
+    <table class="symbol-table">
+      <tr><td>s</td><td>输入 Mel 谱 [B, 80, T']</td></tr>
+      <tr><td>Up_i</td><td>第 i 个转置卷积上采样块</td></tr>
+      <tr><td>MRF</td><td>Multi-Receptive-Field Fusion，多感受野融合</td></tr>
+      <tr><td>ResBlock_k</td><td>kernel=k 的 dilated 残差卷积块</td></tr>
+      <tr><td>D_k</td><td>第 k 个子判别器（MPD+MSD 共7个）</td></tr>
+      <tr><td>L_fm</td><td>特征匹配损失（判别器中间特征 L1 距离）</td></tr>
+    </table>
+  </div>
+
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（PyTorch 实现核心生成器）</h4>
+<pre class="code"><span class="cmt"># ============ HiFi-GAN 生成器核心（PyTorch 简化版） ============</span>
+<span class="kw">import</span> torch, torch.nn <span class="kw">as</span> nn, torch.nn.functional <span class="kw">as</span> F
+
+<span class="kw">class</span> <span class="fn">ResBlock</span>(nn.Module):
+    <span class="str">"""单个 dilated 残差块：LeakyReLU → Conv(d) 串联 + 残差"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, ch, k=<span class="num">7</span>, dilations=(<span class="num">1</span>,<span class="num">3</span>,<span class="num">5</span>)):
+        <span class="fn">super</span>().__init__()
+        self.convs = nn.ModuleList()
+        <span class="kw">for</span> d <span class="kw">in</span> dilations:
+            self.convs.append(nn.Sequential(
+                nn.LeakyReLU(<span class="num">0.1</span>),
+                nn.Conv1d(ch, ch, k, padding=d*(k//<span class="num">2</span>), dilation=d)))
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">for</span> c <span class="kw">in</span> self.convs:
+            x = x + c(x)         <span class="cmt"># 残差连接</span>
+        <span class="kw">return</span> x
+
+<span class="kw">class</span> <span class="fn">MRF</span>(nn.Module):
+    <span class="str">"""多感受野融合：不同 kernel 的 ResBlock 并联，输出相加平均"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, ch, kr=(<span class="num">3</span>,<span class="num">7</span>,<span class="num">11</span>)):
+        <span class="fn">super</span>().__init__()
+        self.blocks = nn.ModuleList([ResBlock(ch, k) <span class="kw">for</span> k <span class="kw">in</span> kr])
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">return</span> <span class="fn">sum</span>(b(x) <span class="kw">for</span> b <span class="kw">in</span> self.blocks) / <span class="fn">len</span>(self.blocks)
+
+<span class="kw">class</span> <span class="fn">HiFiGANGenerator</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, mel_dim=<span class="num">80</span>, ch=<span class="num">512</span>,
+                 ups=(<span class="num">8</span>,<span class="num">8</span>,<span class="num">2</span>,<span class="num">2</span>),     <span class="cmt"># 上采样倍率 ×256 = hop_length</span>
+                 ups_k=(<span class="num">16</span>,<span class="num">16</span>,<span class="num">4</span>,<span class="num">4</span>)):
+        <span class="fn">super</span>().__init__()
+        self.conv_pre = nn.Conv1d(mel_dim, ch, <span class="num">7</span>, padding=<span class="num">3</span>)
+        self.ups = nn.ModuleList()
+        self.mrfs = nn.ModuleList()
+        c = ch
+        <span class="kw">for</span> u, uk <span class="kw">in</span> <span class="fn">zip</span>(ups, ups_k):
+            c = c // <span class="num">2</span>
+            self.ups.append(nn.ConvTranspose1d(c*<span class="num">2</span>, c, uk, u, padding=uk//<span class="num">4</span>))
+            self.mrfs.append(MRF(c))
+        self.conv_post = nn.Sequential(
+            nn.LeakyReLU(<span class="num">0.1</span>),
+            nn.Conv1d(c, <span class="num">1</span>, <span class="num">7</span>, padding=<span class="num">3</span>),
+            nn.Tanh())                 <span class="cmt"># 输出限制在 [-1,1]</span>
+    <span class="kw">def</span> <span class="fn">forward</span>(self, mel):            <span class="cmt"># mel: [B,80,T']</span>
+        x = self.conv_pre(mel)
+        <span class="kw">for</span> up, mrf <span class="kw">in</span> <span class="fn">zip</span>(self.ups, self.mrfs):
+            x = F.leaky_relu(x, <span class="num">0.1</span>)
+            x = up(x)                   <span class="cmt"># 时间轴放大 u 倍</span>
+            x = mrf(x)                  <span class="cmt"># 多感受野细化</span>
+        x = self.conv_post(x).squeeze(<span class="num">1</span>) <span class="cmt"># [B, T_wav]</span>
+        <span class="kw">return</span> x
+
+<span class="cmt"># 快速前向验证（不训练）</span>
+G = HiFiGANGenerator(); G.eval()
+mel = torch.randn(<span class="num">1</span>, <span class="num">80</span>, <span class="num">100</span>)    <span class="cmt"># 1 秒 Mel @ 100 帧/秒</span>
+<span class="kw">with</span> torch.no_grad():
+    wav = G(mel)
+<span class="fn">print</span>(<span class="str">"输入 mel:"</span>, mel.shape, <span class="str">"→ 输出波形:"</span>, wav.shape)
+<span class="cmt"># 预期: [1,25600] ≈ 256× 上采样</span></pre>
+    <div class="code-run-tip">💡 复制可运行；未训练时输出是白噪声，但 MRF+上采样数据流完整。完整训练需加 MPD/MSD 判别器和 L1 Mel 损失。</div>
+  </div>
+</div>
+</section>
+
+<section id="vocoder">
+<h2>🎛️ 声码器家族 · 从 Mel 谱到波形</h2>
+<p>声码器（Vocoder）负责把梅尔谱转成最终波形——这一步的音质直接决定 TTS 最终效果。</p>
+<div class="table-wrap"><table>
+<thead><tr><th>声码器</th><th>年份</th><th>方式</th><th>MOS</th><th>RTF (GPU)</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td>Griffin-Lim</td><td>1984</td><td>迭代相位</td><td>~3.0</td><td>0.05</td><td>无需训练，纯信号处理，有机械感</td></tr>
+<tr><td>WORLD</td><td>2016</td><td>源-滤波参数</td><td>~3.2</td><td>0.1</td><td>传统声码器，F0/频谱/非周期三件套</td></tr>
+<tr><td>WaveNet</td><td>2016</td><td>AR 扩张 CNN</td><td>4.2</td><td>&gt;100</td><td>神经声码器开山，极慢</td></tr>
+<tr><td>WaveRNN</td><td>2018</td><td>AR RNN + 稀疏</td><td>4.2</td><td>~5（CPU实时）</td><td>第一个能在手机跑的神经声码器</td></tr>
+<tr><td>Parallel WaveNet</td><td>2018</td><td>IAF 蒸馏</td><td>4.2</td><td>0.05</td><td>把 WaveNet 蒸馏成非自回归</td></tr>
+<tr><td>MelGAN</td><td>2019</td><td>GAN</td><td>4.0</td><td>0.01</td><td>第一个 GAN 声码器，极快</td></tr>
+<tr><td><b>HiFi-GAN</b></td><td>2020</td><td>GAN + MRF</td><td><b>4.4+</b></td><td><b>0.003</b></td><td>当前最常用，速度质量兼顾</td></tr>
+<tr><td>BigVGAN</td><td>2022</td><td>GAN + Anti-aliased MPD</td><td>4.6</td><td>0.008</td><td>HiFi-GAN 升级版，泛化性更好</td></tr>
+<tr><td>Vocos</td><td>2023</td><td>ISTFT Head</td><td>4.5</td><td>0.002</td><td>直接预测幅度+相位，再 ISTFT，更快更稳</td></tr>
+</tbody>
+</table></div>
+<div class="callout callout-tip"><span class="ic">💡</span><span>新手入门推荐先理解 Griffin-Lim（纯信号处理），再学 HiFi-GAN（工业主流）；想做研究可以看 BigVGAN/Vocos。</span></div>
 </section>
 
 <section id="vits">
-<h2>🎭 VITS · 端到端 TTS 的开源标杆</h2>
-<p>2021 年 Kakao 的 VITS（Variational Inference with adversarial learning for end-to-end Text-to-Speech）把<strong>声学模型 + 声码器</strong>合并成一个端到端模型，一个 VITS 直接从音素生成波形，无需两阶段训练。</p>
-<h3>三大支柱</h3>
-<div class="grid-3">
-<div class="card"><h4>1️⃣ VAE（变分推断）</h4><p style="font-size:.85rem;margin:.25rem 0 0">用变分自编码器把语音隐变量建模为分布，训练时用真实语音做 posterior encoder 得到 z，推理时从 prior predictor 采样。这让 VITS 有"一对多"的多样性（同一句话每次说的不一样）。</p></div>
-<div class="card"><h4>2️⃣ Normalizing Flow</h4><p style="font-size:.85rem;margin:.25rem 0 0">用若干层可逆仿射耦合层（Residual Coupling）把先验分布变得更复杂，建模语音的复杂分布。</p></div>
-<div class="card"><h4>3️⃣ GAN 对抗训练</h4><p style="font-size:.85rem;margin:.25rem 0 0">把 HiFi-GAN 的判别器搬过来直接对波形做对抗训练，省去了单独的声码器训练。</p></div>
+<h2>🎭 VITS · 端到端 TTS 的大一统（2021）</h2>
+<p>之前的 TTS 都是"两段式"：声学模型（文本→Mel）+ 声码器（Mel→波形），<b>两段分开训练会有信息损失</b>。VITS（Variational Inference with adversarial learning for end-to-end Speech Synthesis, Kim et al., 2021）把两段合在一起，用 <b>VAE + Flow + GAN</b> 端到端训练，输入文本直接输出波形，MOS 4.7 首次追平真人录音。</p>
+<div class="grid grid-3">
+  <div class="card"><h4>🔄 后验 Encoder</h4><p style="font-size:.85rem;margin:.25rem 0 0">从真实波形提取 latent z，训练时给 VAE 作"答案"，推理时不用</p></div>
+  <div class="card"><h4>🌊 Normalizing Flow</h4><p style="font-size:.85rem;margin:.25rem 0 0">若干层仿射耦合流（Residual Coupling）把 z 和先验对齐，增强表达力</p></div>
+  <div class="card"><h4>🎲 随机时长预测</h4><p style="font-size:.85rem;margin:.25rem 0 0">用 MAS（Monotonic Alignment Search）自动学习对齐+DP，然后用流预测时长分布（比 FastSpeech 固定时长更自然）</p></div>
+  <div class="card"><h4>🎤 解码器</h4><p style="font-size:.85rem;margin:.25rem 0 0">本质是 HiFi-GAN 生成器，把 latent 直接转波形，判别器对抗训练</p></div>
+  <div class="card"><h4>🧩 损失三合一</h4><p style="font-size:.85rem;margin:.25rem 0 0">VAE 的 KL 散度 + GAN 对抗损失 + Mel 重建 L1 损失</p></div>
+  <div class="card"><h4>🎯 优势</h4><p style="font-size:.85rem;margin:.25rem 0 0">单模型端到端、MOS≈真人、支持 one-shot 音色克隆（VITS2/YourTTS）</p></div>
 </div>
-<div class="math-b">
-  音素 → Text Encoder → Prior Predictor (Flow) → z → Decoder (HiFi-GAN 风格) → 波形  
-  <span style="color:var(--muted);font-size:.8rem">训练时：Posterior Encoder 从真实梅尔谱提取 z，与先验对齐；MAS (Monotonic Alignment Search) 自动找对齐</span>
-</div>
-<div class="callout callout-tip"><span class="ic">⭐</span><span>VITS 是目前中文开源 TTS 的绝对主力：Bert-VITS2、GPT-SoVITS、FishSpeech 等知名项目都基于 VITS 架构扩展（加入 BERT 韵律、LLM 先验、SDP 随机时长等）。</span></div>
-</section>
-
-<section id="valle">
-<h2>🤖 VALL-E · 零样本语音克隆的新纪元</h2>
-<p>2023 年微软的 VALL-E 把 TTS 从"声学模型"变成了"语言模型"——用 6 万小时语音训练一个 codec 语言模型，只需 3 秒未见过的说话人录音，就能克隆其声音、语调、情感。</p>
-<h3>核心思想：语音 = 离散 codec token</h3>
-<ol>
-  <li>用预训练好的神经音频 codec（EnCodec，3 层量化，共 1024 个 token/layer）把波形压缩成离散 token 序列</li>
-  <li>第一阶段：<b>AR 语言模型</b>根据音素和 3 秒提示，自回归预测第一层 codec token（捕捉语义和说话人身份）</li>
-  <li>第二阶段：<b>NAR 模型</b>根据第一层预测其他 7 层 codec token（捕捉声学细节）</li>
-  <li>把 8 层 token 喂回 EnCodec 解码器，得到波形</li>
-</ol>
-<div class="callout callout-i"><span class="ic">🧠</span><span>VALL-E 的革命性在于：它把 TTS 当成了"语音版 GPT"——in-context learning 能力让它不微调就能克隆新声音。随后出现的 Voicebox（Meta，Flow Matching）、NaturalSpeech 2/3（微软）、Speak Foreign、FishSpeech-1.5、Seed-TTS 等都是这个方向的延伸。</span></div>
-<div class="grid-2">
-<div class="card"><h4>✅ 优点</h4><ul style="font-size:.9rem;margin-top:.25rem"><li>零样本 3 秒克隆</li><li>声音/情感/韵律多样性高</li><li>跨语种、代码混读能力强</li><li>可自然重复、犹豫、笑声（在 prompt 中有）</li></ul></div>
-<div class="card"><h4>⚠️ 问题</h4><ul style="font-size:.9rem;margin-top:.25rem"><li>稳定性差：可能漏字、重复、怪音</li><li>长文本连贯性不足</li><li>算力要求高</li><li>伦理风险：声音伪造滥用</li></ul></div>
-</div>
+<div class="callout callout-i"><span class="ic">📌</span><span>现代 TTS 的研究主线（2023-2025）：<b>VALL-E / SoundStorm / Voicebox / F5-TTS / CosyVoice / ChatTTS / MaskGCT</b> 等，大多转向 <b>离散 Token + 语言模型（LLM）</b> 或 <b>Flow Matching</b> 范式，把 TTS 当"声音的 LLM"来做。但 Tacotron2/FastSpeech2/HiFi-GAN/VITS 这一套"两段式 + 端到端 + GAN"依然是工业部署与入门学习的核心。</span></div>
 </section>
 
 <section id="papers">
-<h2>📄 经典论文精读</h2>
-
-<div class="paper"><div class="ti">📘 WaveNet: A Generative Model for Raw Audio</div><div class="me">van den Oord et al., DeepMind, 2016 · SSW 2016</div><div class="ab">首次用扩张因果卷积自回归生成原始波形，MOS 从 3.x 跃升到 4.x，打破"神经网络合成不好"的偏见。但推理极慢，后被用作声码器或被 Parallel/HiFi-GAN 替代。</div></div>
-
-<div class="paper"><div class="ti">📗 Natural TTS Synthesis by Conditioning WaveNet on Mel Spectrogram Predictions (Tacotron 2)</div><div class="me">Shen et al., Google, 2017 · ICASSP 2018</div><div class="ab">确立"Seq2Seq 梅尔谱生成 + WaveNet 声码器"两段式范式，Location-Sensitive Attention 解决对齐稳定性，MOS 4.5 接近真人。</div></div>
-
-<div class="paper"><div class="ti">📙 FastSpeech 2: Fast and High-Quality End-to-End TTS</div><div class="me">Ren et al., Microsoft, 2020 · ICLR 2021</div><div class="ab">非自回归 + 时长/音高/能量方差适配器，速度比 Tacotron2 快 270 倍，MOS 持平。推动了 TTS 的工业化落地。</div></div>
-
-<div class="paper"><div class="ti">📕 HiFi-GAN: Generative Adversarial Networks for Efficient and High Fidelity Speech Synthesis</div><div class="me">Kong et al., Kakao, 2020 · NeurIPS 2020</div><div class="ab">多感受野生成器 + 多周期/多尺度判别器，速度极快、音质极好，至今仍是声码器首选。</div></div>
-
-<div class="paper"><div class="ti">📔 VITS: Conditional Variational Autoencoder with Adversarial Learning for End-to-End Text-to-Speech</div><div class="me">Kim et al., Kakao, 2021 · ICML 2021</div><div class="ab">VAE + Flow + GAN 端到端单模型，MAS 自动对齐，生成多样性强、音质极高。开源中文 TTS 的基座。</div></div>
-
-<div class="paper"><div class="ti">📓 Neural Codec Language Models are Zero-Shot Text to Speech Synthesizers (VALL-E)</div><div class="me">Wang et al., Microsoft, 2023</div><div class="ab">把 EnCodec 离散 token 当"语音单词"，用类 GPT 的语言模型做零样本 TTS，3 秒提示即可克隆声音。开启"语音 LLM"时代。</div></div>
-</section>
-
-<section id="code">
-<h2>💻 源码走读 · Tacotron2 注意力机制</h2>
-<p>Tacotron 2 的 <b>Location-Sensitive Attention</b> 是它能稳定对齐的关键——区别于普通 Bahdanau 注意力，它加入了"累积注意力权重"作为额外特征，防止注意力反复看同一个位置：</p>
-<pre class="code"><span style="color:#94a3b8"># Location-Sensitive Attention 打分（Tacotron 2）</span>
-<span style="color:#7dd3fc">class</span> LocationSensitiveAttention(nn.Module):
-  <span style="color:#7dd3fc">def</span> __init__(self, attn_rnn_ch, enc_ch, attn_ch, attn_conv_n=32, attn_conv_w=15):
-    self.query_proj = nn.Linear(attn_rnn_ch, attn_ch, bias=<span style="color:#fde68a">False</span>)
-    self.loc_proj   = nn.Linear(attn_conv_n, attn_ch, bias=<span style="color:#fde68a">False</span>)
-    self.v          = nn.Linear(attn_ch, 1, bias=<span style="color:#fde68a">False</span>)
-    self.loc_conv   = nn.Conv1d(2, attn_conv_n, attn_conv_w, padding=attn_conv_w//2, bias=<span style="color:#fde68a">False</span>)
-    <span style="color:#94a3b8"># memory 是 encoder 输出，提前投影一次</span>
-    self.memory_proj = nn.Linear(enc_ch, attn_ch, bias=<span style="color:#fde68a">False</span>)
-
-  <span style="color:#7dd3fc">def</span> forward(self, query, memory, prev_attn, prev_attn_cum):
-    <span style="color:#94a3b8"># query: [B, attn_rnn_ch]; memory: [B, T, enc_ch]</span>
-    cat_prev = torch.cat([prev_attn.unsqueeze(1), prev_attn_cum.unsqueeze(1)], dim=1) <span style="color:#94a3b8"># [B,2,T]</span>
-    loc_feat = self.loc_conv(cat_prev).transpose(1,2)                             <span style="color:#94a3b8"># [B,T,C]</span>
-    scores = self.v(torch.tanh(
-        self.query_proj(query).unsqueeze(1)    <span style="color:#94a3b8"># [B,1,C]</span>
-      + self.memory_proj(memory)               <span style="color:#94a3b8"># [B,T,C]</span>
-      + self.loc_proj(loc_feat)                <span style="color:#94a3b8"># [B,T,C] ← 关键位置特征</span>
-    )).squeeze(-1)                              <span style="color:#94a3b8"># [B,T]</span>
-    weights = F.softmax(scores, dim=-1)
-    context = torch.bmm(weights.unsqueeze(1), memory).squeeze(1)
-    <span style="color:#7dd3fc">return</span> context, weights</pre>
+<h2>📚 论文精读 · TTS 核心 8 篇</h2>
+<div class="paper"><div class="ti">📘 WaveNet: A Generative Model for Raw Audio</div><div class="me">van den Oord et al., DeepMind, 2016 · arXiv 1609.03499</div><div class="ab">第一个用神经网络直接生成原始音频波形，扩张因果卷积+softmax 分桶256值，MOS 4.2 远超之前所有参数合成，但自回归极慢，主要贡献是证明"神经生成音频可行"。</div></div>
+<div class="paper"><div class="ti">📗 Natural TTS Synthesis by Conditioning WaveNet on Mel Spectrogram Predictions (Tacotron 2)</div><div class="me">Shen et al., Google, 2018 · ICASSP 2018</div><div class="ab">确立"声学模型(Tacotron2)+神经声码器(WaveNet)"两段式标准流水线；引入 Location-Sensitive Attention 保证对齐稳定；MOS 4.53 首次接近真人。</div></div>
+<div class="paper"><div class="ti">📕 FastSpeech: Fast, Robust and Controllable TTS</div><div class="me">Ren et al., Microsoft, 2019 · NeurIPS 2019</div><div class="ab">第一个非自回归 TTS；用教师模型提取时长→长度调节器扩展音素到帧→并行生成 Mel；比 Tacotron2 快 270×，鲁棒性（不漏字重复）大幅提升。</div></div>
+<div class="paper"><div class="ti">📙 FastSpeech 2: Fast and High-Quality End-to-End TTS</div><div class="me">Ren et al., Microsoft, 2020 · ICLR 2021</div><div class="ab">在 FastSpeech 基础上加入 Variance Adaptor，显式预测 F0/能量，去掉教师蒸馏，直接用 MFA 对齐训练；MOS 4.6，至今是工业部署首选。</div></div>
+<div class="paper"><div class="ti">📓 HiFi-GAN: Generative Adversarial Networks for Efficient and High Fidelity Speech Synthesis</div><div class="me">Kong et al., Kakao, 2020 · NeurIPS 2020</div><div class="ab">提出 MRF 多感受野融合 + MPD+MSD 双判别器；RTF 0.003，MOS 4.4，成为至今最常用的神经声码器。</div></div>
+<div class="paper"><div class="ti">📔 VITS: Conditional Variational Autoencoder with Adversarial Learning for End-to-End TTS</div><div class="me">Kim et al., Kakao, 2021 · ICML 2021</div><div class="ab">首个端到端单模型 TTS（文本→波形），VAE+Flow+GAN+MAS 四位一体，MOS 4.7 追平真人；开源后大量 follow-up（VITS2/YourTTS/StyleTTS 系列）。</div></div>
+<div class="paper"><div class="ti">📒 Neural Codec Language Models are Zero-Shot TTS (VALL-E)</div><div class="me">Wang et al., Microsoft, 2023 · ICASSP 2024</div><div class="ab">把音频用 EnCodec 离散化成 Token（类似 BPE），用 GPT 式语言模型"续写音频"；3秒 prompt 即可克隆音色，开启"LLM for TTS"新范式。</div></div>
+<div class="paper"><div class="ti">📖 CosyVoice / F5-TTS / MaskGCT (2024-2025)</div><div class="me">阿里/复旦/字节 等</div><div class="ab">中文零样本 TTS 最新代表；CosyVoice 做语义+流匹配双层次；F5-TTS 用 Diffusion Transformer 做 flow matching；MaskGCT 用全非自回归掩码预测，速度和质量都达SOTA。</div></div>
 </section>
 
 <section id="tools">
-<h2>🛠️ 工具与框架</h2>
-<table>
-<thead><tr><th>框架</th><th>机构</th><th>特点</th><th>适用场景</th></tr></thead>
+<h2>🔧 工程实现层 · 学 TTS 用什么</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>框架/工具</th><th>出品</th><th>特点</th><th>适用场景</th></tr></thead>
 <tbody>
-<tr><td><b>ESPnet-TTS</b></td><td>CMU/名古屋</td><td>PyTorch、Tacotron2/FastSpeech2/VITS 齐全、Recipe 完善</td><td>研究、复现</td></tr>
-<tr><td><b>Coqui TTS</b></td><td>Coqui</td><td>开源 PyTorch，支持多语言、声音迁移、命令行简单</td><td>快速原型、英文首选</td></tr>
-<tr><td><b>VITS / VITS2</b></td><td>Kakao</td><td>端到端单模型、音质顶级</td><td>产品级部署</td></tr>
-<tr><td><b>Bert-VITS2</b></td><td>开源社区</td><td>中文优化、BERT 韵律、情感控制、clone 效果好</td><td>中文 TTS / 声音克隆</td></tr>
-<tr><td><b>GPT-SoVITS</b></td><td>开源社区</td><td>少样本克隆、跨语种、中文效果极佳</td><td>少样本中文克隆</td></tr>
-<tr><td><b>CosyVoice</b></td><td>阿里</td><td>多语言、跨语种复刻、流式、自然度高</td><td>中文工业产品</td></tr>
-<tr><td><b>ChatTTS</b></td><td>开源</td><td>对话式 TTS、加笑声/停顿/口癖，自然度极高</td><td>对话场景</td></tr>
-<tr><td><b>Edge-TTS</b></td><td>微软</td><td>免费在线调用、中文女声（晓晓）效果极好</td><td>不想训模型时的首选</td></tr>
+<tr><td><b>ESPnet2-TTS</b></td><td>CMU/名古屋</td><td>PyTorch，Tacotron2/FastSpeech2/VITS 全覆盖，recipe 齐全</td><td>研究复现</td></tr>
+<tr><td><b>Coqui TTS</b></td><td>Coqui</td><td>支持多语言多说话人，API 友好</td><td>原型/研究</td></tr>
+<tr><td><b>Mellotron</b></td><td>NVIDIA</td><td>GST + Attention 控制韵律</td><td>韵律迁移</td></tr>
+<tr><td><b>CosyVoice</b></td><td>阿里通义</td><td>中文 SOTA，零样本/跨语种/流式</td><td>中文产品</td></tr>
+<tr><td><b>F5-TTS</b></td><td>复旦/南加大</td><td>Flow Matching + DiT，中英零样本</td><td>研究/产品</td></tr>
+<tr><td><b>ChatTTS</b></td><td>开源社区</td><td>专为对话设计，有笑声/停顿</td><td>对话式 TTS</td></tr>
+<tr><td><b>HiFi-GAN</b></td><td>jik876（官方）</td><td>官方 PyTorch 实现，可直接当声码器使用</td><td>声码器部署</td></tr>
+<tr><td><b>WORLD / PyWORLD</b></td><td>森勢将雅</td><td>传统 WORLD 声码器 Python 封装</td><td>参数合成/对比基准</td></tr>
+<tr><td><b>librosa</b></td><td>开源</td><td>音频读取/STFT/Mel/Griffin-Lim 全套工具</td><td>数据预处理</td></tr>
 </tbody>
-</table>
+</table></div>
+</section>
 
-<div class="cross" style="margin-top:2rem">
-<div class="ico">🎤</div>
-<div class="bd">
-<h4>学完"说"，再学"听" →</h4>
-<p>从 MFCC 特征到 GMM-HMM 解码，从 CTC 对齐到 Whisper 大规模预训练——ASR 子站同样的四层结构带你走完"让机器听懂"的全流程，和 TTS 互为镜像。</p>
-<div class="btns">
-<a href="../asr/" class="btn btn-p">🎤 进入 ASR 子站</a>
-<a href="../asr/#ctc" class="btn btn-pl">⚡ 直奔 CTC</a>
-<a href="../asr/#whisper" class="btn btn-pl">🌐 直奔 Whisper</a>
-<a href="../lab.html" class="btn btn-pl">🔬 打开语音实验室</a>
-<a href="../index.html" class="btn btn-pl">🏠 返回首页</a>
-</div>
-</div>
+<section id="schema">
+<h2>🕸️ 知识本体 Schema</h2>
+<p>TTS 领域的核心概念本体（Concept Graph）：</p>
+<pre class="code" style="color:#cbd5e1">
+TextToSpeech
+├─ 前端 Text Frontend
+│   ├─ 文本正则化 (TN)
+│   ├─ 分词 / G2P（字→音素）
+│   ├─ 韵律预测（停顿/重音）
+│   └─ 多音字消歧
+├─ 信号基础
+│   ├─ 源-滤波模型（声源 + 声道）
+│   ├─ 基频 F0（YIN/PYIN/Harvest）
+│   ├─ 共振峰（LPC/LSP）
+│   └─ STFT/Mel 谱
+├─ 声学模型（Text→声学特征）
+│   ├─ 统计参数：HTS/STRAIGHT/WORLD
+│   ├─ 自回归：Tacotron2/DeepVoice3
+│   ├─ 非自回归：FastSpeech2/VITS(部分)
+│   └─ LLM范式：VALL-E/SoundStorm/CosyVoice
+├─ 声码器（声学特征→波形）
+│   ├─ 相位重建：Griffin-Lim
+│   ├─ 参数：WORLD
+│   ├─ AR神经：WaveNet/WaveRNN
+│   ├─ GAN：MelGAN/HiFi-GAN/BigVGAN
+│   ├─ Flow：WaveGlow
+│   └─ 端到端：VITS（含解码器）
+├─ 关键问题
+│   ├─ 时长对齐（Attention/MFA/LengthRegulator/MAS）
+│   ├─ 韵律建模（F0/能量/风格/GST）
+│   ├─ 多说话人/零样本克隆（X-vector/UTT-Embed）
+│   └─ 情感/可控性
+└─ 评价
+    ├─ MOS（主观平均意见分）
+    ├─ MCD（Mel 倒谱失真）
+    ├─ F0 RMSE
+    └─ DNSMOS/UTMOS（客观神经指标）
+</pre>
+<div class="cross">
+  <h4>🔗 继续学习</h4>
+  <p>看完 TTS 流水线，再回到 ASR 看< b>CTC/Attention</b>的对齐问题——TTS 和 ASR 在对齐上是镜像关系。</p>
+  <a class="cross-btn" href="../asr/index.html#ctc">ASR · CTC 对齐</a>
+  <a class="cross-btn" href="../lab.html">🔬 语音实验室</a>
 </div>
 </section>
 
 </main>
-</div>
 
-<footer><div class="wrap">TTS · 语音合成研究站 · agent-speech · 受 agent-cv / agent-yolo 启发</div></footer>
+<footer class="footer">
+  <p>Agent-TTS · 现代 TTS 技术学习研究站 · 参考 <a href="https://yejinlei.github.io/agent-cv/">Agent-CV</a> · <a href="https://yejinlei.github.io/agent-yolo/">Agent-YOLO</a> 风格构建</p>
+  <p style="margin-top:.4rem;font-size:.8rem;color:#94a3b8">内容持续更新 · 2026</p>
+</footer>
 
-<script src="../main.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function(){
-// override TOC highlight color to orange (the CSS !important in inline <style> handles .on state)
-
-// ===== Formant demo =====
-(function(){
-  const cv=document.getElementById('fmt-cv'),ctx=cv.getContext('2d');
-  const vowels={
-    a:{f1:800,f2:1200,label:'/a/ 爸（低舌位、后舌位）',desc:'F1 高 = 嘴张得大（舌位低），F2 低 = 舌位靠后，类似"啊"的发音'},
-    i:{f1:300,f2:2300,label:'/i/ 衣（高舌位、前舌位）',desc:'F1 低 = 嘴张得小（舌位高），F2 很高 = 舌位靠前，类似"一"的发音'},
-    u:{f1:350,f2:800, label:'/u/ 乌（高舌位、后舌位）',desc:'F1 低 = 嘴小，F2 很低 = 舌位靠后+圆唇，类似"乌"的发音'},
-    e:{f1:500,f2:1700,label:'/e/ 鹅（中舌位、中舌位）',desc:'F1 中、F2 中，舌位半高半低不前不后，类似"鹅"的发音'},
-  };
-  function resize(){const r=cv.getBoundingClientRect();cv.width=r.width*(devicePixelRatio||1);cv.height=r.height*(devicePixelRatio||1);ctx.setTransform(devicePixelRatio||1,0,0,devicePixelRatio||1,0,0);}
-  function draw(v){
-    const w=cv.clientWidth,h=cv.clientHeight;
-    ctx.clearRect(0,0,w,h);
-    // background
-    ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
-    // source harmonics slope (-12dB/oct, modeled as decreasing envelope)
-    // draw a simplified source spectrum (flat after -6dB/oct glottal)
-    ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;
-    for(let x=0;x<w;x+=50){ctx.beginPath();ctx.moveTo(x,h);ctx.lineTo(x,h-10);ctx.stroke();}
-    // vocal tract transfer function: 3 formants modeled as Gaussians
-    const fs=[v.f1,v.f2,v.f2*1.8];
-    const bw=[80,110,160];
-    // freq axis: 0-4000Hz
-    const fMax=4000;
-    function px(f){return f/fMax*w;}
-    function py(db){return h-30-db/60*(h-50);}
-    // base envelope
-    ctx.beginPath();
-    for(let x=0;x<w;x++){
-      const f=x/w*fMax;
-      // lip radiation + glottal gives approx +6dB/oct
-      let db=40 - 6*Math.log2(fMax/(f+100));
-      for(let k=0;k<fs.length;k++){
-        const d=(f-fs[k])/bw[k];db+=25*Math.exp(-d*d*0.5);
-      }
-      if(db<0)db=0;if(db>60)db=60;
-      if(x===0)ctx.moveTo(x,py(db));else ctx.lineTo(x,py(db));
-    }
-    ctx.strokeStyle='#f97316';ctx.lineWidth=2.5;ctx.stroke();
-    // mark F1/F2
-    fs.slice(0,2).forEach((F,i)=>{
-      const x=px(F);
-      ctx.fillStyle='#c2410c';
-      ctx.beginPath();ctx.arc(x,py(40+25*Math.exp(0))-5,5,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#c2410c';ctx.font='bold 12px inherit';ctx.textAlign='center';
-      ctx.fillText('F'+(i+1)+'='+F+'Hz',x,py(65));
-    });
-    // axis
-    ctx.strokeStyle='#94a3b8';ctx.beginPath();ctx.moveTo(0,h-20);ctx.lineTo(w,h-20);ctx.stroke();
-    ctx.fillStyle='#64748b';ctx.font='10px inherit';ctx.textAlign='center';
-    [0,1000,2000,3000,4000].forEach(f=>ctx.fillText(f+'Hz',px(f),h-5));
-    document.getElementById('fmt-desc').innerHTML='<b style="color:var(--org-d)">'+v.label+'</b> — '+v.desc;
-  }
-  document.querySelectorAll('.vowel-btn').forEach(b=>{
-    b.addEventListener('click',()=>{
-      document.querySelectorAll('.vowel-btn').forEach(x=>{x.classList.remove('btn-p');x.classList.add('btn-pl');});
-      b.classList.remove('btn-pl');b.classList.add('btn-p');
-      draw(vowels[b.dataset.v]);
-    });
+// ===== 元音共振峰互动演示 =====
+const vowels = {
+  'a':{f1:730,f2:1090,color:'#f97316',name:'/a/（八）'},
+  'i':{f1:270,f2:2290,color:'#0ea5e9',name:'/i/（一）'},
+  'u':{f1:300,f2:870, color:'#10b981',name:'/u/（乌）'},
+  'e':{f1:530,f2:1840,color:'#8b5cf6',name:'/e/（诶）'},
+  'o':{f1:500,f2:1000,color:'#ef4444',name:'/o/（喔）'},
+};
+const vowelBtns = document.getElementById('vowel-btns');
+const cv = document.getElementById('formant-cv');
+const frCur = document.getElementById('fr-cur');
+const spCur = document.getElementById('sp-cur');
+if(vowelBtns && cv){
+  Object.entries(vowels).forEach(([k,v])=>{
+    const b=document.createElement('button');
+    b.className='btn btn-s';
+    b.textContent=v.name;
+    b.onclick=()=>{
+      frCur.textContent='F1='+v.f1+' Hz';
+      spCur.textContent='F2='+v.f2+' Hz';
+      // 简单在CV上画点
+      const dotId='v-dot';
+      document.getElementById(dotId)?.remove();
+      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('id',dotId);
+      const x=40+((2500-v.f2)/2000)*400;
+      const y=40+((v.f1-200)/800)*260;
+      dot.setAttribute('cx',x);dot.setAttribute('cy',y);
+      dot.setAttribute('r',8);dot.setAttribute('fill',v.color);
+      dot.setAttribute('opacity','0.7');
+      cv.appendChild(dot);
+    };
+    vowelBtns.appendChild(b);
   });
-  window.addEventListener('resize',()=>{resize();draw(current);});
-  let current=vowels.a;
-  resize();draw(current);
-})();
+}
+
+// 主入口：页面加载后初始化 KaTeX
+window.addEventListener('load', ()=>{
+  if(window.renderMathInElement){
+    renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});
+  }
+  // TOC 高亮保持
 });
 </script>
 </body>

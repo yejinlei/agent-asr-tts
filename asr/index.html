@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ASR · 语音识别研究站 | Agent-Speech</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/dist/tailwind.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <link rel="stylesheet" href="../style.css">
 <style>
 /* ASR 主题色 */
@@ -18,9 +23,40 @@
 .lab{background:var(--sky-l);border-color:#bae6fd}
 .lab h3{color:var(--sky-d)}
 section h2{border-bottom-color:var(--sky-l)}
-section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);border-radius:2px;display:inline-block}
+section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);border-radius:2px;display:inline-block;margin-right:.5rem;vertical-align:middle}
 .btn-p{background:var(--sky);color:#fff}.btn-p:hover{background:var(--sky-d)}
 .btn-pl{background:var(--sky-l);color:var(--sky-d)}.btn-pl:hover{background:#bae6fd}
+
+/* 四步教学法 algo-block 样式 */
+.algo-block{background:#fff;border:1px solid #e2e8f0;border-radius:.75rem;padding:1.5rem;margin:1.5rem 0;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.algo-block h3{font-size:1.25rem;font-weight:700;color:#0c4a6e;margin:0 0 1.25rem 0;padding-bottom:.75rem;border-bottom:2px solid #e0f2fe}
+.algo-step{margin:1.25rem 0}
+.algo-step h4{font-size:1rem;font-weight:600;color:#334155;display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+.algo-step .num{display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;background:#0ea5e9;color:#fff;font-size:.8rem;font-weight:700}
+.algo-svg-wrap{background:#f8fafc;border-radius:.5rem;padding:1rem;overflow-x:auto}
+.s-algo{width:100%;height:auto;display:block}
+.s-algo .box{fill:#e0f2fe;stroke:#0ea5e9;stroke-width:1.5;rx:6}
+.s-algo .box-out{fill:#ffedd5;stroke:#f97316;stroke-width:1.5;rx:6}
+.s-algo .box-done{fill:#dcfce7;stroke:#22c55e;stroke-width:1.5;rx:6}
+.s-algo .box-key{fill:#ede9fe;stroke:#8b5cf6;stroke-width:1.5;rx:6}
+.s-algo .arrow{stroke:#64748b;stroke-width:1.5;fill:none;marker-end:url(#arrow)}
+.s-algo .arrow-key{stroke:#8b5cf6;stroke-width:2;fill:none;marker-end:url(#arrow-p)}
+.s-algo .label{fill:#475569;font-size:12px;font-family:inherit}
+.s-algo .label-key{fill:#6d28d9;font-size:12px;font-weight:600;font-family:inherit}
+.s-algo .title{fill:#0c4a6e;font-size:13px;font-weight:600;font-family:inherit}
+.algo-explain{background:#f8fafc;border-left:3px solid #0ea5e9;padding:1rem;border-radius:0 .5rem .5rem 0;font-size:.92rem;line-height:1.7;color:#334155}
+.formula-block{background:#fafafa;border:1px solid #e2e8f0;border-radius:.5rem;padding:1rem;margin:.75rem 0;overflow-x:auto;text-align:center}
+.formula-desc{font-size:.9rem;margin:.75rem 0;color:#475569}
+.symbol-table{width:100%;font-size:.88rem;border-collapse:collapse;margin:.5rem 0}
+.symbol-table td{padding:.5rem .75rem;border-bottom:1px solid #e2e8f0}
+.symbol-table td:first-child{font-family:Monaco,Consolas,monospace;color:#7c3aed;font-weight:600;width:30%}
+pre{background:#1e293b;color:#e2e8f0;padding:1rem;border-radius:.5rem;overflow-x:auto;font-family:Monaco,Consolas,monospace;font-size:.85rem;line-height:1.6;margin:.75rem 0}
+.cmt{color:#94a3b8}
+.kw{color:#c4b5fd}
+.fn{color:#67e8f9}
+.str{color:#86efac}
+.num{color:#fde047}
+.code-run-tip{font-size:.82rem;color:#64748b;background:#f1f5f9;padding:.5rem .75rem;border-radius:.3rem;margin-top:.5rem}
 </style>
 </head>
 <body>
@@ -51,7 +87,7 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
     <div class="stat"><div class="n">18</div><div class="l">核心章节</div></div>
     <div class="stat"><div class="n">8</div><div class="l">经典模型精读</div></div>
     <div class="stat"><div class="n">6</div><div class="l">互动 Demo</div></div>
-    <div class="stat"><div class="n">5</div><div class="l">段源码走读</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">段手搓源码</div></div>
   </div>
 </div></header>
 
@@ -61,6 +97,8 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
   <a href="#intro" class="on">🎯 ASR 是什么</a>
   <a href="#signal">📡 语音信号基础</a>
   <a href="#preprocess">🔪 预处理四步</a>
+  <a href="#stft">📊 STFT</a>
+  <a href="#mel">🎵 Mel 滤波</a>
   <a href="#mfcc">📊 MFCC 特征</a>
   <a href="#gmm-hmm">🔗 GMM-HMM</a>
   <a href="#viterbi">🧭 Viterbi 解码</a>
@@ -88,7 +126,7 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
 <li><strong>语言层面</strong>：同音词多（"世事/逝世/事实"），必须靠上下文语言模型消歧</li>
 <li><strong>时序层面</strong>：语音是连续流，一个字占几帧不定，存在"对齐"问题</li>
 </ul>
-<p>70 年来 ASR 经历了三次范式跃迁：<b>模板匹配 DTW</b> → <b>统计模型 GMM-HMM</b> → <b>端到端神经网络 CTC/Attention/RNN-T</b> → <b>大规模预训练 Whisper</b>。下面按这个顺序展开。</p>
+<p>70 年来 ASR 经历了三次范式跃迁：<b>模板匹配 DTW</b> → <b>统计模型 GMM-HMM</b> → <b>端到端神经网络 CTC/Attention/RNN-T</b> → <b>大规模预训练 Whisper</b>。下面按这个顺序展开，每个核心算法用「图示→原理→公式→手搓代码」四步法讲透。</p>
 </section>
 
 <section id="signal">
@@ -128,20 +166,357 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
 <div class="callout callout-tip"><span class="ic">🤔</span><b>为什么是 25ms/10ms？</b> 经验值：小于 25ms 频谱不稳定，大于 25ms 帧内信号变化太大（音素已经变了）。帧移 10ms 是为了让相邻帧有 60% 重叠，避免漏掉快速变化的音素。<span></span></div>
 </section>
 
+<section id="stft">
+<h2>📊 STFT · 短时傅里叶变换</h2>
+<div class="algo-block">
+  <h3>🎼 短时傅里叶变换 (STFT)</h3>
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 240" width="760" height="240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+          </marker>
+          <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/>
+          </marker>
+        </defs>
+        <!-- 原始波形 -->
+        <rect class="box" x="30" y="30" width="140" height="70" rx="6"/>
+        <text class="title" x="100" y="55" text-anchor="middle">原始波形 x[n]</text>
+        <polyline points="40,65 60,75 80,55 100,80 120,50 140,75 160,60" stroke="#0ea5e9" stroke-width="1.5" fill="none"/>
+        <!-- 分帧 -->
+        <rect class="box-key" x="220" y="30" width="140" height="70" rx="6"/>
+        <text class="title" x="290" y="55" text-anchor="middle">分帧 + 加窗</text>
+        <line x1="240" y1="80" x2="260" y2="80" stroke="#8b5cf6" stroke-width="8" stroke-linecap="round"/>
+        <line x1="275" y1="80" x2="295" y2="80" stroke="#8b5cf6" stroke-width="8" stroke-linecap="round"/>
+        <line x1="310" y1="80" x2="330" y2="80" stroke="#8b5cf6" stroke-width="8" stroke-linecap="round"/>
+        <!-- FFT -->
+        <rect class="box-key" x="410" y="30" width="140" height="70" rx="6"/>
+        <text class="title" x="480" y="55" text-anchor="middle">逐帧 FFT</text>
+        <text class="label" x="480" y="80" text-anchor="middle">每帧 → 频谱</text>
+        <!-- 语谱图 -->
+        <rect class="box-out" x="600" y="30" width="130" height="70" rx="6"/>
+        <text class="title" x="665" y="55" text-anchor="middle">语谱图</text>
+        <g opacity="0.7">
+          <rect x="610" y="62" width="10" height="25" fill="#0ea5e9"/>
+          <rect x="622" y="65" width="10" height="22" fill="#38bdf8"/>
+          <rect x="634" y="60" width="10" height="27" fill="#0ea5e9"/>
+          <rect x="646" y="68" width="10" height="19" fill="#7dd3fc"/>
+          <rect x="658" y="63" width="10" height="24" fill="#0ea5e9"/>
+          <rect x="670" y="66" width="10" height="21" fill="#38bdf8"/>
+          <rect x="682" y="70" width="10" height="17" fill="#bae6fd"/>
+          <rect x="694" y="64" width="10" height="23" fill="#0ea5e9"/>
+          <rect x="706" y="67" width="10" height="20" fill="#38bdf8"/>
+        </g>
+        <!-- 箭头 -->
+        <line class="arrow" x1="170" y1="65" x2="220" y2="65"/>
+        <line class="arrow" x1="360" y1="65" x2="410" y2="65"/>
+        <line class="arrow-key" x1="550" y1="65" x2="600" y2="65"/>
+        <!-- 滑动窗口示意 -->
+        <text class="title" x="380" y="130" text-anchor="middle">滑动窗口示意图</text>
+        <line x1="60" y1="160" x2="700" y2="160" stroke="#94a3b8" stroke-width="1"/>
+        <!-- 帧 -->
+        <rect x="100" y="145" width="100" height="30" fill="#e0f2fe" stroke="#0ea5e9" rx="3"/>
+        <text class="label" x="150" y="190" text-anchor="middle">帧 n (25ms)</text>
+        <rect x="160" y="145" width="100" height="30" fill="#ede9fe" stroke="#8b5cf6" opacity="0.6" rx="3"/>
+        <text class="label" x="210" y="190" text-anchor="middle">帧 n+1 (步长10ms)</text>
+        <rect x="220" y="145" width="100" height="30" fill="#ffedd5" stroke="#f97316" opacity="0.4" rx="3"/>
+        <text class="label" x="270" y="190" text-anchor="middle">帧 n+2</text>
+        <!-- 轴标签 -->
+        <text class="label" x="700" y="155" text-anchor="end">时间 →</text>
+        <text class="label" x="665" y="115" text-anchor="middle">↑ 频率</text>
+      </svg>
+    </div>
+  </div>
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      想象你在听一首很长的歌，想知道"哪一秒有鼓声"——你不能对整首歌只做一次分析，那样会丢掉时间信息。<br><br>
+      <b>STFT 就是"滑动小窗口听声音"</b>：
+      <ol style="margin:.5rem 0 0 1.25rem;padding:0">
+        <li><b>分帧</b>：把长信号切成 25ms 小段，相邻帧重叠 15ms（步长 10ms），保证不丢信息</li>
+        <li><b>加窗</b>：每段乘汉明窗——把帧两端"压下去"，避免突然截断产生的虚假频率（频谱泄漏）</li>
+        <li><b>逐帧 FFT</b>：对每个小窗口做傅里叶变换，得到这一瞬间的频率成分</li>
+        <li><b>拼接</b>：把所有帧的频谱沿时间轴排开，就得到了一张"时间-频率"图：<b>语谱图（Spectrogram）</b></li>
+      </ol>
+      最终产物是一个二维矩阵：横轴时间、纵轴频率、颜色深浅代表能量大小——这是 ASR 所有后续特征的起点。
+    </div>
+  </div>
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="stft-f">
+      $$X[m,k] = \sum_{n=0}^{N-1} x[n+m\cdot H] \cdot w[n] \cdot e^{-j2\pi k n / N}$$
+    </div>
+    <div class="formula-desc">
+      对第 <i>m</i> 帧、第 <i>k</i> 个频率 bin 计算复频谱。先取信号从偏移 m·H 开始的 N 个点，乘窗函数，再做 N 点 DFT。
+    </div>
+    <table class="symbol-table">
+      <tr><td>x[n]</td><td>原始时域信号采样点</td></tr>
+      <tr><td>m</td><td>帧索引，m=0,1,...,M-1</td></tr>
+      <tr><td>N</td><td>帧长（FFT点数），通常取 512</td></tr>
+      <tr><td>H</td><td>帧移 hop size，160点(10ms@16kHz)</td></tr>
+      <tr><td>w[n]</td><td>窗函数，汉明窗：w[n] = 0.54 - 0.46·cos(2πn/(N-1))</td></tr>
+      <tr><td>k</td><td>频率 bin 索引，对应频率 f_k = k·f_s/N</td></tr>
+      <tr><td>|X[m,k]|²</td><td>功率谱（取幅度平方）</td></tr>
+    </table>
+  </div>
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（纯 NumPy）</h4>
+<pre><span class="cmt"># 纯 NumPy 实现 STFT，不依赖 scipy/librosa</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">stft</span>(x, n_fft=<span class="num">512</span>, hop_length=<span class="num">160</span>, win_length=<span class="num">400</span>):
+    <span class="cmt"># x: 一维原始信号，16kHz采样</span>
+    <span class="cmt"># 1. 生成汉明窗</span>
+    window = <span class="num">0.54</span> - <span class="num">0.46</span> * np.<span class="fn">cos</span>(<span class="num">2</span>*np.pi*np.<span class="fn">arange</span>(win_length)/(win_length-<span class="num">1</span>))
+    <span class="cmt"># 2. 计算帧数</span>
+    n_frames = <span class="num">1</span> + (len(x) - win_length) // hop_length
+    <span class="cmt"># 3. 预分配频谱矩阵 [n_frames, n_fft//2+1]</span>
+    S = np.<span class="fn">zeros</span>((n_frames, n_fft//<span class="num">2</span>+<span class="num">1</span>), dtype=np.complex64)
+    <span class="cmt"># 4. 逐帧处理</span>
+    <span class="kw">for</span> m <span class="kw">in</span> <span class="fn">range</span>(n_frames):
+        start = m * hop_length
+        frame = x[start : start+win_length]          <span class="cmt"># 取一帧</span>
+        frame = frame * window                        <span class="cmt"># 加窗</span>
+        <span class="cmt"># 补零到 n_fft 长度</span>
+        padded = np.<span class="fn">zeros</span>(n_fft)
+        padded[:win_length] = frame
+        <span class="cmt"># 做 FFT，只保留正频率部分</span>
+        spec = np.fft.<span class="fn">fft</span>(padded)[:n_fft//<span class="num">2</span>+<span class="num">1</span>]
+        S[m] = spec
+    <span class="cmt"># 返回幅度谱</span>
+    <span class="kw">return</span> np.<span class="fn">abs</span>(S)
+</pre>
+    <div class="code-run-tip">💡 复制到 Python 环境直接运行，需安装 numpy。测试：x = np.random.randn(16000)（1秒随机噪声），S = stft(x)，S.shape 应为 (98, 257)。</div>
+  </div>
+</div>
+</section>
+
+<section id="mel">
+<h2>🎵 Mel 滤波器组</h2>
+<div class="algo-block">
+  <h3>🎼 Mel 滤波器组（模拟人耳感知）</h3>
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 240" width="760" height="240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-mel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+          </marker>
+        </defs>
+        <rect class="box" x="30" y="30" width="200" height="70" rx="6"/>
+        <text class="title" x="130" y="55" text-anchor="middle">线性频率轴 (Hz)</text>
+        <line x1="50" y1="75" x2="210" y2="75" stroke="#0ea5e9" stroke-width="2"/>
+        <text class="label" x="50" y="90" text-anchor="middle">0</text>
+        <text class="label" x="130" y="90" text-anchor="middle">4k</text>
+        <text class="label" x="210" y="90" text-anchor="middle">8k Hz</text>
+        <rect class="box-key" x="280" y="30" width="200" height="70" rx="6"/>
+        <text class="title" x="380" y="55" text-anchor="middle">Mel 非线性映射</text>
+        <text class="label-key" x="380" y="80" text-anchor="middle">低频密、高频疏</text>
+        <rect class="box-out" x="530" y="30" width="200" height="70" rx="6"/>
+        <text class="title" x="630" y="55" text-anchor="middle">Mel 谱 (80维)</text>
+        <g opacity="0.7">
+          <rect x="550" y="70" width="8" height="20" fill="#f97316"/>
+          <rect x="562" y="65" width="8" height="25" fill="#f97316"/>
+          <rect x="574" y="60" width="8" height="30" fill="#fb923c"/>
+          <rect x="586" y="68" width="8" height="22" fill="#f97316"/>
+          <rect x="598" y="72" width="8" height="18" fill="#fdba74"/>
+          <rect x="610" y="63" width="8" height="27" fill="#f97316"/>
+          <rect x="622" y="66" width="8" height="24" fill="#fb923c"/>
+          <rect x="634" y="70" width="8" height="20" fill="#fdba74"/>
+          <rect x="646" y="67" width="8" height="23" fill="#f97316"/>
+          <rect x="658" y="71" width="8" height="19" fill="#fdba74"/>
+          <rect x="670" y="65" width="8" height="25" fill="#fb923c"/>
+          <rect x="682" y="69" width="8" height="21" fill="#fdba74"/>
+          <rect x="694" y="73" width="8" height="17" fill="#fed7aa"/>
+          <rect x="706" y="68" width="8" height="22" fill="#fdba74"/>
+        </g>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mel)" x1="230" y1="65" x2="280" y2="65"/>
+        <line stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrow-p)" x1="480" y1="65" x2="530" y2="65"/>
+        <text class="title" x="380" y="130" text-anchor="middle">三角滤波器组（Mel上等距，Hz上左密右疏）</text>
+        <line x1="60" y1="210" x2="700" y2="210" stroke="#94a3b8" stroke-width="1"/>
+        <polygon points="70,210 120,160 170,210" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+        <polygon points="130,210 190,165 250,210" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+        <polygon points="210,210 280,170 350,210" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+        <polygon points="310,210 400,172 490,210" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+        <polygon points="430,210 540,168 620,210" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text class="label" x="60" y="225" text-anchor="start">0 Hz</text>
+        <text class="label" x="700" y="225" text-anchor="end">8kHz</text>
+        <text class="label-key" x="380" y="155" text-anchor="middle">每个三角形累加频谱能量 → 输出一个数值</text>
+      </svg>
+    </div>
+  </div>
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      人耳就像一个"粗糙的频谱分析仪"：对低频（bass鼓）分辨力强，100Hz和200Hz明显不同；对高频（金属摩擦）很迟钝，7000Hz和7500Hz听不出差别。<br><br>
+      <b>Mel滤波器就是在模拟人耳</b>：造一组"三角形滤波器"，<b>低频放很多窄的、高频放少数宽的</b>。每个三角形响应一小段频率，把该范围内的能量累加输出一个数。80个滤波器就输出80维<b>Mel谱</b>，把257维线性频谱压缩成符合感知的特征。
+    </div>
+  </div>
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="mel-f">
+      $$f_{mel} = 2595 \cdot \log_{10}\left(1 + \frac{f}{700}\right)$$
+      $$S_{mel}[m] = \sum_{k} |X[k]|^2 \cdot H_m[k]$$
+    </div>
+    <table class="symbol-table">
+      <tr><td>f_mel</td><td>Mel感知频率（单位mel）</td></tr>
+      <tr><td>H_m[k]</td><td>第m个三角滤波器在频率bin k的响应（分段线性）</td></tr>
+      <tr><td>S_mel[m]</td><td>第m个滤波器输出的能量值</td></tr>
+      <tr><td>n_mels</td><td>滤波器个数，ASR常用80</td></tr>
+    </table>
+  </div>
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（纯NumPy）</h4>
+<pre><span class="cmt"># 纯NumPy手搓Mel滤波器组</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">hz2mel</span>(f): <span class="kw">return</span> <span class="num">2595</span>*np.<span class="fn">log10</span>(<span class="num">1</span>+f/<span class="num">700</span>)
+<span class="kw">def</span> <span class="fn">mel2hz</span>(m): <span class="kw">return</span> <span class="num">700</span>*(<span class="num">10</span>**(m/<span class="num">2595</span>)-<span class="num">1</span>)
+
+<span class="kw">def</span> <span class="fn">mel_fb</span>(n_fft=<span class="num">512</span>, sr=<span class="num">16000</span>, n_mels=<span class="num">80</span>, fmax=<span class="num">8000</span>):
+    mels = np.<span class="fn">linspace</span>(<span class="fn">hz2mel</span>(<span class="num">0</span>), <span class="fn">hz2mel</span>(fmax), n_mels+<span class="num">2</span>)
+    bins = np.<span class="fn">floor</span>((n_fft+<span class="num">1</span>)*<span class="fn">mel2hz</span>(mels)/sr).<span class="fn">astype</span>(int)
+    fb = np.<span class="fn">zeros</span>((n_mels, n_fft//<span class="num">2</span>+<span class="num">1</span>))
+    <span class="kw">for</span> m <span class="kw">in</span> <span class="fn">range</span>(n_mels):
+        l,c,r = bins[m], bins[m+<span class="num">1</span>], bins[m+<span class="num">2</span>]
+        <span class="kw">for</span> k <span class="kw">in</span> <span class="fn">range</span>(l,c): fb[m,k]=(k-l)/(c-l)
+        <span class="kw">for</span> k <span class="kw">in</span> <span class="fn">range</span>(c,r): fb[m,k]=(r-k)/(r-c)
+    <span class="kw">return</span> fb
+<span class="cmt"># fb = mel_fb(); S_mel = S_power @ fb.T</span>
+</pre>
+    <div class="code-run-tip">💡 fb.shape = (80, 257)，每行是一个三角滤波器。</div>
+  </div>
+</div>
+</section>
+
 <section id="mfcc">
 <h2>📊 MFCC · 梅尔频率倒谱系数</h2>
 <p>MFCC（Mel-Frequency Cepstral Coefficients）是 ASR 历史上统治最久的特征（1980s-2010s），至今 FBank 仍是主流。它模拟了人耳对频率的非线性感知——<b>对低频敏感、对高频粗略</b>。</p>
-<h3>MFCC 七步流程</h3>
-<ol>
-  <li><b>预加重 → 分帧 → 加窗</b>（上节已讲）</li>
-  <li><b>FFT</b>：每帧做 512 点 FFT，得幅度谱</li>
-  <li><b>Mel 滤波器组</b>：用一组三角滤波器（Mel 刻度）对幅度谱滤波并求和，模拟人耳频率感知</li>
-  <li><b>取 log</b>：模拟人耳对响度的对数感知（dB）</li>
-  <li><b>DCT 离散余弦变换</b>：把滤波器组输出去相关，得到倒谱系数</li>
-  <li><b>保留前 13 维</b>（含能量）：高阶系数主要是激励细节，可丢弃</li>
-  <li><b>加 Δ/ΔΔ 一阶二阶差分</b>：加上动态特征，最终 39 维</li>
-</ol>
-<div class="math-b">f<sub>mel</sub> = 2595 · log<sub>10</sub>(1 + f / 700)</div>
+<div class="algo-block">
+  <h3>🎼 MFCC 梅尔频率倒谱系数（传统特征之王）</h3>
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 260" width="760" height="260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-mfcc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+          </marker>
+        </defs>
+        <!-- 7步流水线 横排 -->
+        <rect class="box" x="20" y="50" width="90" height="50" rx="6"/>
+        <text class="title" x="65" y="72" text-anchor="middle">预加重</text>
+        <text class="label" x="65" y="90" text-anchor="middle" font-size="10">高通滤波</text>
+
+        <rect class="box" x="125" y="50" width="90" height="50" rx="6"/>
+        <text class="title" x="170" y="72" text-anchor="middle">分帧加窗</text>
+        <text class="label" x="170" y="90" text-anchor="middle" font-size="10">25ms/10ms</text>
+
+        <rect class="box-key" x="230" y="50" width="90" height="50" rx="6"/>
+        <text class="title" x="275" y="72" text-anchor="middle">FFT</text>
+        <text class="label" x="275" y="90" text-anchor="middle" font-size="10">→功率谱</text>
+
+        <rect class="box-key" x="335" y="50" width="90" height="50" rx="6"/>
+        <text class="title" x="380" y="72" text-anchor="middle">Mel滤波</text>
+        <text class="label" x="380" y="90" text-anchor="middle" font-size="10">80个三角</text>
+
+        <rect class="box" x="440" y="50" width="90" height="50" rx="6"/>
+        <text class="title" x="485" y="72" text-anchor="middle">取log</text>
+        <text class="label" x="485" y="90" text-anchor="middle" font-size="10">对数能量</text>
+
+        <rect class="box-key" x="545" y="50" width="90" height="50" rx="6"/>
+        <text class="title" x="590" y="72" text-anchor="middle">DCT</text>
+        <text class="label" x="590" y="90" text-anchor="middle" font-size="10">解相关</text>
+
+        <rect class="box-out" x="650" y="50" width="90" height="50" rx="6"/>
+        <text class="title" x="695" y="72" text-anchor="middle">MFCC</text>
+        <text class="label" x="695" y="90" text-anchor="middle" font-size="10">13维+Δ/ΔΔ</text>
+
+        <!-- 箭头 -->
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="110" y1="75" x2="125" y2="75"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="215" y1="75" x2="230" y2="75"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="320" y1="75" x2="335" y2="75"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="425" y1="75" x2="440" y2="75"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="530" y1="75" x2="545" y2="75"/>
+        <line stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrow-p)" x1="635" y1="75" x2="650" y2="75"/>
+
+        <text class="title" x="380" y="130" text-anchor="middle">七步流水线：原始波形 → 39维MFCC特征</text>
+        <!-- 下方：Δ ΔΔ 说明 -->
+        <rect class="box-done" x="250" y="170" width="260" height="50" rx="6"/>
+        <text class="title" x="380" y="195" text-anchor="middle">加一阶差分Δ、二阶差分ΔΔ（动态特征）</text>
+        <text class="label" x="380" y="215" text-anchor="middle">13 → 13+13+13 = 39维</text>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="695" y1="100" x2="695" y2="130"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="695" y1="130" x2="510" y2="130"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-mfcc)" x1="510" y1="130" x2="510" y2="170"/>
+      </svg>
+    </div>
+  </div>
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      STFT得到的频谱有257维，相邻频率高度相关，直接给模型用冗余太多。MFCC通过七步流水线把它压缩成13维"精华"：
+      <ol style="margin:.5rem 0 0 1.25rem;padding:0">
+        <li><b>预加重</b>：高通滤波，提升高频能量</li>
+        <li><b>分帧加窗 → FFT</b>：得到功率谱（STFT）</li>
+        <li><b>Mel滤波</b>：用80个三角滤波器压缩成80维</li>
+        <li><b>取log</b>：模拟人耳对响度的对数感知（分贝）</li>
+        <li><b>DCT离散余弦变换</b>：关键一步！把不同Mel频段的能量做去相关，类似"频谱的频谱"（倒谱cepstrum）</li>
+        <li><b>保留前13维</b>：高阶系数主要是声门脉冲细节，丢弃</li>
+        <li><b>加Δ/ΔΔ差分</b>：13维静态特征+13维速度+13维加速度=39维，捕捉时序变化</li>
+      </ol>
+    </div>
+  </div>
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="mfcc-f">
+      $$\text{预加重：} y[t] = x[t] - 0.97\,x[t-1]$$
+      $$\text{对数能量：} \hat S[m] = \log(S_{mel}[m])$$
+      $$c_n = \sum_{m=0}^{M-1} \hat S[m] \cdot \cos\left(\frac{\pi n(m+0.5)}{M}\right),\quad n=0,1,\dots,12$$
+    </div>
+    <table class="symbol-table">
+      <tr><td>Ŝ[m]</td><td>第m个Mel滤波器的对数能量</td></tr>
+      <tr><td>M</td><td>Mel滤波器个数（通常40或80）</td></tr>
+      <tr><td>c_n</td><td>第n个MFCC系数，n=0是直流能量</td></tr>
+      <tr><td>Δ_t</td><td>一阶差分：Δ_t = (c_{t+2} - c_{t-2}) / 某个加权和</td></tr>
+    </table>
+  </div>
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（纯NumPy，DCT手搓）</h4>
+<pre><span class="cmt"># 完整MFCC流水线（纯NumPy，不调用scipy.fft.dct）</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">dct</span>(x, n_ceps=<span class="num">13</span>):
+    <span class="cmt"># x: [..., M] log-Mel特征，手搓DCT-II</span>
+    M = x.shape[-<span class="num">1</span>]
+    n = np.<span class="fn">arange</span>(n_ceps)[:, None]
+    m = np.<span class="fn">arange</span>(M)[None, :]
+    <span class="cmt"># DCT-II 基矩阵</span>
+    basis = np.<span class="fn">cos</span>(np.pi * n * (m + <span class="num">0.5</span>) / M)  <span class="cmt"># [n_ceps, M]</span>
+    <span class="kw">return</span> x @ basis.T  <span class="cmt"># [..., n_ceps]</span>
+
+<span class="kw">def</span> <span class="fn">mfcc</span>(x, sr=<span class="num">16000</span>, n_mfcc=<span class="num">13</span>, n_fft=<span class="num">512</span>, hop=<span class="num">160</span>, n_mels=<span class="num">40</span>):
+    <span class="cmt"># 1. 预加重</span>
+    x = np.<span class="fn">append</span>(x[<span class="num">0</span>], x[<span class="num">1</span>:] - <span class="num">0.97</span>*x[:-<span class="num">1</span>])
+    <span class="cmt"># 2. STFT得功率谱（代码复用前面的stft）</span>
+    S = <span class="fn">stft</span>(x, n_fft, hop)
+    S_pow = S**<span class="num">2</span>
+    <span class="cmt"># 3. Mel滤波</span>
+    fb = <span class="fn">mel_fb</span>(n_fft, sr, n_mels)
+    S_mel = S_pow @ fb.T
+    <span class="cmt"># 4. 取对数（加小常数防log(0)）</span>
+    S_log = np.<span class="fn">log</span>(S_mel + <span class="num">1e-10</span>)
+    <span class="cmt"># 5. DCT得MFCC</span>
+    c = <span class="fn">dct</span>(S_log, n_mfcc)
+    <span class="kw">return</span> c
+<span class="cmt"># 注：完整版本还会加 lifter、Δ/ΔΔ，这里是核心</span>
+</pre>
+    <div class="code-run-tip">💡 需先定义stft()和mel_fb()（前面已实现），然后测试：mfcc(np.random.randn(16000)).shape ≈ (98, 13)。</div>
+  </div>
+</div>
 <div class="callout callout-i"><span class="ic">📐</span><span>Mel 刻度把 Hz 转换成感知频率。1kHz 以下近似线性，1kHz 以上近似对数——这是因为人耳基底膜上的毛细胞在低频区分布密、高频区分布稀。</span></div>
 <div class="callout callout-w"><span class="ic">⚠️</span><span>深度学习时代，大家发现 DCT 这步是<strong>线性变换</strong>，神经网络自己就能学，所以现在主流用 <b>FBank（Log-Mel 谱，省略 DCT）</b> 作为输入特征，维数更高（80 维）但信息损失更少。</span></div>
 </section>
@@ -172,8 +547,134 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
 </section>
 
 <section id="viterbi">
-<h2>🧭 Viterbi 解码 · 互动演示</h2>
+<h2>🧭 Viterbi 解码 · 动态规划找最优路径</h2>
 <p>Viterbi 本质是动态规划：每个时间步每个状态，记录"到达这里的最大概率"和"从哪来的"，最后回溯得到最优路径。</p>
+<div class="algo-block">
+  <h3>🎼 Viterbi 算法（动态规划找最优路径）</h3>
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 280" width="760" height="280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-vt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+          </marker>
+        </defs>
+        <!-- 网格：5帧 × 3状态 -->
+        <!-- 帧t轴 -->
+        <text class="title" x="380" y="30" text-anchor="middle">时间-状态网格：黑框=当前最优，箭头=从哪来，红=最优路径</text>
+        <!-- 状态标签 -->
+        <text class="label-key" x="40" y="80" text-anchor="middle">状态C</text>
+        <text class="label-key" x="40" y="140" text-anchor="middle">状态B</text>
+        <text class="label-key" x="40" y="200" text-anchor="middle">状态A</text>
+        <!-- t=1~5 -->
+        <g font-size="11" fill="#64748b">
+          <text x="130" y="240" text-anchor="middle">t=1</text>
+          <text x="250" y="240" text-anchor="middle">t=2</text>
+          <text x="370" y="240" text-anchor="middle">t=3</text>
+          <text x="490" y="240" text-anchor="middle">t=4</text>
+          <text x="610" y="240" text-anchor="middle">t=5</text>
+        </g>
+        <!-- 网格节点 -->
+        <!-- t=1 -->
+        <rect x="110" y="60" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="130" y="80" text-anchor="middle" font-size="10">0.1</text>
+        <rect x="110" y="120" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="130" y="140" text-anchor="middle" font-size="10">0.3</text>
+        <rect x="110" y="180" width="40" height="30" fill="#dcfce7" stroke="#22c55e" stroke-width="2.5" rx="4"/>
+        <text class="label-key" x="130" y="200" text-anchor="middle" font-size="10" font-weight="700">0.6✓</text>
+        <!-- t=2 -->
+        <rect x="230" y="60" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="250" y="80" text-anchor="middle" font-size="10">0.1</text>
+        <rect x="230" y="120" width="40" height="30" fill="#dcfce7" stroke="#22c55e" stroke-width="2.5" rx="4"/>
+        <text class="label-key" x="250" y="140" text-anchor="middle" font-size="10" font-weight="700">0.5✓</text>
+        <rect x="230" y="180" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="250" y="200" text-anchor="middle" font-size="10">0.4</text>
+        <!-- t=3 -->
+        <rect x="350" y="60" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="370" y="80" text-anchor="middle" font-size="10">0.2</text>
+        <rect x="350" y="120" width="40" height="30" fill="#dcfce7" stroke="#22c55e" stroke-width="2.5" rx="4"/>
+        <text class="label-key" x="370" y="140" text-anchor="middle" font-size="10" font-weight="700">0.6✓</text>
+        <rect x="350" y="180" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="370" y="200" text-anchor="middle" font-size="10">0.2</text>
+        <!-- t=4 -->
+        <rect x="470" y="60" width="40" height="30" fill="#dcfce7" stroke="#22c55e" stroke-width="2.5" rx="4"/>
+        <text class="label-key" x="490" y="80" text-anchor="middle" font-size="10" font-weight="700">0.7✓</text>
+        <rect x="470" y="120" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="490" y="140" text-anchor="middle" font-size="10">0.2</text>
+        <rect x="470" y="180" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="490" y="200" text-anchor="middle" font-size="10">0.1</text>
+        <!-- t=5 终点 -->
+        <rect x="590" y="60" width="40" height="30" fill="#dcfce7" stroke="#22c55e" stroke-width="3" rx="4"/>
+        <text class="label-key" x="610" y="80" text-anchor="middle" font-size="10" font-weight="700">END★</text>
+        <rect x="590" y="120" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="610" y="140" text-anchor="middle" font-size="10">0.2</text>
+        <rect x="590" y="180" width="40" height="30" class="box" rx="4"/>
+        <text class="label" x="610" y="200" text-anchor="middle" font-size="10">0.1</text>
+        <!-- 路径箭头（最优路径）-->
+        <polyline points="130,195 250,135 370,135 490,75 610,75" stroke="#ef4444" stroke-width="2.5" fill="none" marker-end="url(#arrow-vt)" marker-mid="url(#arrow-vt)"/>
+        <!-- 回溯说明 -->
+        <text class="title" x="380" y="265" text-anchor="middle">回溯：从最后一步最大概率的状态开始，沿箭头往回走，得到A→B→B→C→C</text>
+      </svg>
+    </div>
+  </div>
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      想象你要从左边走到右边，每一步（每帧）你可以站在不同状态（音素）上，每个位置有"站在这里的概率"（发射概率），从i走到j有"转移概率"。<br><br>
+      <b>目标：找总概率最大的那条路径。</b><br><br>
+      暴力枚举所有路径是指数级（3^T），不可能算完。Viterbi用<b>动态规划</b>——每个时间步、每个状态，只记两件事：
+      <ol style="margin:.5rem 0 0 1.25rem;padding:0">
+        <li><b>δ</b>：走到这里的<b>最大概率</b>是多少（只保留最优，其他路径丢弃）</li>
+        <li><b>ψ</b>：这个最大概率是<b>从哪个状态过来</b>的（回溯指针）</li>
+      </ol>
+      算到最后一步，找总概率最大的那个终点，然后沿着ψ指针往回走，就能还原出完整最优路径。复杂度从O(N^T)降到O(T·N²)。
+    </div>
+  </div>
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="viterbi-f">
+      $$\delta_t(j) = \max_i \left[\delta_{t-1}(i) \cdot a_{ij}\right] \cdot b_j(o_t),\quad \psi_t(j) = \arg\max_i \delta_{t-1}(i) \cdot a_{ij}$$
+      $$q_T^* = \arg\max_j \delta_T(j),\quad q_t^* = \psi_{t+1}(q_{t+1}^*)$$
+    </div>
+    <table class="symbol-table">
+      <tr><td>δ_t(j)</td><td>时刻t到达状态j的最优路径概率</td></tr>
+      <tr><td>a_ij</td><td>从状态i转移到j的概率（转移矩阵A）</td></tr>
+      <tr><td>b_j(o_t)</td><td>状态j发射观测o_t的概率（发射矩阵B）</td></tr>
+      <tr><td>ψ_t(j)</td><td>回溯指针：从哪个i到j最优</td></tr>
+      <tr><td>q_t*</td><td>最优路径在时刻t的状态</td></tr>
+    </table>
+  </div>
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（纯NumPy）</h4>
+<pre><span class="cmt"># Viterbi解码：输入观测序列，输出最优状态序列</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">viterbi</span>(obs, pi, A, B):
+    <span class="cmt"># obs: 观测序列 [T]，每个元素是观测索引</span>
+    <span class="cmt"># pi: 初始状态概率 [N]</span>
+    <span class="cmt"># A: 转移矩阵 [N,N], A[i,j]=p(j|i)</span>
+    <span class="cmt"># B: 发射矩阵 [N,M], B[i,o]=p(o|i)</span>
+    T, N = len(obs), len(pi)
+    <span class="cmt"># 用对数概率避免下溢</span>
+    log_d = np.<span class="fn">log</span>(pi + <span class="num">1e-10</span>) + np.<span class="fn">log</span>(B[:, obs[<span class="num">0</span>]] + <span class="num">1e-10</span>)
+    psi = np.<span class="fn">zeros</span>((T, N), dtype=int)
+    <span class="cmt"># 递推</span>
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, T):
+        <span class="cmt"># [N,N] 所有i→j的概率</span>
+        scores = log_d[:, None] + np.<span class="fn">log</span>(A + <span class="num">1e-10</span>)
+        psi[t] = np.<span class="fn">argmax</span>(scores, axis=<span class="num">0</span>)  <span class="cmt"># 最优来源</span>
+        log_d = scores[psi[t], np.<span class="fn">arange</span>(N)] + np.<span class="fn">log</span>(B[:, obs[t]] + <span class="num">1e-10</span>)
+    <span class="cmt"># 回溯</span>
+    path = np.<span class="fn">zeros</span>(T, dtype=int)
+    path[-<span class="num">1</span>] = np.<span class="fn">argmax</span>(log_d)
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(T-<span class="num">2</span>, -<span class="num">1</span>, -<span class="num">1</span>):
+        path[t] = psi[t+<span class="num">1</span>, path[t+<span class="num">1</span>]]
+    <span class="kw">return</span> path, np.<span class="fn">max</span>(log_d)
+</pre>
+    <div class="code-run-tip">💡 上面的互动Demo就是跑这段逻辑。测试：pi=[1/3,1/3,1/3]，A是left-to-right转移，B是随机发射，viterbi返回最优路径。</div>
+  </div>
+</div>
 <div class="lab">
 <h3>🎯 玩具级 Viterbi（3 状态 × 5 帧）</h3>
 <p style="font-size:.88rem;margin-bottom:.75rem">观察下面 3 状态（音素 A/B/C）× 5 帧的发射概率矩阵，点击"运行 Viterbi"看最优路径如何被选出来：</p>
@@ -206,17 +707,139 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
 <section id="ctc">
 <h2>⚡ CTC · 连接时序分类</h2>
 <p>CTC（Connectionist Temporal Classification，Graves 2006/2014）是端到端 ASR 的开山之作，解决了一个核心难题：<b>输入输出长度不等、无法帧级对齐时如何训练</b>。</p>
-<h3>核心思想：引入 blank</h3>
-<p>在输出标签集中加入一个特殊符号 <b>ε（blank）</b>，允许模型在帧级别输出 blank 或重复字符。最终序列通过两步合并得到真实文本：</p>
-<ol>
-  <li><b>去重复</b>：把连续相同字符合并（如 "aaεbb" → "aεb"）</li>
-  <li><b>去 blank</b>：删掉所有 ε（"aεb" → "ab"）</li>
-</ol>
-<div class="math-b">
-  P(Y|X) = Σ<sub>π ∈ B⁻¹(Y)</sub> Π<sub>t</sub> p(π<sub>t</sub>|X)
-</div>
-<p style="font-size:.88rem;color:var(--muted);text-align:center;margin-top:-.5rem">所有合并后等于 Y 的路径 π 的概率之和，可以用前向-后向算法高效计算</p>
+<div class="algo-block">
+  <h3>🎼 CTC（连接时序分类，端到端对齐核心）</h3>
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 280" width="760" height="280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-ctc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+          </marker>
+        </defs>
+        <text class="title" x="380" y="30" text-anchor="middle">CTC Lattice：输入6帧 → blank(ε灰)+h/i字符 → 多条路径归约为"hi"</text>
+        <!-- 帧标签 -->
+        <text class="label" x="120" y="60" text-anchor="middle">t=1</text>
+        <text class="label" x="220" y="60" text-anchor="middle">t=2</text>
+        <text class="label" x="320" y="60" text-anchor="middle">t=3</text>
+        <text class="label" x="420" y="60" text-anchor="middle">t=4</text>
+        <text class="label" x="520" y="60" text-anchor="middle">t=5</text>
+        <text class="label" x="620" y="60" text-anchor="middle">t=6</text>
+        <!-- 扩展标签：ε h ε i ε -->
+        <text class="label" x="60" y="95" text-anchor="middle">ε</text>
+        <text class="label-key" x="60" y="130" text-anchor="middle">h</text>
+        <text class="label" x="60" y="165" text-anchor="middle">ε</text>
+        <text class="label-key" x="60" y="200" text-anchor="middle" fill="#f97316">i</text>
+        <text class="label" x="60" y="235" text-anchor="middle">ε</text>
+        <!-- 节点 t=1 -->
+        <rect x="100" y="80" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="120" y="97" text-anchor="middle" font-size="10">0.6</text>
+        <rect x="100" y="115" width="40" height="25" fill="#dbeafe" stroke="#0ea5e9" rx="3"/>
+        <text class="label-key" x="120" y="132" text-anchor="middle" font-size="10">0.3</text>
+        <!-- t=2 -->
+        <rect x="200" y="80" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="220" y="97" text-anchor="middle" font-size="10">0.4</text>
+        <rect x="200" y="115" width="40" height="25" fill="#dbeafe" stroke="#0ea5e9" rx="3"/>
+        <text class="label-key" x="220" y="132" text-anchor="middle" font-size="10">0.5</text>
+        <rect x="200" y="150" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="220" y="167" text-anchor="middle" font-size="10">0.1</text>
+        <!-- t=3 -->
+        <rect x="300" y="115" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="320" y="132" text-anchor="middle" font-size="10">0.3</text>
+        <rect x="300" y="150" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="320" y="167" text-anchor="middle" font-size="10">0.5</text>
+        <rect x="300" y="185" width="40" height="25" fill="#fed7aa" stroke="#f97316" rx="3"/>
+        <text class="label-key" x="320" y="202" text-anchor="middle" font-size="10" fill="#f97316">0.2</text>
+        <!-- t=4 -->
+        <rect x="400" y="150" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="420" y="167" text-anchor="middle" font-size="10">0.2</text>
+        <rect x="400" y="185" width="40" height="25" fill="#fed7aa" stroke="#f97316" rx="3"/>
+        <text class="label-key" x="420" y="202" text-anchor="middle" font-size="10" fill="#f97316">0.6</text>
+        <rect x="400" y="220" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="420" y="237" text-anchor="middle" font-size="10">0.2</text>
+        <!-- t=5 -->
+        <rect x="500" y="185" width="40" height="25" fill="#fed7aa" stroke="#f97316" rx="3"/>
+        <text class="label-key" x="520" y="202" text-anchor="middle" font-size="10" fill="#f97316">0.5</text>
+        <rect x="500" y="220" width="40" height="25" fill="#f1f5f9" stroke="#94a3b8" rx="3"/>
+        <text class="label" x="520" y="237" text-anchor="middle" font-size="10">0.5</text>
+        <!-- t=6 终点 -->
+        <rect x="600" y="220" width="40" height="25" fill="#dcfce7" stroke="#22c55e" stroke-width="2.5" rx="3"/>
+        <text class="label-key" x="620" y="237" text-anchor="middle" font-size="10">终点</text>
+        <!-- 示例路径：ε→h→ε→i→i→ε → "hi" -->
+        <polyline points="120,93 220,128 320,163 420,198 520,198 620,233" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+        <text class="title" x="380" y="265" text-anchor="middle">B-归约规则：先合并连续重复字符，再删除所有ε。路径"hhεεii"→"hεi"→"hi"，"εhεiεε"也→"hi"</text>
+      </svg>
+    </div>
+  </div>
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      语音输入可能有100帧，但标签只有"hi"两个字符——帧数≠字数，而且不知道哪个帧对应"h"哪个对应"i"，这就是<b>对齐问题</b>。<br><br>
+      CTC的天才想法：<b>引入一个特殊符号ε（blank空白）</b>，允许模型输出：
+      <ul style="margin:.25rem 0 0 1.25rem;padding:0">
+        <li>ε："我现在什么都没说，还在停顿"</li>
+        <li>重复字符："我还在说这个字"</li>
+      </ul>
+      解码时用<b>B-归约</b>：先把连续重复的字符合并，再删掉所有ε。这样一来，"hhεii"、"εhεiε"、"hhhii"、"hiεεε"都归约成<b>"hi"</b>。<br><br>
+      训练时，所有能归约成"hi"的路径都是对的——我们要把<b>所有合法路径的概率加起来</b>，这就是"连接时序分类"名字的由来。用前向-后向动态规划高效计算，不用枚举指数级路径。
+    </div>
+  </div>
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="ctc-f">
+      $$P(Y|X) = \sum_{\pi \in B^{-1}(Y)} \prod_{t=1}^{T} y_t(\pi_t)$$
+      $$\alpha(t,u) = \big(\alpha(t-1,u) + \alpha(t-1,u-1) + \alpha_{\text{skip}}(t-1,u-2)\big) \cdot y_t(l_u)$$
+    </div>
+    <div class="formula-desc">
+      α(t,u)表示前t帧、走到扩展标签序列第u个位置的总概率。扩展标签序列l是在真实标签每个字符前后都插入ε，如"hi"→[ε,h,ε,i,ε]。转移规则：可以停在原地、走到下一个；当l_u是真实字符且≠l_{u-2}时，可以跳过一个ε。
+    </div>
+    <table class="symbol-table">
+      <tr><td>B(π)</td><td>归约函数：合并重复→删ε，得到真实标签</td></tr>
+      <tr><td>B⁻¹(Y)</td><td>所有能归约成Y的CTC路径集合</td></tr>
+      <tr><td>y_t(c)</td><td>第t帧输出字符c的概率（模型softmax输出）</td></tr>
+      <tr><td>l</td><td>扩展标签序列（插入ε后，长度2U+1）</td></tr>
+      <tr><td>α(t,u)</td><td>前向变量：前t帧走到l_u的总概率</td></tr>
+    </table>
+  </div>
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（纯NumPy实现CTC前向）</h4>
+<pre><span class="cmt"># CTC前向算法：计算 P(Y|X)，不用torch.nn.CTCLoss</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
 
+<span class="kw">def</span> <span class="fn">ctc_loss</span>(log_probs, targets, blank=<span class="num">0</span>):
+    <span class="cmt"># log_probs: [T, C] 每帧各字符的对数概率</span>
+    <span class="cmt"># targets: 目标标签序列（不含blank），list[int]</span>
+    T, C = log_probs.shape
+    U = len(targets)
+    <span class="cmt"># 1. 构建扩展序列：ε t0 ε t1 ε ... ε tU ε，长度=2U+1</span>
+    l = []
+    <span class="kw">for</span> t <span class="kw">in</span> targets:
+        l.extend([blank, t])
+    l.<span class="fn">append</span>(blank)
+    L = len(l)  <span class="cmt"># 2U+1</span>
+    <span class="cmt"># 2. 初始化α：t=0时，只能从第0个ε或第1个真实字符开始</span>
+    alpha = np.<span class="fn">full</span>((T, L), -np.inf)
+    alpha[<span class="num">0</span>, <span class="num">0</span>] = log_probs[<span class="num">0</span>, l[<span class="num">0</span>]]
+    alpha[<span class="num">0</span>, <span class="num">1</span>] = log_probs[<span class="num">0</span>, l[<span class="num">1</span>]]
+    <span class="cmt"># 3. 前向递推（对数空间加法用logsumexp）</span>
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, T):
+        <span class="kw">for</span> u <span class="kw">in</span> <span class="fn">range</span>(L):
+            <span class="cmt"># 三个来源：(t-1,u)停留、(t-1,u-1)前进一步</span>
+            acc = alpha[t-<span class="num">1</span>, u]
+            <span class="kw">if</span> u - <span class="num">1</span> &gt;= <span class="num">0</span>:
+                acc = np.<span class="fn">logaddexp</span>(acc, alpha[t-<span class="num">1</span>, u-<span class="num">1</span>])
+            <span class="cmt"># skip：l_u是真实字符且不等于l_{u-2}，可跳过ε</span>
+            <span class="kw">if</span> u - <span class="num">2</span> &gt;= <span class="num">0</span> <span class="kw">and</span> l[u] != blank <span class="kw">and</span> l[u] != l[u-<span class="num">2</span>]:
+                acc = np.<span class="fn">logaddexp</span>(acc, alpha[t-<span class="num">1</span>, u-<span class="num">2</span>])
+            alpha[t, u] = acc + log_probs[t, l[u]]
+    <span class="cmt"># 4. 终点两个ε（最后和倒数第二个位置）</span>
+    log_p = np.<span class="fn">logaddexp</span>(alpha[T-<span class="num">1</span>, L-<span class="num">1</span>], alpha[T-<span class="num">1</span>, L-<span class="num">2</span>])
+    <span class="kw">return</span> -log_p  <span class="cmt"># 返回负对数似然（loss）</span>
+</pre>
+    <div class="code-run-tip">💡 全程在对数空间计算避免数值下溢，用np.logaddexp做log-sum-exp。6帧预测"hi"的演示就是这套α递推。</div>
+  </div>
+</div>
 <div class="callout callout-i"><span class="ic">🧮</span><span><b>为什么要求和而不是取 argmax</b>？因为同一句话可以对应很多条合法路径（blank 插在哪、重复几次都可以），训练时必须把所有合法路径的概率加起来作为该标签序列的似然。</span></div>
 
 <h3>🎮 CTC 对齐可视化</h3>
@@ -233,8 +856,133 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
 </section>
 
 <section id="attention">
-<h2>🎯 Attention · Seq2Seq 与 LAS</h2>
-<p>CTC 的条件独立假设太强。Attention Seq2Seq 引入自回归解码器：每步基于"已输出的字符"+"注意力加权后的编码器输出"预测下一个字符。</p>
+<h2>🎯 Attention · 缩放点积注意力</h2>
+<p>CTC 的条件独立假设太强。Attention 机制让模型在每一步预测时，都能"回头看"输入序列的所有位置，按需聚焦最相关的信息——这是 Transformer 和 LAS 模型的核心。</p>
+<div class="algo-block">
+  <h3>🎼 缩放点积注意力（QKV图书馆检索）</h3>
+  <div class="algo-step step-svg">
+    <h4><span class="num">1</span>原理图</h4>
+    <div class="algo-svg-wrap">
+      <svg class="s-algo" viewBox="0 0 760 280" width="760" height="280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-att" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+          </marker>
+        </defs>
+        <text class="title" x="380" y="30" text-anchor="middle">图书馆类比：提问 → 匹配相关书 → 按相似度取出内容</text>
+        <!-- 第一行：Q K V -->
+        <rect class="box-key" x="30" y="60" width="120" height="60" rx="6"/>
+        <text class="title" x="90" y="85" text-anchor="middle">Query (Q)</text>
+        <text class="label-key" x="90" y="108" text-anchor="middle">我要找什么？</text>
+        <text class="label" x="90" y="135" text-anchor="middle" font-size="10">（你写下的检索问题）</text>
+
+        <rect class="box" x="200" y="60" width="120" height="60" rx="6"/>
+        <text class="title" x="260" y="85" text-anchor="middle">Keys (K)</text>
+        <text class="label" x="260" y="108" text-anchor="middle">每本书的标签</text>
+        <text class="label" x="260" y="135" text-anchor="middle" font-size="10">（所有书的索引卡）</text>
+
+        <rect class="box" x="370" y="60" width="120" height="60" rx="6"/>
+        <text class="title" x="430" y="85" text-anchor="middle">Values (V)</text>
+        <text class="label" x="430" y="108" text-anchor="middle">书的内容</text>
+        <text class="label" x="430" y="135" text-anchor="middle" font-size="10">（每本书的正文）</text>
+
+        <rect class="box-key" x="540" y="60" width="190" height="60" rx="6"/>
+        <text class="title" x="635" y="85" text-anchor="middle">相似度 Q·K^T / √d_k</text>
+        <text class="label-key" x="635" y="108" text-anchor="middle">算问题和每本书的匹配度</text>
+
+        <!-- 第二行：softmax -->
+        <rect class="box" x="130" y="160" width="200" height="60" rx="6"/>
+        <text class="title" x="230" y="185" text-anchor="middle">Softmax 归一化 → 权重α</text>
+        <text class="label" x="230" y="208" text-anchor="middle">匹配度转成概率分布（加起来=1）</text>
+
+        <!-- 第三行：加权求和 -->
+        <rect class="box-out" x="410" y="160" width="220" height="60" rx="6"/>
+        <text class="title" x="520" y="185" text-anchor="middle">加权求和 Σ α_i · V_i</text>
+        <text class="label" x="520" y="208" text-anchor="middle">按权重把相关书的内容拼起来</text>
+
+        <!-- 输出 -->
+        <rect class="box-done" x="650" y="160" width="80" height="60" rx="6"/>
+        <text class="title" x="690" y="195" text-anchor="middle">上下文</text>
+        <text class="title" x="690" y="212" text-anchor="middle">向量</text>
+
+        <!-- 箭头 -->
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-att)" x1="150" y1="90" x2="200" y2="90"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-att)" x1="320" y1="90" x2="370" y2="90"/>
+        <line stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrow-p)" x1="490" y1="90" x2="540" y2="90"/>
+        <line stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrow-p)" x1="635" y1="120" x2="635" y2="150"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-att)" x1="635" y1="150" x2="230" y2="160"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-att)" x1="330" y1="190" x2="410" y2="190"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-att)" x1="630" y1="190" x2="650" y2="190"/>
+        <!-- 额外V输入箭头 -->
+        <line stroke="#64748b" stroke-width="1.5" stroke-dasharray="3,2" x1="430" y1="120" x2="430" y2="150"/>
+        <line stroke="#64748b" stroke-width="1.5" stroke-dasharray="3,2" x1="430" y1="150" x2="470" y2="150"/>
+        <line stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow-att)" x1="470" y1="150" x2="470" y2="160"/>
+
+        <text class="title" x="380" y="255" text-anchor="middle">核心：每一步预测都能"看"所有输入位置，但权重由当前Query和输入的相关性动态决定</text>
+      </svg>
+    </div>
+  </div>
+  <div class="algo-step step-principle">
+    <h4><span class="num">2</span>通俗原理</h4>
+    <div class="algo-explain">
+      就像你去图书馆查资料：
+      <ol style="margin:.5rem 0 0 1.25rem;padding:0">
+        <li><b>Q（Query）</b>：你脑子里的问题——"我想知道ASR里的CTC是什么"</li>
+        <li><b>K（Key）</b>：每本书的索引标签——《语音识别》《深度学习》《图像处理》……</li>
+        <li><b>Q·K^T 相似度</b>：你把问题和每本书标签做比对，《语音识别》匹配度0.9、《深度学习》0.3、《图像处理》0.01</li>
+        <li><b>Softmax归一化</b>：把匹配度变成概率权重，加起来=1，比如[0.7, 0.25, 0.05]</li>
+        <li><b>V（Value）</b>：每本书的实际内容</li>
+        <li><b>加权求和</b>：70%的内容来自《语音识别》、25%来自《深度学习》、5%来自其他——这就是你"注意"到的上下文</li>
+      </ol>
+      注意这是"软"注意力：你不只是挑一本书，而是所有书都看一点，相关的多看、不相关的少看。除以√d_k是为了防止点积值过大导致softmax饱和（梯度消失）。
+    </div>
+  </div>
+  <div class="algo-step step-formula">
+    <h4><span class="num">3</span>数学公式</h4>
+    <div class="formula-block" id="att-f">
+      $$\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V$$
+    </div>
+    <table class="symbol-table">
+      <tr><td>Q</td><td>查询矩阵 [T_q, d_k]，解码器每步一个向量</td></tr>
+      <tr><td>K</td><td>键矩阵 [T_k, d_k]，编码器每个位置一个向量</td></tr>
+      <tr><td>V</td><td>值矩阵 [T_k, d_v]，编码器内容表示</td></tr>
+      <tr><td>d_k</td><td>Q/K的维度，缩放因子，防止点积方差过大</td></tr>
+      <tr><td>QK^T</td><td>相似度矩阵 [T_q, T_k]，每对(query,key)的匹配度</td></tr>
+      <tr><td>softmax</td><td>归一化成注意力权重α，每行加起来=1</td></tr>
+      <tr><td>输出</td><td>[T_q, d_v]，每个query对应的上下文向量</td></tr>
+    </table>
+  </div>
+  <div class="algo-step step-code">
+    <h4><span class="num">4</span>从零手搓（纯NumPy，含手搓softmax）</h4>
+<pre><span class="cmt"># 缩放点积注意力：纯NumPy实现，不调用torch高层API</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">def</span> <span class="fn">softmax</span>(x, axis=-<span class="num">1</span>):
+    <span class="cmt"># 减max防溢出</span>
+    e = np.<span class="fn">exp</span>(x - np.<span class="fn">max</span>(x, axis=axis, keepdims=<span class="kw">True</span>))
+    <span class="kw">return</span> e / e.<span class="fn">sum</span>(axis=axis, keepdims=<span class="kw">True</span>)
+
+<span class="kw">def</span> <span class="fn">scaled_dot_product_attention</span>(Q, K, V, mask=<span class="kw">None</span>):
+    <span class="cmt"># Q: [T_q, d_k], K: [T_k, d_k], V: [T_k, d_v]</span>
+    d_k = Q.shape[-<span class="num">1</span>]
+    <span class="cmt"># 1. 计算相似度 [T_q, T_k]</span>
+    scores = Q @ K.T / np.<span class="fn">sqrt</span>(d_k)
+    <span class="cmt"># 2. 可选mask：屏蔽未来位置（解码时用）</span>
+    <span class="kw">if</span> mask <span class="kw">is not None</span>:
+        scores = np.<span class="fn">where</span>(mask, scores, -np.inf)
+    <span class="cmt"># 3. softmax得权重</span>
+    attn = <span class="fn">softmax</span>(scores, axis=-<span class="num">1</span>)
+    <span class="cmt"># 4. 加权求和V → [T_q, d_v]</span>
+    out = attn @ V
+    <span class="kw">return</span> out, attn
+
+<span class="cmt"># 测试：T_q=1(当前步), T_k=5(5个输入帧), d=64</span>
+<span class="cmt"># Q = np.random.randn(1, 64); K = np.random.randn(5, 64); V = np.random.randn(5, 64)</span>
+<span class="cmt"># out, attn = scaled_dot_product_attention(Q,K,V); attn.sum(-1)=1</span>
+</pre>
+    <div class="code-run-tip">💡 这是Transformer最核心的5行代码！多头注意力就是把Q/K/V拆成h份，分别做注意力再拼起来。</div>
+  </div>
+</div>
 <h3>LAS（Listen, Attend, Spell）</h3>
 <div class="grid-3">
   <div class="card" style="border-top:3px solid var(--sky)"><h4>👂 Listen（编码器）</h4><p style="font-size:.88rem;margin:.25rem 0 0">金字塔 BLSTM 把语音帧下采样 8 倍，得到高层声学表征 <code>h</code>。</p></div>
@@ -266,10 +1014,10 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
 <p>2020 年 Google 提出 Conformer，把 Transformer（长程建模）和 CNN（局部特征）结合起来，至今仍是<strong>非大模型时代最强 ASR 编码器</strong>。</p>
 <h3>Conformer Block 结构（Macaron 结构）</h3>
 <pre class="code">ConformerBlock(x):
-  x = x + ½·FFN(x)               <span style="color:#94a3b8"># 前 FFN（Macaron）</span>
-  x = x + MHSA(x)                 <span style="color:#94a3b8"># 多头自注意力（长程）</span>
-  x = x + ConvModule(x)           <span style="color:#94a3b8"># 深度可分离卷积 + 门控 + Swish（局部）</span>
-  x = x + ½·FFN(x)                <span style="color:#94a3b8"># 后 FFN</span>
+  x = x + ½·FFN(x)               <span class="cmt"># 前 FFN（Macaron）</span>
+  x = x + MHSA(x)                 <span class="cmt"># 多头自注意力（长程）</span>
+  x = x + ConvModule(x)           <span class="cmt"># 深度可分离卷积 + 门控 + Swish（局部）</span>
+  x = x + ½·FFN(x)                <span class="cmt"># 后 FFN</span>
   x = LayerNorm(x)
   return x</pre>
 <div class="callout callout-i"><span class="ic">💡</span><span><b>为什么要双 FFN（Macaron）</b>？论文发现把 FFN 拆成两半放在注意力+卷积两侧，每层总参数量减半但效果更好。这是一个实验结论，没有深刻理论，但非常好用。</span></div>
@@ -296,15 +1044,15 @@ section h2::before{content:'';width:4px;height:1.2rem;background:var(--sky);bord
   </ul>
 </div>
 </div>
-<pre class="code"><span style="color:#94a3b8"># 一行命令使用 Whisper</span>
+<pre class="code"><span class="cmt"># 一行命令使用 Whisper</span>
 pip install -U openai-whisper
 whisper meeting.mp3 --model large-v3 --language zh --output_format srt
-<span style="color:#94a3b8"># Python 接口</span>
-import whisper
-model = whisper.load_model("large-v3")
-result = model.transcribe("meeting.mp3", word_timestamps=True)
-for seg in result["segments"]:
-    print(f"[{seg['start']:.1f}-{seg['end']:.1f}] {seg['text']}")</pre>
+<span class="cmt"># Python 接口</span>
+<span class="kw">import</span> whisper
+model = whisper.<span class="fn">load_model</span>(<span class="str">"large-v3"</span>)
+result = model.<span class="fn">transcribe</span>(<span class="str">"meeting.mp3"</span>, word_timestamps=<span class="kw">True</span>)
+<span class="kw">for</span> seg <span class="kw">in</span> result[<span class="str">"segments"</span>]:
+    <span class="fn">print</span>(<span class="str">f"[{seg['start']:.1f}-{seg['end']:.1f}] {seg['text']}"</span>)</pre>
 </section>
 
 <section id="papers">
@@ -322,28 +1070,28 @@ for seg in result["segments"]:
 <section id="code">
 <h2>💻 源码走读 · Kaldi HMM 拓扑</h2>
 <p>Kaldi 是传统 ASR 的经典框架，理解它的 TransitionModel 是理解 HMM-ASR 的钥匙。下面是核心概念的伪代码：</p>
-<pre class="code"><span style="color:#94a3b8">// Kaldi 中三状态 HMM 拓扑（每个音素 = 3 个状态）</span>
-<span style="color:#7dd3fc">class</span> HmmTopology {
-  <span style="color:#7dd3fc">//</span> 每个音素 3 状态，状态 0/1/2，0 不能到 2（left-to-right）
+<pre class="code"><span class="cmt">// Kaldi 中三状态 HMM 拓扑（每个音素 = 3 个状态）</span>
+<span class="kw">class</span> HmmTopology {
+  <span class="cmt">//</span> 每个音素 3 状态，状态 0/1/2，0 不能到 2（left-to-right）
   TopologyEntry states[] = {
-    {<span style="color:#fdba74">0</span>, { {0, <span style="color:#fde68a">0.5</span>}, {1, <span style="color:#fde68a">0.5</span>} }},  <span style="color:#94a3b8">// 状态0：自环 0.5、到1 0.5</span>
-    {<span style="color:#fdba74">1</span>, { {1, <span style="color:#fde68a">0.5</span>}, {2, <span style="color:#fde68a">0.5</span>} }},  <span style="color:#94a3b8">// 状态1：自环 0.5、到2 0.5</span>
-    {<span style="color:#fdba74">2</span>, { {2, <span style="color:#fde68a">0.5</span>}, {-1, <span style="color:#fde68a">0.5</span>} }}  <span style="color:#94a3b8">// 状态2：自环 0.5、结束 -1 0.5</span>
+    {<span class="num">0</span>, { {0, <span class="num">0.5</span>}, {1, <span class="num">0.5</span>} }},  <span class="cmt">// 状态0：自环 0.5、到1 0.5</span>
+    {<span class="num">1</span>, { {1, <span class="num">0.5</span>}, {2, <span class="num">0.5</span>} }},  <span class="cmt">// 状态1：自环 0.5、到2 0.5</span>
+    {<span class="num">2</span>, { {2, <span class="num">0.5</span>}, {-1, <span class="num">0.5</span>} }}  <span class="cmt">// 状态2：自环 0.5、结束 -1 0.5</span>
   };
 };
 
-<span style="color:#94a3b8">// Viterbi 核心：动态规划</span>
-<span style="color:#7dd3fc">for</span> t = <span style="color:#fdba74">1</span>; t < T; t++ {
-  <span style="color:#7dd3fc">for each</span> state j {
-    <span style="color:#94a3b8">// 找从哪个状态 i 过来概率最大</span>
+<span class="cmt">// Viterbi 核心：动态规划</span>
+<span class="kw">for</span> t = <span class="num">1</span>; t &lt; T; t++ {
+  <span class="kw">for each</span> state j {
+    <span class="cmt">// 找从哪个状态 i 过来概率最大</span>
     best_i = argmax_i ( viterbi[t-1][i] * log_a[i][j] )
     viterbi[t][j] = viterbi[t-1][best_i] + log_a[best_i][j] + log_b[j][o[t]]
     backptr[t][j] = best_i
   }
 }
-<span style="color:#94a3b8">// 回溯得到最优路径</span>
+<span class="cmt">// 回溯得到最优路径</span>
 path[T] = argmax_j viterbi[T][j]
-<span style="color:#7dd3fc">for</span> t = T-1; t >= 0; t--
+<span class="kw">for</span> t = T-1; t &gt;= 0; t--
   path[t] = backptr[t+1][path[t+1]]</pre>
 </section>
 
@@ -368,17 +1116,13 @@ path[T] = argmax_j viterbi[T][j]
 <div class="card" style="padding:1rem">
 <svg viewBox="0 0 800 280" width="100%" style="font-family:inherit;font-size:11px">
   <line x1="60" y1="240" x2="770" y2="240" stroke="#cbd5e1"/><line x1="60" y1="30" x2="60" y2="240" stroke="#cbd5e1"/>
-  <!-- y axis labels: WER 40% -> 5% -->
   <text x="50" y="244" text-anchor="end" fill="#64748b">0%</text>
   <text x="50" y="194" text-anchor="end" fill="#64748b">10%</text>
   <text x="50" y="144" text-anchor="end" fill="#64748b">20%</text>
   <text x="50" y="94" text-anchor="end" fill="#64748b">30%</text>
   <text x="50" y="44" text-anchor="end" fill="#64748b">40%</text>
   <text x="20" y="140" transform="rotate(-90,20,140)" fill="#64748b">WER (Switchboard)</text>
-  <!-- data points: year, wer, label -->
-  <!-- GMM-HMM 40%@1995, 25%@2005; DNN-HMM 16%@2012; LSTM 11%@2016; ResNet 8%@2017; Conformer 5.0%@2020; Whisper-large 4.2%@2022 (on other sets but approx) -->
   <polyline points="100,140 220,115 320,160 440,185 520,200 620,215 720,219" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
-  <!-- points -->
   <g fill="#0ea5e9">
     <circle cx="100" cy="140" r="5"/><text x="100" y="130" text-anchor="middle" fill="#0369a1" font-weight="600">GMM-HMM</text><text x="100" y="260" text-anchor="middle" fill="#64748b">1995</text><text x="100" y="155" text-anchor="middle" fill="#64748b">~40%</text>
     <circle cx="220" cy="115" r="5"/><text x="220" y="105" text-anchor="middle" fill="#0369a1" font-weight="600">fMPE+BMMI</text><text x="220" y="260" text-anchor="middle" fill="#64748b">2005</text><text x="220" y="130" text-anchor="middle" fill="#64748b">~25%</text>
@@ -388,7 +1132,6 @@ path[T] = argmax_j viterbi[T][j]
     <circle cx="620" cy="215" r="5"/><text x="620" y="205" text-anchor="middle" fill="#0369a1" font-weight="600">Conformer</text><text x="620" y="260" text-anchor="middle" fill="#64748b">2020</text><text x="620" y="230" text-anchor="middle" fill="#64748b">5.0%</text>
     <circle cx="720" cy="219" r="5"/><text x="720" y="209" text-anchor="middle" fill="#0369a1" font-weight="600">Whisper</text><text x="720" y="260" text-anchor="middle" fill="#64748b">2022</text><text x="720" y="234" text-anchor="middle" fill="#64748b">~4%</text>
   </g>
-  <!-- human parity line -->
   <line x1="60" y1="220" x2="770" y2="220" stroke="#ef4444" stroke-dasharray="4,3"/>
   <text x="700" y="216" fill="#ef4444" font-size="10">人类速记员水平 ≈5%</text>
 </svg>
@@ -414,13 +1157,11 @@ path[T] = argmax_j viterbi[T][j]
 </main>
 </div>
 
-<footer><div class="wrap">ASR · 语音识别研究站 · agent-speech · 受 agent-cv / agent-yolo 启发</div></footer>
+<footer><div class="wrap">ASR · 语音识别研究站 · agent-speech · 受 agent-cv / agent-yolo 启发 · 知识本体 Schema: SignalProcessing → FeatureExtraction → AcousticModel → Decoding → EndToEnd</div></footer>
 
 <script src="../main.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-// ===== TOC =====
-
 // ===== single sine (signal demo) =====
 (function(){
   const cv=document.getElementById('scv'),ctx=cv.getContext('2d');
@@ -443,22 +1184,21 @@ document.addEventListener("DOMContentLoaded", function(){
 (function(){
   const states=['A','B','C'];
   const T=5;
-  let emis; // [T][state]
+  let emis;
   function randEmis(){emis=Array.from({length:T},()=>{const r=states.map(()=>Math.random());const s=r.reduce((a,b)=>a+b);return r.map(v=>v/s);});render();document.getElementById('vt-out').innerHTML='<span style="color:#94a3b8">点击「运行 Viterbi」开始解码</span>';}
   function render(){
-    let html='<table style="width:100%;font-size:.85rem;text-align:center;border-collapse:collapse"><thead><tr><th style="padding:.4rem">状态\帧</th>';
+    let html='<table style="width:100%;font-size:.85rem;text-align:center;border-collapse:collapse"><thead><tr><th style="padding:.4rem">状态\\帧</th>';
     for(let t=0;t<T;t++) html+=`<th style="padding:.4rem;background:#f1f5f9">t=${t+1}</th>`;html+='</tr></thead><tbody>';
     states.forEach((s,i)=>{html+=`<tr><td style="padding:.4rem;font-weight:600;background:var(--sky-l);color:var(--sky-d)">${s}</td>`;for(let t=0;t<T;t++)html+=`<td style="padding:.4rem;border:1px solid var(--border)" id="e${t}${i}">${emis[t][i].toFixed(2)}</td>`;html+='</tr>';});html+='</tbody></table>';
     document.getElementById('vt-grid').innerHTML=html;
   }
   function viterbi(){
     const trellis=Array.from({length:T},()=>states.map(()=>({prob:-Infinity,from:-1})));
-    const trans=[[0.6,0.4,0.0],[0.0,0.6,0.4],[0.0,0.0,0.8]]; // left-to-right with self-loop+exit
+    const trans=[[0.6,0.4,0.0],[0.0,0.6,0.4],[0.0,0.0,0.8]];
     states.forEach((_,i)=>trellis[0][i].prob=Math.log(emis[0][i])+Math.log(1/3));
     for(let t=1;t<T;t++)for(let j=0;j<states.length;j++)for(let i=0;i<=j;i++){const p=trellis[t-1][i].prob+Math.log(trans[i][j])+Math.log(emis[t][j]);if(p>trellis[t][j].prob){trellis[t][j].prob=p;trellis[t][j].from=i;}}
     let best=0;for(let j=1;j<states.length;j++)if(trellis[T-1][j].prob>trellis[T-1][best].prob)best=j;
     const path=[best];for(let t=T-1;t>0;t--){path.unshift(trellis[t][path[0]].from);}
-    // highlight
     for(let t=0;t<T;t++){states.forEach((_,i)=>{const el=document.getElementById(`e${t}${i}`);if(el){el.style.background='';el.style.fontWeight='';}});const el=document.getElementById(`e${t}${path[t]}`);if(el){el.style.background='var(--sky-l)';el.style.fontWeight='700';}}
     const labels=path.map(i=>states[i]);
     document.getElementById('vt-out').innerHTML='<span style="color:var(--muted)">最优路径：</span><b style="color:var(--sky-d);font-size:1rem;letter-spacing:2px">'+labels.join(' → ')+'</b> <span style="color:var(--muted);margin-left:.5rem">（对数概率 = '+(trellis[T-1][best].prob).toFixed(2)+'）</span>';
@@ -473,8 +1213,7 @@ document.addEventListener("DOMContentLoaded", function(){
   const vis=document.getElementById('ctc-vis'),info=document.getElementById('ctc-info');
   function gen(){
     const txt=document.getElementById('ctc-txt').value||'a';
-    const T=18;const chars=['ε',...txt.split('')];
-    // generate a valid alignment path
+    const T=18;
     let path=[];let ci=0;let last='ε';
     while(path.length<T){
       if(ci>=txt.length){for(let i=path.length;i<T;i++)path.push('ε');break;}
@@ -483,18 +1222,25 @@ document.addEventListener("DOMContentLoaded", function(){
       if(last==='ε'){c=r<0.55?'ε':txt[ci];}
       else if(last===txt[ci]){c=r<0.4?'ε':(r<0.85?txt[ci]:(ci+1<txt.length?txt[ci+1]:txt[ci]));}
       else{c=r<0.45?'ε':txt[ci];}
-      if(c!=='ε' && last!==c && c!==last){if(c===txt[ci]){/* stay */}else if(c===txt[ci+1]){ci++;}}
+      if(c!=='ε' && last!==c && c!==last){if(c===txt[ci]){}else if(c===txt[ci+1]){ci++;}}
       path.push(c);last=c;
     }
-    // ensure it collapses correctly: enforce transitions
     let merged='',prev='ε';
     for(const c of path){if(c!==prev&&c!=='ε')merged+=c;prev=c;}
-    // if mismatch, just add final eps until end and rerun if needed; but for demo, accept
-    vis.innerHTML=path.map(c=>`<span style="padding:4px 8px;border-radius:3px;font-weight:600;font-size:.9rem;background:${c==='ε'?'#f1f5f9':c===txt[0]?'#dbeafe':c===txt[1]||c===txt[2]?'#fed7aa':'#ddd6fe'};color:${c==='ε'?'#94a3b8':'inherit'};margin:1px">${c==='ε'?'ε':c}</span>`).join('');
+    const colors=['#dbeafe','#fed7aa','#ddd6fe','#fecaca','#bfdbfe'];
+    vis.innerHTML=path.map((c,i)=>{
+      const idx=c==='ε'?-1:txt.indexOf(c);
+      return `<span style="padding:4px 8px;border-radius:3px;font-weight:600;font-size:.9rem;background:${c==='ε'?'#f1f5f9':colors[idx%colors.length]};color:${c==='ε'?'#94a3b8':'inherit'};margin:1px">${c==='ε'?'ε':c}</span>`;
+    }).join('');
     info.innerHTML='合并去重去ε：<b style="color:var(--sky-d)">"'+merged+'"</b>'+(merged===txt?' ✅':'（随机对齐可能未正确收敛，再点一次）');
   }
   document.getElementById('ctc-gen').addEventListener('click',gen);gen();
 })();
+
+// KaTeX auto render
+if(window.renderMathInElement){
+  renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true}]});
+}
 });
 </script>
 </body>
