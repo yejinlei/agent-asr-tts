@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>语音实验室 · Agent-Speech</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* 实验室专用样式 */
+:root{--brand:#7c3aed;--brand-soft:#ede9fe;--brand-50:#f5f3ff;--brand-600:#6d28d9;--brand-700:#5b21b6}
+
+.lab-hero{background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 45%,#e0e7ff 100%);border-radius:20px;padding:2.2rem 2rem;border:1px solid #e9d5ff;margin-bottom:1.6rem}
+.lab-hero h1{font-size:2rem;color:#4c1d95;margin:.2rem 0 .6rem}
+.lab-hero p{color:#6b21a8;line-height:1.7;max-width:900px}
+.lab-badges{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+.lab-badge{background:#fff;color:#6d28d9;padding:.25rem .7rem;border-radius:999px;font-size:.8rem;border:1px solid #ddd6fe;font-weight:500}
+
+.controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem;box-shadow:0 1px 2px rgba(0,0,0,.02)}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:8px;font-weight:500;font-size:.88rem;cursor:pointer;border:1px solid transparent;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-600)}
+.btn-primary:disabled{background:#c4b5fd;cursor:not-allowed}
+.btn-ghost{background:#fff;color:#4b5563;border-color:#e5e7eb}
+.btn-ghost:hover{background:#f9fafb;color:var(--brand-700);border-color:#ddd6fe}
+.btn-danger{background:#fff;color:#dc2626;border-color:#fecaca}
+.btn-danger:hover{background:#fef2f2}
+.btn-rec{background:#dc2626;color:#fff}
+.btn-rec.recording{animation:pulse 1.2s infinite;background:#991b1b}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}
+
+.drop-zone{flex:1;min-width:220px;border:2px dashed #ddd6fe;border-radius:10px;padding:.75rem 1rem;color:#6d28d9;cursor:pointer;text-align:center;transition:all .15s;background:#faf5ff}
+.drop-zone:hover{background:#f5f3ff;border-color:#c4b5fd}
+.drop-zone.drag{background:#ede9fe;border-color:var(--brand)}
+
+.param-group{display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:#4b5563;flex-wrap:wrap}
+.param-group label{color:#6b7280}
+.param-group select,.param-group input[type=range]{padding:.35rem .5rem;border-radius:6px;border:1px solid #d1d5db;font-family:inherit;font-size:.82rem}
+.param-group input[type=range]{padding:0;width:110px}
+.param-val{min-width:2.5rem;color:var(--brand-700);font-weight:600;font-variant-numeric:tabular-nums}
+
+.layer-toggles{display:flex;gap:.5rem;flex-wrap:wrap;margin-left:auto}
+.toggle-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .65rem;border-radius:999px;font-size:.8rem;background:#f3f4f6;color:#6b7280;cursor:pointer;user-select:none;border:1px solid transparent;transition:all .15s}
+.toggle-chip.on{background:var(--brand-soft);color:var(--brand-700);border-color:#ddd6fe}
+.toggle-chip .dot{width:8px;height:8px;border-radius:50%;background:#d1d5db}
+.toggle-chip.on .dot{background:var(--brand)}
+
+/* 视图区 */
+.viewer{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:1rem;box-shadow:0 1px 2px rgba(0,0,0,.02);margin-bottom:1rem}
+.viewer h3{font-size:1.05rem;color:var(--brand-700);margin:0 0 .6rem;display:flex;align-items:center;gap:.45rem}
+.viewer h3 .unit{font-size:.78rem;color:#9ca3af;font-weight:400}
+.canvas-wrap{position:relative;width:100%;background:#fafbff;border-radius:10px;border:1px solid #f1f0ff;overflow:hidden}
+.canvas-wrap canvas{display:block;width:100%;cursor:crosshair}
+.axis-label{position:absolute;font-size:.7rem;color:#9ca3af;font-variant-numeric:tabular-nums;pointer-events:none}
+.axis-x{bottom:4px;right:8px}
+.axis-y{top:4px;left:8px}
+
+/* 选中信息条 */
+.selection-bar{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;background:linear-gradient(90deg,#fef3c7,#fde68a);border:1px solid #fcd34d;border-radius:10px;padding:.6rem .9rem;font-size:.85rem;color:#78350f;margin-bottom:1rem}
+.selection-bar .lbl{font-weight:600;color:#92400e}
+.selection-bar .val{font-variant-numeric:tabular-nums;font-weight:600}
+.selection-bar .empty{color:#b45309}
+
+/* 数据面板 */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem}
+.info-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1rem}
+.info-card h4{font-size:.9rem;color:var(--brand-700);margin:0 0 .6rem;display:flex;align-items:center;gap:.4rem}
+.info-card .kv{display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px dashed #f3f4f6;font-size:.85rem}
+.info-card .kv:last-child{border:0}
+.info-card .k{color:#6b7280}
+.info-card .v{color:#111827;font-weight:600;font-variant-numeric:tabular-nums}
+
+.play-cursor{position:absolute;top:0;bottom:0;width:2px;background:#dc2626;pointer-events:none;z-index:10;box-shadow:0 0 4px rgba(220,38,38,.5);display:none}
+.play-cursor::after{content:'';position:absolute;top:-4px;left:-4px;width:10px;height:10px;border-radius:50%;background:#dc2626}
+
+.status-line{font-size:.8rem;color:#6b7280;margin-top:.5rem;display:flex;gap:1rem;flex-wrap:wrap}
+.status-line b{color:var(--brand-700);font-weight:600}
+
+.hint-tip{background:#fef9c3;border:1px solid #fde047;color:#854d0e;border-radius:8px;padding:.6rem .8rem;font-size:.82rem;margin-bottom:1rem;line-height:1.6}
+.hint-tip b{color:#713f12}
+
+.hidden-file{display:none}
+
+/* 让页面容器在实验室页也可用（不与 style.css 冲突） */
+</style>
+</head>
+<body>
+<!-- 顶部导航 -->
+<nav class="topbar">
+  <div class="nav-container">
+    <a href="index.html" class="nav-brand">🎙️ Agent‑Speech</a>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="asr/">🎤 ASR</a>
+      <a href="tts/">📢 TTS</a>
+      <a href="lab.html" class="active">🔬 语音实验室</a>
+      <a href="https://github.com/yejinlei/agent-asr-tts" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+<div class="lab-hero">
+  <div class="lab-badges">
+    <span class="lab-badge">🔬 类似 Praat 的浏览器版</span>
+    <span class="lab-badge">📶 纯前端 · 零上传</span>
+    <span class="lab-badge">📊 波形 · 语谱图 · 基频 · 共振峰</span>
+    <span class="lab-badge">🎙️ 支持麦克风录音</span>
+  </div>
+  <h1>语音实验室 · 浏览器里的 Praat</h1>
+  <p>上传一段音频（或直接对着麦克风录制），下方会实时呈现<strong>波形</strong>、<strong>宽带语谱图</strong>、<strong>基频 F0 曲线</strong>和<strong>共振峰 F1-F4</strong>。你可以在波形上拖拽选区、滚轮缩放时间轴、点击任意位置试听，体验和 Praat 类似的声学分析工作流——但无需安装任何软件，音频不会离开你的浏览器。</p>
+</div>
+
+<div class="hint-tip">
+  <b>使用提示：</b>①点击「上传音频」选择 WAV/MP3/OGG 文件，或点击「🎙️ 开始录音」录制；②上方滑块可调整窗长/窗移/亮度/动态范围；③在波形图上<b>拖拽</b>可选中一段，点「▶ 播放选区」可只听这段；④滚轮缩放时间轴，按住 Shift+滚轮缩放幅度；⑤点击图层徽章可显隐 F0/共振峰/能量。
+</div>
+
+<!-- 控制条 -->
+<div class="controls">
+  <label class="drop-zone" id="dropZone">
+    📁 <b>点击或拖入音频</b>（WAV / MP3 / OGG / M4A）
+    <input type="file" id="fileInput" class="hidden-file" accept="audio/*,.wav,.mp3,.ogg,.m4a,.flac">
+  </label>
+
+  <button class="btn btn-rec" id="recBtn">🎙️ 开始录音</button>
+  <button class="btn btn-ghost" id="playBtn" disabled>▶ 播放</button>
+  <button class="btn btn-ghost" id="playSelBtn" disabled>▶ 播放选区</button>
+  <button class="btn btn-danger" id="stopBtn" disabled>■ 停止</button>
+
+  <div class="param-group">
+    <label>窗长</label>
+    <input type="range" id="winLen" min="128" max="2048" step="128" value="1024" aria-label="STFT 窗长">
+    <span class="param-val" id="winLenVal">1024</span>
+  </div>
+  <div class="param-group">
+    <label>窗移</label>
+    <input type="range" id="hopLen" min="64" max="512" step="32" value="256" aria-label="STFT 窗移">
+    <span class="param-val" id="hopLenVal">256</span>
+  </div>
+  <div class="param-group">
+    <label>亮度</label>
+    <input type="range" id="bright" min="-40" max="40" step="2" value="0" aria-label="语谱图亮度">
+    <span class="param-val" id="brightVal">0</span>
+  </div>
+  <div class="param-group">
+    <label>动态</label>
+    <input type="range" id="dynRange" min="30" max="90" step="5" value="60" aria-label="语谱图动态范围">
+    <span class="param-val" id="dynRangeVal">60</span>
+  </div>
+
+  <div class="layer-toggles">
+    <span class="toggle-chip on" data-layer="wave"><span class="dot"></span>波形</span>
+    <span class="toggle-chip on" data-layer="spec"><span class="dot"></span>语谱</span>
+    <span class="toggle-chip on" data-layer="f0"><span class="dot"></span>F0</span>
+    <span class="toggle-chip on" data-layer="formant"><span class="dot"></span>共振峰</span>
+    <span class="toggle-chip" data-layer="energy"><span class="dot"></span>能量</span>
+  </div>
+</div>
+
+<!-- 选中信息 -->
+<div class="selection-bar" id="selBar" style="display:none">
+  <span><span class="lbl">选区：</span><span class="val" id="selTime">--</span></span>
+  <span><span class="lbl">时长：</span><span class="val" id="selDur">--</span></span>
+  <span><span class="lbl">平均 F0：</span><span class="val" id="selF0">--</span></span>
+  <span><span class="lbl">平均 F1/F2：</span><span class="val" id="selFormant">--</span></span>
+  <span><span class="lbl">RMS 能量：</span><span class="val" id="selRMS">--</span></span>
+  <button class="btn btn-ghost" id="clearSel">× 清除选区</button>
+</div>
+
+<!-- 波形 -->
+<div class="viewer">
+  <h3>🌊 波形（Waveform） <span class="unit">横轴：时间 (s) · 纵轴：归一化振幅</span></h3>
+  <div class="canvas-wrap" id="waveWrap">
+    <canvas id="waveCanvas"></canvas>
+    <div class="play-cursor" id="waveCursor"></div>
+    <span class="axis-label axis-x">拖拽选段 · 点击定位</span>
+    <span class="axis-label axis-y">amplitude ∈ [-1, 1]</span>
+  </div>
+</div>
+
+<!-- 语谱图 -->
+<div class="viewer">
+  <h3>🎨 宽带语谱图（Spectrogram） <span class="unit">横轴：时间 · 纵轴：频率 (Hz，0 ~ 采样率/2)</span></h3>
+  <div class="canvas-wrap" id="specWrap">
+    <canvas id="specCanvas"></canvas>
+    <div class="play-cursor" id="specCursor"></div>
+    <span class="axis-label axis-x">暖色=能量强（元音共振峰可见为横向亮带）</span>
+    <span class="axis-label axis-y">freq (Hz)</span>
+  </div>
+  <div class="status-line" id="specStatus">
+    <span><b>窗函数：</b>Hann</span>
+    <span><b>FFT 点数：</b><span id="fftSizeVal">--</span></span>
+    <span><b>频率分辨率：</b><span id="freqResVal">--</span> Hz</span>
+    <span><b>时间分辨率：</b><span id="timeResVal">--</span> ms</span>
+  </div>
+</div>
+
+<!-- 基频 & 共振峰叠加图 -->
+<div class="viewer">
+  <h3>🎵 基频 F0 曲线 + 共振峰轨迹 <span class="unit">F0 蓝线 / F1-F4 橙点 / 单位 Hz</span></h3>
+  <div class="canvas-wrap" id="pitchWrap">
+    <canvas id="pitchCanvas"></canvas>
+    <div class="play-cursor" id="pitchCursor"></div>
+    <span class="axis-label axis-x">F0 反映声带振动频率；共振峰 F1/F2 决定元音音色</span>
+  </div>
+</div>
+
+<!-- 信息面板 -->
+<div class="info-grid" style="margin-bottom:1.5rem">
+  <div class="info-card">
+    <h4>📇 文件信息</h4>
+    <div class="kv"><span class="k">文件名</span><span class="v" id="infoName">—</span></div>
+    <div class="kv"><span class="k">时长</span><span class="v" id="infoDur">—</span></div>
+    <div class="kv"><span class="k">采样率</span><span class="v" id="infoSr">—</span></div>
+    <div class="kv"><span class="k">声道数</span><span class="v" id="infoCh">—</span></div>
+    <div class="kv"><span class="k">采样点数</span><span class="v" id="infoLen">—</span></div>
+  </div>
+  <div class="info-card">
+    <h4>🎯 全局声学指标</h4>
+    <div class="kv"><span class="k">平均基频 (F0)</span><span class="v" id="gF0">—</span></div>
+    <div class="kv"><span class="k">F0 范围 (min-max)</span><span class="v" id="gF0Range">—</span></div>
+    <div class="kv"><span class="k">平均 F1</span><span class="v" id="gF1">—</span></div>
+    <div class="kv"><span class="k">平均 F2</span><span class="v" id="gF2">—</span></div>
+    <div class="kv"><span class="k">RMS 能量均值</span><span class="v" id="gRMS">—</span></div>
+  </div>
+  <div class="info-card">
+    <h4>💡 快速判读</h4>
+    <div class="kv"><span class="k">性别倾向</span><span class="v" id="judgeGender">—</span></div>
+    <div class="kv"><span class="k">浊音占比</span><span class="v" id="judgeVoiced">—</span></div>
+    <div class="kv"><span class="k">最高共振峰</span><span class="v" id="judgeMaxFmt">—</span></div>
+    <div class="kv"><span class="k">建议发音人</span><span class="v" id="judgeSpeaker">—</span></div>
+    <div class="kv"><span class="k">Praat 风格说明</span><span class="v" style="font-size:.75rem;color:#6b7280;font-weight:400">在浏览器实时计算</span></div>
+  </div>
+</div>
+
+<!-- 页脚 -->
+<footer style="text-align:center;color:#9ca3af;font-size:.85rem;padding:2rem 0 3rem;border-top:1px solid #f3f4f6;margin-top:2rem">
+  <p>🎙️ Agent‑Speech · 语音实验室 — 纯前端声学分析工具 · 类 Praat Web 版</p>
+  <p style="margin-top:.4rem">音频仅在本地浏览器处理，<b>不会上传到任何服务器</b>。</p>
+  <p style="margin-top:.4rem">返回 <a href="index.html" style="color:var(--brand-700);text-decoration:underline">首页</a> · <a href="asr/" style="color:var(--brand-700);text-decoration:underline">ASR</a> · <a href="tts/" style="color:var(--brand-700);text-decoration:underline">TTS</a></p>
+</footer>
+
+</div>
+
+<script>
+/* ============================================================
+ *  语音实验室 · 核心逻辑（纯 JS + Canvas + Web Audio API）
+ *  模块：1) 文件加载/录音 2) 播放/选区 3) FFT 4) STFT/语谱图
+ *        5) YIN 基频 6) LPC 共振峰 7) RMS 能量 8) 绘图/交互
+ * ============================================================ */
+const LAB = (()=>{
+  // ---------- 状态 ----------
+  let audioCtx=null, audioBuffer=null, sourceNode=null;
+  let audioData=null;   // 单声道 Float32Array
+  let sr=44100, dur=0;
+  let fileName='—';
+
+  // 分析结果
+  let specImg=null;     // ImageData 语谱
+  let f0Arr=null;       // 每帧F0
+  let fmtArr=null;      // 每帧[F1,F2,F3,F4]
+  let rmsArr=null;      // 每帧RMS
+  let nFrames=0;
+
+  // 视图
+  let viewStart=0, viewEnd=0; // 秒
+  let selStart=-1, selEnd=-1; // 样本索引
+  let isDragging=false, dragStart=0;
+  let playing=false, playStart=0, playTimer=null;
+  let recStream=null, recNode=null, recChunks=null, mediaRecorder=null;
+  let layers={wave:true, spec:true, f0:true, formant:true, energy:false};
+
+  // 参数
+  const params={winLen:1024, hopLen:256, bright:0, dynRange:60};
+
+  // DOM
+  const $=id=>document.getElementById(id);
+  const waveCv=$('waveCanvas'), specCv=$('specCanvas'), pitchCv=$('pitchCanvas');
+  const waveW=$('waveWrap'), specW=$('specWrap'), pitchW=$('pitchWrap');
+  const waveCur=$('waveCursor'), specCur=$('specCursor'), pitchCur=$('pitchCursor');
+
+  // ---------- 工具 ----------
+  function hanning(n){const w=new Float32Array(n);for(let i=0;i<n;i++)w[i]=0.5*(1-Math.cos(2*Math.PI*i/(n-1)));return w;}
+  function nextPow2(n){let p=1;while(p<n)p<<=1;return p;}
+  function fmtTime(s){if(s<0)return '--';
+    const m=Math.floor(s/60), sec=(s-m*60).toFixed(3);
+    return (m>0?m+'m ':'')+sec+'s';}
+  function db(x){return 20*Math.log10(Math.max(x,1e-10));}
+
+  // ---------- FFT (Cooley-Tukey 基2迭代) ----------
+  function fft(re, im){
+    const n=re.length;
+    // bit reverse
+    for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;
+      if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}
+    for(let len=2;len<=n;len<<=1){
+      const ang=-2*Math.PI/len;
+      const wlr=Math.cos(ang), wli=Math.sin(ang);
+      for(let i=0;i<n;i+=len){let wr=1, wi=0;
+        for(let k=0;k<len/2;k++){
+          const ur=re[i+k], ui=im[i+k];
+          const vr=re[i+k+len/2]*wr - im[i+k+len/2]*wi;
+          const vi=re[i+k+len/2]*wi + im[i+k+len/2]*wr;
+          re[i+k]=ur+vr; im[i+k]=ui+vi;
+          re[i+k+len/2]=ur-vr; im[i+k+len/2]=ui-vi;
+          const nwr=wr*wlr - wi*wli; wi=wr*wli + wi*wlr; wr=nwr;
+        }}}
+  }
+
+  // ---------- YIN 基频检测 ----------
+  function yin(frame, sr, fmin=50, fmax=500, threshold=0.12){
+    const N=frame.length;
+    const bufLen=Math.floor(N/2);
+    const y=new Float32Array(bufLen);
+    // diff
+    for(let tau=0;tau<bufLen;tau++){for(let i=0;i<bufLen;i++){const d=frame[i]-frame[i+tau];y[tau]+=d*d;}}
+    // cummulative normalized mean (CMNDF)
+    let running=0; y[0]=1;
+    let minTau=Math.floor(sr/fmax), maxTau=Math.floor(sr/fmin);
+    let tauEst=-1;
+    for(let tau=1;tau<bufLen;tau++){
+      running += y[tau];
+      y[tau] = y[tau] * tau / running;
+      if(tau>minTau && tau<maxTau && y[tau]<threshold){
+        while(tau+1<bufLen && y[tau+1]<y[tau]) tau++;
+        tauEst=tau; break;
+      }
+    }
+    if(tauEst===-1){
+      // 找最小值
+      let mv=Infinity;
+      for(let tau=minTau;tau<Math.min(maxTau,bufLen);tau++)if(y[tau]<mv){mv=y[tau];tauEst=tau;}
+      if(mv>0.4) return 0; // 无声/清音
+    }
+    // 抛物线插值
+    let t=tauEst;
+    if(t>0 && t<bufLen-1){
+      const s0=y[t-1], s1=y[t], s2=y[t+1];
+      const d=(s2-s0)/(2*(2*s1-s2-s0));
+      t=t+d;
+    }
+    return sr/t;
+  }
+
+  // ---------- LPC + 求根 → 共振峰 ----------
+  function autocorr(x, ord){
+    const r=new Float32Array(ord+1);
+    for(let k=0;k<=ord;k++){for(let i=0;i<x.length-k;i++)r[k]+=x[i]*x[i+k];}
+    return r;
+  }
+  function levinson(r, ord){
+    const a=new Float32Array(ord+1); a[0]=1;
+    const e=new Float32Array(ord+1); e[0]=r[0];
+    for(let i=1;i<=ord;i++){
+      let kk=r[i];
+      for(let j=1;j<i;j++)kk+=a[j]*r[i-j];
+      kk/=-e[i-1];
+      a[i]=kk;
+      for(let j=1;j<i;j++){const tmp=a[j]+kk*a[i-j];a[i-j]=a[i-j]+kk*a[j];a[j]=tmp;}
+      e[i]=e[i-1]*(1-kk*kk);
+    }
+    return a;
+  }
+  function solveRootsPoly(poly){
+    // 用伴随矩阵幂法求最大根？这里使用解析+迭代的简化方法：
+    // 先构造伴随矩阵，再对所有根做 QR 分解太复杂。
+    // 采用：用 Durand-Kerner 方法求所有根（order次多项式）。
+    const n=poly.length-1;
+    const roots=[];
+    for(let i=0;i<n;i++)roots.push({re:Math.cos(2*Math.PI*i/n), im:Math.sin(2*Math.PI*i/n)});
+    const maxIter=80;
+    for(let it=0;it<maxIter;it++){
+      let maxD=0;
+      for(let i=0;i<n;i++){
+        let r=roots[i], dr={re:1,im:0};
+        // poly(r)
+        let pv={re:poly[0],im:0};
+        for(let k=1;k<=n;k++){
+          const nre=pv.re*r.re - pv.im*r.im + poly[k];
+          const nim=pv.re*r.im + pv.im*r.re;
+          pv={re:nre,im:nim};
+        }
+        // ∏(r-rj)
+        for(let j=0;j<n;j++)if(j!==i){
+          const drr={re:r.re-roots[j].re, im:r.im-roots[j].im};
+          const nre=dr.re*drr.re - dr.im*drr.im;
+          const nim=dr.re*drr.im + dr.im*drr.re;
+          dr={re:nre,im:nim};
+        }
+        // delta = pv / dr
+        const denom=dr.re*dr.re + dr.im*dr.im;
+        if(denom<1e-12)continue;
+        const dre=(pv.re*dr.re+pv.im*dr.im)/denom;
+        const dim=(pv.im*dr.re-pv.re*dr.im)/denom;
+        roots[i]={re:r.re-dre, im:r.im-dim};
+        maxD=Math.max(maxD, Math.hypot(dre,dim));
+      }
+      if(maxD<1e-6)break;
+    }
+    return roots;
+  }
+  function lpcFormants(frame, sr, nFormant=4){
+    // pre-emphasis
+    const pre=new Float32Array(frame.length);
+    pre[0]=frame[0];
+    for(let i=1;i<frame.length;i++)pre[i]=frame[i]-0.97*frame[i-1];
+    // window
+    const w=hanning(pre.length);
+    const win=new Float32Array(pre.length);
+    for(let i=0;i<pre.length;i++)win[i]=pre[i]*w[i];
+    // autocorr + levinson
+    const lpcOrder=Math.floor(2+sr/1000); // ~10-12 for 10k
+    const r=autocorr(win, Math.min(lpcOrder, 20));
+    const a=levinson(r, r.length-1);
+    // 找根
+    const roots=solveRootsPoly(a);
+    const fmts=[];
+    for(const rt of roots){
+      const mag=Math.hypot(rt.re,rt.im);
+      if(mag>=0.98&&mag<=1.02 && rt.im>0.001){ // 单位圆上且共轭上半
+        const ang=Math.atan2(rt.im,rt.re);
+        const f=ang*sr/(2*Math.PI);
+        if(f>60&&f<sr/2-100) fmts.push(f);
+      }
+    }
+    fmts.sort((a,b)=>a-b);
+    while(fmts.length<nFormant)fmts.push(0);
+    return fmts.slice(0,nFormant);
+  }
+
+  // ---------- 预处理：重采样到单声道 ----------
+  function getMono(buf){
+    const n=buf.length;
+    if(buf.numberOfChannels===1)return buf.getChannelData(0).slice();
+    const m=new Float32Array(n);
+    const l=buf.getChannelData(0), r=buf.getChannelData(1);
+    for(let i=0;i<n;i++)m[i]=(l[i]+r[i])*0.5;
+    return m;
+  }
+
+  // ---------- 核心分析 ----------
+  function analyze(){
+    if(!audioData)return;
+    const N=audioData.length;
+    dur=N/sr;
+    const winLen=params.winLen, hop=params.hopLen;
+    const fftSize=nextPow2(winLen*2);
+    const w=hanning(winLen);
+    nFrames=Math.max(1, Math.floor((N-winLen)/hop)+1);
+
+    // 重置画布尺寸
+    setupCanvases();
+
+    // 计算语谱
+    const specW_px=specCv.width, specH_px=specCv.height;
+    const spec=new Float32Array(nFrames*(fftSize/2));
+    const re=new Float32Array(fftSize), im=new Float32Array(fftSize);
+    f0Arr=new Float32Array(nFrames);
+    fmtArr=new Array(nFrames);
+    rmsArr=new Float32Array(nFrames);
+
+    let maxMag=-Infinity;
+    for(let f=0;f<nFrames;f++){
+      const start=f*hop;
+      // FFT
+      re.fill(0); im.fill(0);
+      let energy=0;
+      for(let i=0;i<winLen;i++){const v=audioData[start+i]*w[i];re[i]=v;energy+=v*v;}
+      rmsArr[f]=Math.sqrt(energy/winLen);
+      fft(re,im);
+      for(let k=0;k<fftSize/2;k++){
+        const m=Math.hypot(re[k],im[k]);
+        const mdb=db(m);
+        spec[f*(fftSize/2)+k]=mdb;
+        if(mdb>maxMag)maxMag=mdb;
+      }
+      // YIN（用 2*winLen 窗口，边界保护）
+      const yinStart=Math.max(0, Math.min(start-winLen/4, N-winLen*2));
+      const yf=new Float32Array(Math.min(winLen*2, N-yinStart));
+      for(let i=0;i<yf.length;i++)yf[i]=audioData[yinStart+i];
+      f0Arr[f]=yin(yf, sr);
+      // LPC 共振峰
+      const lpcFrame=new Float32Array(winLen*2);
+      const lpcStart=Math.max(0,start-winLen/2);
+      const lpcN=Math.min(winLen*2, N-lpcStart);
+      for(let i=0;i<lpcN;i++)lpcFrame[i]=audioData[lpcStart+i];
+      fmtArr[f]=lpcFormants(lpcFrame, sr);
+    }
+
+    // 生成语谱图 ImageData：逐列绘制，热色映射 viridis/inferno 简化暖色系
+    const img=specCv.getContext('2d').createImageData(specW_px, specH_px);
+    const bright=params.bright, dyn=params.dynRange;
+    const nyq=sr/2;
+    for(let px=0;px<specW_px;px++){
+      const fidx=Math.floor(px/specW_px*nFrames);
+      for(let py=0;py<specH_px;py++){
+        // 频率：顶部=nyq，底部=0（镜像，绘图时再翻）
+        const k=Math.floor((1-py/specH_px)*(fftSize/2));
+        const v=spec[fidx*(fftSize/2)+k];
+        let norm=(v-maxMag+bright+dyn)/dyn;
+        norm=Math.max(0,Math.min(1,norm));
+        // 暖色映射：黑→紫→红→橙→黄→白
+        let r,g,b;
+        const t=norm;
+        if(t<0.25){const u=t/0.25;r=10+u*60;g=5;b=30+u*70;}
+        else if(t<0.5){const u=(t-0.25)/0.25;r=70+u*150;g=10+u*30;b=100-u*80;}
+        else if(t<0.75){const u=(t-0.5)/0.25;r=220+u*30;g=40+u*120;b=20;}
+        else{const u=(t-0.75)/0.25;r=250;g=160+u*90;b=20+u*200;}
+        const o=(py*specW_px+px)*4;
+        img.data[o]=r;img.data[o+1]=g;img.data[o+2]=b;img.data[o+3]=255;
+      }
+    }
+    specImg=img;
+
+    // 更新信息
+    updateInfo();
+    drawAll();
+  }
+
+  // ---------- 绘图 ----------
+  function setupCanvases(){
+    [['wave',waveCv,waveW],['spec',specCv,specW],['pitch',pitchCv,pitchW]].forEach(([_,cv,wrap])=>{
+      const dpr=window.devicePixelRatio||1;
+      const w=wrap.clientWidth;
+      const h=(_==='wave')?180:(_==='spec')?360:240;
+      cv.width=w*dpr; cv.height=h*dpr;
+      cv.style.width=w+'px'; cv.style.height=h+'px';
+      cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+    });
+  }
+
+  function xToTime(x){return viewStart + x/waveCv.clientWidth*(viewEnd-viewStart);}
+  function timeToX(t){return (t-viewStart)/(viewEnd-viewStart)*waveCv.clientWidth;}
+  function samToTime(s){return s/sr;}
+  function timeToSam(t){return Math.max(0,Math.min(audioData.length-1,Math.floor(t*sr)));}
+
+  function drawAll(){
+    if(!audioData)return;
+    drawWave();
+    drawSpec();
+    drawPitch();
+  }
+
+  function drawWave(){
+    const ctx=waveCv.getContext('2d');
+    const w=waveCv.clientWidth,h=waveCv.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    // 背景网格
+    ctx.strokeStyle='#f3f4f6';ctx.lineWidth=1;
+    for(let y=0;y<=4;y++){const py=y/4*h;ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(w,py);ctx.stroke();}
+    // 中轴
+    ctx.strokeStyle='#e5e7eb';ctx.beginPath();ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);ctx.stroke();
+    // 时间轴刻度
+    ctx.fillStyle='#9ca3af';ctx.font='11px system-ui';
+    const span=viewEnd-viewStart;
+    const tickStep=niceStep(span, 8);
+    for(let t=Math.ceil(viewStart/tickStep)*tickStep;t<=viewEnd;t+=tickStep){
+      const x=timeToX(t);
+      ctx.strokeStyle='#f3f4f6';ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+      ctx.fillText(t.toFixed(tickStep<0.1?3:(tickStep<1?2:1))+'s', x+3, h-4);
+    }
+    // 波形
+    if(layers.wave){
+      ctx.strokeStyle=layers.spec?'#a78bfa':'#7c3aed';
+      ctx.lineWidth=1;
+      ctx.beginPath();
+      const iStart=timeToSam(viewStart), iEnd=timeToSam(viewEnd);
+      const visible=iEnd-iStart;
+      const step=Math.max(1,Math.floor(visible/w));
+      for(let x=0;x<w;x++){
+        const si=iStart+x*step;
+        let mn=1,mx=-1;
+        for(let k=0;k<step;k++){const v=audioData[si+k];if(v<mn)mn=v;if(v>mx)mx=v;}
+        const y1=h/2 - mx*h/2;
+        const y2=h/2 - mn*h/2;
+        ctx.moveTo(x+.5,y1);ctx.lineTo(x+.5,y2);
+      }
+      ctx.stroke();
+    }
+    // 选区
+    if(selStart>=0){
+      const x1=timeToX(samToTime(selStart)),x2=timeToX(samToTime(selEnd));
+      ctx.fillStyle='rgba(124,58,237,.10)';
+      ctx.fillRect(x1,0,x2-x1,h);
+      ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(x1,0);ctx.lineTo(x1,h);ctx.moveTo(x2,0);ctx.lineTo(x2,h);ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawSpec(){
+    const ctx=specCv.getContext('2d');
+    const w=specCv.clientWidth,h=specCv.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    if(specImg&&layers.spec){
+      // 横向映射 frame -> x
+      const tmp=document.createElement('canvas');
+      tmp.width=specImg.width;tmp.height=specImg.height;
+      tmp.getContext('2d').putImageData(specImg,0,0);
+      ctx.imageSmoothingEnabled=true;
+      const x1=timeToX(0), x2=timeToX(dur);
+      // 只画可见部分
+      ctx.drawImage(tmp, Math.floor(nFrames*viewStart/dur),0,Math.ceil(nFrames*(viewEnd-viewStart)/dur),specImg.height,
+                                  0,0,w,h);
+      // 频率刻度
+      ctx.fillStyle='rgba(255,255,255,.85)';ctx.font='11px system-ui';ctx.textAlign='right';
+      for(let f=0;f<=8;f++){
+        const freq=f*(sr/2/8);
+        const y=h - freq/(sr/2)*h;
+        ctx.fillText(Math.round(freq)+'Hz', w-6, y+4);
+        ctx.strokeStyle='rgba(255,255,255,.15)';ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+      }
+      ctx.textAlign='left';
+    }else{
+      ctx.fillStyle='#d1d5db';ctx.font='14px system-ui';
+      ctx.fillText('语谱图层已关闭', 16, 24);
+    }
+  }
+
+  function drawPitch(){
+    const ctx=pitchCv.getContext('2d');
+    const w=pitchCv.clientWidth,h=pitchCv.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    // 背景
+    ctx.fillStyle='#fafbff';ctx.fillRect(0,0,w,h);
+    // 网格
+    ctx.strokeStyle='#f3f4f6';
+    const fmax=Math.min(sr/2, 5000);
+    for(let f=0;f<=5;f++){const y=h-f/5*h;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+      ctx.fillStyle='#9ca3af';ctx.font='11px system-ui';ctx.fillText(Math.round(f/5*fmax)+'Hz',6,y-4);}
+
+    if(!f0Arr)return;
+    // 时间轴
+    const span=viewEnd-viewStart;
+    const tickStep=niceStep(span, 8);
+    ctx.fillStyle='#9ca3af';
+    for(let t=Math.ceil(viewStart/tickStep)*tickStep;t<=viewEnd;t+=tickStep){
+      const x=timeToX(t);
+      ctx.strokeStyle='#f3f4f6';ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+      ctx.fillText(t.toFixed(tickStep<0.1?3:(tickStep<1?2:1))+'s', x+3, h-4);
+    }
+
+    const yOf=f=> h - f/fmax*h;
+    // 能量
+    if(layers.energy && rmsArr){
+      ctx.fillStyle='rgba(16,185,129,.15)';
+      ctx.beginPath();ctx.moveTo(0,h);
+      let maxE=0; for(const e of rmsArr)if(e>maxE)maxE=e; maxE=Math.max(maxE,0.01);
+      for(let x=0;x<w;x++){
+        const fi=Math.floor((viewStart + x/w*span)*sr/params.hopLen);
+        const e=fi>=0&&fi<nFrames?rmsArr[fi]/maxE:0;
+        ctx.lineTo(x, h-e*h*0.3);
+      }
+      ctx.lineTo(w,h);ctx.closePath();ctx.fill();
+    }
+    // 共振峰
+    if(layers.formant){
+      const colors=['#f97316','#f59e0b','#eab308','#facc15'];
+      for(let fn=0;fn<4;fn++){
+        ctx.fillStyle=colors[fn];
+        for(let x=0;x<w;x++){
+          const fi=Math.floor((viewStart + x/w*span)*sr/params.hopLen);
+          if(fi<0||fi>=nFrames)continue;
+          const v=fmtArr[fi][fn];
+          if(v<=0||v>fmax)continue;
+          ctx.beginPath();ctx.arc(x, yOf(v), 2, 0, Math.PI*2);ctx.fill();
+        }
+      }
+    }
+    // F0 曲线
+    if(layers.f0){
+      ctx.strokeStyle='#2563eb';ctx.lineWidth=2;ctx.beginPath();
+      let started=false;
+      for(let x=0;x<w;x++){
+        const fi=Math.floor((viewStart + x/w*span)*sr/params.hopLen);
+        if(fi<0||fi>=nFrames)continue;
+        const v=f0Arr[fi];
+        if(v<=0){started=false;continue;}
+        const y=yOf(v);
+        if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    // 选区
+    if(selStart>=0){
+      const x1=timeToX(samToTime(selStart)),x2=timeToX(samToTime(selEnd));
+      ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(x1,0);ctx.lineTo(x1,h);ctx.moveTo(x2,0);ctx.lineTo(x2,h);ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function niceStep(span, target){
+    const raw=span/target;
+    const mag=Math.pow(10,Math.floor(Math.log10(raw)));
+    const n=raw/mag;
+    let step;
+    if(n<1.5)step=1;else if(n<3)step=2;else if(n<7)step=5;else step=10;
+    return step*mag;
+  }
+
+  // ---------- 文件/录音 ----------
+  function loadFile(file){
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const reader=new FileReader();
+    reader.onload=e=>{
+      audioCtx.decodeAudioData(e.target.result, buf=>{
+        audioBuffer=buf; sr=buf.sampleRate;
+        audioData=getMono(buf);
+        dur=audioData.length/sr;
+        viewStart=0; viewEnd=dur;
+        selStart=selEnd=-1;
+        fileName=file.name;
+        $('infoName').textContent=file.name;
+        $('playBtn').disabled=false;
+        analyze();
+      }, err=>alert('音频解码失败：'+err.message));
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  async function startRecord(){
+    try{
+      if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      recStream=await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRecorder=new MediaRecorder(recStream);
+      recChunks=[];
+      mediaRecorder.ondataavailable=ev=>{if(ev.data.size>0)recChunks.push(ev.data);};
+      mediaRecorder.onstop=()=>{
+        const blob=new Blob(recChunks,{type:'audio/webm'});
+        const f=new File([blob], 'recording-'+Date.now()+'.webm',{type:'audio/webm'});
+        loadFile(f);
+        recStream.getTracks().forEach(t=>t.stop());
+      };
+      mediaRecorder.start();
+      $('recBtn').textContent='⏹ 停止录音';
+      $('recBtn').classList.add('recording');
+    }catch(err){alert('无法访问麦克风：'+err.message);}
+  }
+  function stopRecord(){
+    if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();
+    $('recBtn').textContent='🎙️ 开始录音';
+    $('recBtn').classList.remove('recording');
+  }
+
+  // ---------- 播放 ----------
+  function playRange(startSam, endSam){
+    stopPlay();
+    if(!audioBuffer)return;
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    sourceNode=audioCtx.createBufferSource();
+    sourceNode.buffer=audioBuffer;
+    sourceNode.connect(audioCtx.destination);
+    const startT=startSam/sr, endT=endSam/sr;
+    const offset=startT;
+    const dura=endT-startT;
+    sourceNode.start(0,offset,dura);
+    playing=true; playStart=performance.now()/1000 - startT;
+    $('stopBtn').disabled=false;
+    $('playBtn').textContent='⏸ 播放中';
+    updateCursor();
+    playTimer=setInterval(updateCursor, 30);
+    sourceNode.onended=()=>{stopPlay();};
+  }
+  function stopPlay(){
+    if(sourceNode){try{sourceNode.stop();}catch(e){}sourceNode.disconnect();sourceNode=null;}
+    if(playTimer){clearInterval(playTimer);playTimer=null;}
+    playing=false;
+    waveCur.style.display='none';specCur.style.display='none';pitchCur.style.display='none';
+    $('stopBtn').disabled=true;
+    $('playBtn').textContent='▶ 播放';
+  }
+  function updateCursor(){
+    if(!playing)return;
+    const t=performance.now()/1000 - playStart;
+    if(t>=viewEnd)return;
+    if(t>=viewStart){
+      const x=timeToX(t);
+      [waveCur,specCur,pitchCur].forEach(c=>{c.style.display='block';c.style.left=x+'px';});
+    }
+  }
+
+  // ---------- 选区 ----------
+  function updateSelInfo(){
+    const bar=$('selBar');
+    if(selStart<0||selEnd<selEnd<0||selStart>=selEnd){bar.style.display='none';$('playSelBtn').disabled=true;return;}
+    bar.style.display='flex';
+    $('playSelBtn').disabled=false;
+    const s=selStart/sr, e=selEnd/sr;
+    $('selTime').textContent=s.toFixed(3)+' s → '+e.toFixed(3)+' s';
+    $('selDur').textContent=(e-s).toFixed(3)+' s';
+    // 选区统计
+    const fiS=Math.floor(s*sr/params.hopLen), fiE=Math.floor(e*sr/params.hopLen);
+    let n=0,f0sum=0,f1s=0,f2s=0,rms=0,nv=0;
+    for(let fi=fiS;fi<Math.min(fiE,nFrames);fi++){
+      if(f0Arr[fi]>0){f0sum+=f0Arr[fi];n++;}
+      if(fmtArr[fi][0]>0){f1s+=fmtArr[fi][0];f2s+=fmtArr[fi][1]||0;nv++;}
+      rms+=rmsArr[fi];
+    }
+    $('selF0').textContent=n>0?(f0sum/n).toFixed(1)+' Hz':'—';
+    $('selFormant').textContent=nv>0?((f1s/nv).toFixed(0)+'/'+(f2s/nv).toFixed(0)+' Hz'):'—';
+    $('selRMS').textContent=db(rms/Math.max(1,fiE-fiS)).toFixed(1)+' dB';
+  }
+
+  function updateInfo(){
+    $('infoDur').textContent=dur.toFixed(3)+' s';
+    $('infoSr').textContent=sr+' Hz';
+    $('infoCh').textContent=audioBuffer.numberOfChannels+' ch';
+    $('infoLen').textContent=audioData.length.toLocaleString();
+    const fftSize=nextPow2(params.winLen*2);
+    $('fftSizeVal').textContent=fftSize;
+    $('freqResVal').textContent=(sr/fftSize).toFixed(2);
+    $('timeResVal').textContent=(params.hopLen/sr*1000).toFixed(2);
+    // 全局指标
+    let f0s=0,f0n=0,f0mn=Infinity,f0mx=-Infinity;
+    let f1s=0,f2s=0,fn=0;
+    let rms=0,vn=0;
+    for(let i=0;i<nFrames;i++){
+      if(f0Arr[i]>0){f0s+=f0Arr[i];f0n++;if(f0Arr[i]<f0mn)f0mn=f0Arr[i];if(f0Arr[i]>f0mx)f0mx=f0Arr[i];vn++;}
+      if(fmtArr[i][0]>0){f1s+=fmtArr[i][0];f2s+=fmtArr[i][1]||0;fn++;}
+      rms+=rmsArr[i];
+    }
+    const f0mean=f0n?f0s/f0n:0;
+    $('gF0').textContent=f0mean?f0mean.toFixed(1)+' Hz':'—';
+    $('gF0Range').textContent=(f0n?f0mn.toFixed(0)+' ~ '+f0mx.toFixed(0):'—');
+    $('gF1').textContent=fn?(f1s/fn).toFixed(0)+' Hz':'—';
+    $('gF2').textContent=fn?(f2s/fn).toFixed(0)+' Hz':'—';
+    $('gRMS').textContent=db(rms/nFrames).toFixed(1)+' dB';
+    // 判读
+    let gender='—';
+    if(f0mean>0){if(f0mean<160)gender='男低音/男声（F0≈'+f0mean.toFixed(0)+'Hz）';
+      else if(f0mean<220)gender='男声偏高/女声偏低（F0≈'+f0mean.toFixed(0)+'Hz）';
+      else gender='女声/童声（F0≈'+f0mean.toFixed(0)+'Hz）';}
+    $('judgeGender').textContent=gender;
+    $('judgeVoiced').textContent=(vn/nFrames*100).toFixed(1)+' %';
+    let mxF=0; for(let i=0;i<nFrames;i++)for(const f of fmtArr[i])if(f>mxF)mxF=f;
+    $('judgeMaxFmt').textContent=mxF?mxF.toFixed(0)+' Hz':'—';
+    $('judgeSpeaker').textContent=fn?((f2s/fn)>1500?'元音偏前（如 /i/ /e/ 类），建议观察 F2 走向':'元音偏后（如 /u/ /o/ 类），F2 偏低'):'—';
+  }
+
+  // ---------- 交互 ----------
+  function bindEvents(){
+    // 文件
+    const fi=$('fileInput'), dz=$('dropZone');
+    fi.addEventListener('change',e=>{if(e.target.files[0])loadFile(e.target.files[0]);});
+    dz.addEventListener('click',()=>fi.click());
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');
+      const f=e.dataTransfer.files[0];if(f)loadFile(f);});
+
+    // 录音
+    $('recBtn').addEventListener('click',()=>{
+      if($('recBtn').classList.contains('recording'))stopRecord();else startRecord();
+    });
+
+    // 播放
+    $('playBtn').addEventListener('click',()=>{
+      if(playing)stopPlay();
+      else{
+        if(selStart>=0)playRange(selStart,selEnd);
+        else playRange(timeToSam(viewStart), timeToSam(viewEnd));
+      }
+    });
+    $('playSelBtn').addEventListener('click',()=>{if(selStart>=0)playRange(selStart,selEnd);});
+    $('stopBtn').addEventListener('click',stopPlay);
+    $('clearSel').addEventListener('click',()=>{selStart=selEnd=-1;updateSelInfo();drawAll();});
+
+    // 参数
+    const bindParam=(id,key,fmt)=>{
+      const el=$(id), v=$(id+'Val');
+      el.addEventListener('input',()=>{params[key]=parseInt(el.value);v.textContent=fmt?fmt(params[key]):params[key];
+        if(audioData)analyze();});
+    };
+    bindParam('winLen','winLen');bindParam('hopLen','hopLen');bindParam('bright','bright');bindParam('dynRange','dynRange');
+
+    // 图层
+    document.querySelectorAll('.toggle-chip').forEach(chip=>{
+      chip.addEventListener('click',()=>{
+        const l=chip.dataset.layer;
+        layers[l]=!layers[l];chip.classList.toggle('on');drawAll();
+      });
+    });
+
+    // 波形上拖拽/点击选区
+    function onPointerDown(e){
+      if(!audioData)return;
+      const rect=waveCv.getBoundingClientRect();
+      const x=e.clientX-rect.left;
+      isDragging=true;
+      dragStart=x;
+      selStart=selEnd=timeToSam(xToTime(x));
+      waveCv.setPointerCapture(e.pointerId);
+    }
+    function onPointerMove(e){
+      if(!isDragging||!audioData)return;
+      const rect=waveCv.getBoundingClientRect();
+      const x=e.clientX-rect.left;
+      selEnd=timeToSam(xToTime(x));
+      if(selEnd<selStart)[selStart,selEnd]=[selEnd,selStart];
+      drawAll();
+    }
+    function onPointerUp(e){
+      if(!isDragging)return;
+      isDragging=false;
+      waveCv.releasePointerCapture(e.pointerId);
+      if(Math.abs(selEnd-selStart)<sr*0.01){selStart=selEnd=-1;} // 点击没拖，当作定位
+      else{
+        // 若播放中停止，更新"播放选区"按钮
+      }
+      updateSelInfo();
+      drawAll();
+    }
+    waveCv.addEventListener('pointerdown',onPointerDown);
+    waveCv.addEventListener('pointermove',onPointerMove);
+    waveCv.addEventListener('pointerup',onPointerUp);
+    waveCv.addEventListener('pointercancel',onPointerUp);
+
+    // 双击重置视图
+    waveCv.addEventListener('dblclick',()=>{viewStart=0;viewEnd=dur;drawAll();});
+
+    // 滚轮缩放（以鼠标位置为中心）
+    function onWheel(e){
+      if(!audioData)return;
+      e.preventDefault();
+      const rect=waveCv.getBoundingClientRect();
+      const x=e.clientX-rect.left;
+      const t=xToTime(x);
+      const factor=e.deltaY>0?1.2:1/1.2;
+      let ns=(t-viewStart)*factor, ne=(viewEnd-t)*factor;
+      viewStart=Math.max(0,t-ns);
+      viewEnd=Math.min(dur,t+ne);
+      if(viewEnd-viewStart<0.05){viewEnd=viewStart+0.05;}
+      drawAll();
+    }
+    waveCv.addEventListener('wheel',onWheel,{passive:false});
+    specCv.addEventListener('wheel',onWheel,{passive:false});
+    pitchCv.addEventListener('wheel',onWheel,{passive:false});
+
+    // 点击语谱/基频图定位
+    function onSingleClick(e){
+      if(!audioData)return;
+      const rect=e.currentTarget.getBoundingClientRect();
+      const x=e.clientX-rect.left;
+      const t=xToTime(x);
+      // 单击1秒试听
+      playRange(timeToSam(t),timeToSam(Math.min(dur,t+1)));
+    }
+    specCv.addEventListener('click',onSingleClick);
+    pitchCv.addEventListener('click',onSingleClick);
+
+    // resize
+    window.addEventListener('resize',()=>{setupCanvases();drawAll();});
+
+    // 初始化画布尺寸
+    setupCanvases();
+  }
+
+  return {init:bindEvents};
+})();
+
+window.addEventListener('DOMContentLoaded',()=>{LAB.init();});
+</script>
+</body>
+</html>
