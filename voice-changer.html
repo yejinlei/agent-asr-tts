@@ -325,8 +325,17 @@
   const PS_FRAME=2048, PS_HOP=512;
 
   function ensureAC(){
-    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
-    if(AC.state==='suspended')AC.resume();
+    // 重要：只有在用户手势触发的流程里（btnMic/btnPlay/btnUpload 回调中）才会创建 AC，
+    // 避免在页面加载时偷偷创建导致被 Chrome autoplay policy 拒绝、state=suspended。
+    if(!AC){
+      AC=new (window.AudioContext||window.webkitAudioContext)();
+    }
+    if(AC.state==='suspended'||AC.state==='interrupted'){
+      // resume 是 Promise；调用方在 click 里 await，失败再抛
+      const p=AC.resume();
+      if(p&&typeof p.catch==='function')p.catch(()=>{});
+    }
+    return AC;
   }
 
   function buildFXGraph(){
@@ -520,7 +529,8 @@
     if(srcNode){try{srcNode.stop();}catch(e){}srcNode=null;}
     if(rafId){cancelAnimationFrame(rafId);rafId=null;}
     btnStop.disabled=true;btnStop.classList.add('btn-disabled');
-    btnMic.disabled=false;btnPlay.disabled=!audioBuf;
+    btnMic.disabled=false;btnMic.classList.remove('btn-disabled');
+    btnPlay.disabled=!audioBuf;
     if(audioBuf)btnPlay.classList.remove('btn-disabled');
     setStatus(audioBuf?'已加载文件，点试听或开麦':'选择上传文件或开启麦克风');
     // clear canvases
@@ -531,22 +541,57 @@
   }
 
   // ---- Mic mode ----
+  // 修复：在用户手势内显式确保 AC 已激活；捕获麦克风失败并给出清晰提示。
   btnMic.addEventListener('click',async()=>{
+    let stream=null;
     try{
+      setStatus('⏳ 正在请求麦克风权限…');
+      // 显式请求麦克风（浏览器必须在用户手势内）；允许系统默认设备
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+        throw new Error('当前浏览器不支持麦克风访问（请使用 HTTPS 或现代浏览器）');
+      }
+      stream=await navigator.mediaDevices.getUserMedia({
+        audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},
+        video:false
+      });
+      setStatus('⏳ 初始化音频上下文（首次需用户手势）…');
       ensureAC();
+      // 若 AC 仍是 suspended，再次 resume（部分移动浏览器需要）
+      if(AC.state==='suspended'||AC.state==='interrupted'){
+        try{await AC.resume();}catch(e){}
+      }
+      if(AC.state!=='running'){
+        throw new Error('音频上下文未能启动（state='+AC.state+'），请点击页面任意位置后重试');
+      }
       buildFXGraph();rebuildFX();
-      micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      micStream=stream;
       micSrc=AC.createMediaStreamSource(micStream);
       makeProcessor();
-      // reset pitch shifter state
       psDelay=null;
       connectChain(micSrc,'speak');
-      btnMic.disabled=true;btnStop.disabled=false;btnStop.classList.remove('btn-disabled');
+      btnMic.disabled=true;btnMic.classList.add('btn-disabled');
+      btnStop.disabled=false;btnStop.classList.remove('btn-disabled');
       btnPlay.disabled=true;btnPlay.classList.add('btn-disabled');
-      setStatus('🎙️ 实时变声进行中，说话即听','on');
+      setStatus('🎙️ 实时变声进行中，说话即听（若无声请检查系统输出/麦克风授权）','on');
       drawWave();
     }catch(err){
-      console.error(err);setStatus('❌ 麦克风访问失败: '+err.message,'err');
+      console.error('[voice-changer] mic open failed:',err);
+      if(stream){try{stream.getTracks().forEach(t=>t.stop());}catch(e){}}
+      let msg=err&&err.message?err.message:String(err);
+      // 把常见英文错误翻译成友好中文提示
+      if(/Requested device not found|NotFoundError|no audio/i.test(msg)){
+        msg='未检测到可用麦克风设备，请确认已插入/启用麦克风';
+      }else if(/NotAllowedError|Permission denied|Permission dismissed/i.test(msg)){
+        msg='麦克风权限被拒绝，请点击地址栏左侧🔒图标允许麦克风后重试';
+      }else if(/NotReadableError|Could not start audio source/i.test(msg)){
+        msg='麦克风被其他程序占用，请关闭其他录音软件后重试';
+      }else if(/HTTPS|secure/i.test(msg)){
+        msg='麦克风访问需要 HTTPS 或 localhost 环境，请通过 https:// 访问本站';
+      }else if(/suspended|state=/i.test(msg)){
+        msg=msg+'（再次点击按钮一般可解决）';
+      }
+      btnMic.disabled=false;btnMic.classList.remove('btn-disabled');
+      setStatus('❌ 麦克风开启失败：'+msg,'err');
     }
   });
 
