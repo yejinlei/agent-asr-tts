@@ -36,7 +36,20 @@
   .principle-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.8rem}
   .principle-item{background:#faf5ff;border-radius:.5rem;padding:.8rem;border-left:3px solid #a78bfa}
   .principle-item b{color:#7c3aed}
-  @media(max-width:680px){.principle-grid{grid-template-columns:1fr}.slider-row{grid-template-columns:110px 1fr 60px}}
+  .fb-tip{display:flex;align-items:flex-start;gap:.7rem;background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #f97316;border-radius:.55rem;padding:.7rem .9rem;margin:.8rem 0;font-size:.86rem;color:#7c2d12;line-height:1.55}
+.fb-tip-icon{font-size:1.3rem;line-height:1;margin-top:.05rem;flex-shrink:0}
+.fb-tip-body{flex:1}.fb-tip-body b{color:#c2410c}
+.fb-tip-close{background:transparent;border:none;font-size:1.3rem;color:#9a3412;cursor:pointer;line-height:1;padding:.1rem .3rem;border-radius:.3rem}
+.fb-tip-close:hover{background:#fed7aa;color:#7c2d12}
+.mon-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:.6rem;padding:.6rem .9rem;margin:.5rem 0 .9rem}
+.mon-label{font-size:.85rem;color:#475569;margin-right:.4rem}
+.mon-btn{padding:.45rem .8rem;border:1px solid #cbd5e1;background:#fff;border-radius:.5rem;cursor:pointer;font-size:.85rem;font-family:inherit;transition:.15s;margin-right:.3rem}
+.mon-btn:hover{border-color:#7c3aed;background:#f5f3ff}
+.mon-btn.active{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.mon-vol{display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#334155}
+.mon-vol input[type=range]{width:160px;accent-color:#7c3aed}
+.mon-vol .val{font-family:Monaco,monospace;font-size:.82rem;color:#7c3aed;min-width:48px;text-align:right}
+@media(max-width:680px){.principle-grid{grid-template-columns:1fr}.slider-row{grid-template-columns:110px 1fr 60px}.mon-vol input[type=range]{width:120px}.mon-btn{font-size:.8rem;padding:.4rem .55rem}}
 </style>
 </head>
 <body>
@@ -80,6 +93,29 @@
   <button id="btnPlay" class="btn btn-ghost btn-disabled" disabled>🔊 试听输出</button>
   <span id="status" class="status">选择上传文件或开启麦克风</span>
 </div>
+
+<div id="fbTip" class="fb-tip" role="alert" aria-live="polite">
+  <span class="fb-tip-icon">🎧</span>
+  <div class="fb-tip-body">
+    <b>防啸叫提示：</b>扬声器外放会让处理后的声音再次被麦克风拾到，形成"回声闭环"（俗称啸叫/互相干扰）。
+    <b>强烈建议戴耳机使用实时变声</b>；如必须外放，请切到「🔊 扬声器模式」并降低下方主音量。
+  </div>
+  <button id="fbTipClose" class="fb-tip-close" aria-label="关闭提示">×</button>
+</div>
+
+<div class="mon-row" role="group" aria-label="监听模式与音量">
+  <div class="mon-mode" role="radiogroup" aria-label="监听模式">
+    <span class="mon-label">监听模式：</span>
+    <button id="modeHeadphone" class="mon-btn active" role="radio" aria-checked="true" data-mode="hp">🎧 耳机（推荐，无回声）</button>
+    <button id="modeSpeaker" class="mon-btn" role="radio" aria-checked="false" data-mode="spk">🔊 扬声器（默认-12dB，开启AEC）</button>
+  </div>
+  <div class="mon-vol">
+    <label for="masterVol">主音量</label>
+    <input type="range" id="masterVol" min="-30" max="6" step="1" value="-6" aria-label="主音量">
+    <span class="val" id="masterVolVal">-6 dB</span>
+  </div>
+</div>
+
 
 <section>
 <div class="grid-2">
@@ -236,6 +272,7 @@
 <script src="audio-utils.js"></script>
 <script>
 (function(){
+  let listenMode='hp'; // hp=耳机（原声/低延迟）, spk=扬声器（开AEC/-12dB）
   const AU = window.AU;
   const $ = id => document.getElementById(id);
 
@@ -319,10 +356,17 @@
   let inAnalyser=null, outAnalyser=null;
   let srcNode=null, audioBuf=null; // file mode
   // FX chain nodes
-  let fxInput=null, fxOutput=null, hpNode=null, lsNode=null, hsNode=null, bpNode=null, lpNode=null, wetGain=null, outGain=null;
+  let fxInput=null, fxOutput=null, hpNode=null, lsNode=null, hsNode=null, bpNode=null, lpNode=null, wetGain=null, outGain=null, compNode=null, limiterNode=null;
   // pitch shift state (ring buffer)
   let psState={readPos:0, writeBuf:null, writePos:0, hop:512, buf:null};
   const PS_FRAME=2048, PS_HOP=512;
+
+  // tanh 软限幅曲线：k 越大越"硬"，k=4 听感上轻微过载同时硬削波保护
+  function makeTanhCurve(n,k){
+    const arr=new Float32Array(n); const k2=k||4;
+    for(let i=0;i<n;i++){const x=(i/(n-1))*2-1; arr[i]=Math.tanh(k2*x)/Math.tanh(k2);}
+    return arr;
+  }
 
   function ensureAC(){
     // 重要：只有在用户手势触发的流程里（btnMic/btnPlay/btnUpload 回调中）才会创建 AC，
@@ -345,7 +389,7 @@
       hsNode&&hsNode.disconnect();bpNode&&bpNode.disconnect();lpNode&&lpNode.disconnect();
       wetGain&&wetGain.disconnect();outGain&&outGain.disconnect();}catch(e){}
 
-    hpNode=AC.createBiquadFilter();hpNode.type='highpass';hpNode.frequency.value=80;
+    hpNode=AC.createBiquadFilter();hpNode.type='highpass';hpNode.frequency.value=120;
     lsNode=AC.createBiquadFilter();lsNode.type='lowshelf';lsNode.frequency.value=250;
     hsNode=AC.createBiquadFilter();hsNode.type='highshelf';hsNode.frequency.value=2500;
     // bp 常态用 allpass 旁路（不改变幅度），只有“电话音”预设才切成 bandpass；
@@ -353,6 +397,14 @@
     bpNode=AC.createBiquadFilter();bpNode.type='allpass';bpNode.frequency.value=1500;bpNode.Q.value=0.7;
     lpNode=AC.createBiquadFilter();lpNode.type='lowpass';lpNode.frequency.value=18000;
     wetGain=AC.createGain();
+    // 压缩器：阈值-18dB、比率4:1，压制瞬态避免反馈闭环自激
+    compNode=AC.createDynamicsCompressor();
+    compNode.threshold.value=-18; compNode.knee.value=12;
+    compNode.ratio.value=4; compNode.attack.value=0.01; compNode.release.value=0.12;
+    // WaveShaper tanh 软限幅：硬性阻止削波爆音、限制回声能量累积
+    limiterNode=AC.createWaveShaper();
+    limiterNode.curve=makeTanhCurve(4096,4);
+    limiterNode.oversample='2x';
     outGain=AC.createGain();outGain.gain.value=1;
 
     inAnalyser=AC.createAnalyser();inAnalyser.fftSize=2048;
@@ -377,7 +429,13 @@
     const e=params.emo||0;
     // +1激动+3dB, -1悲伤-2dB
     const emoDb=e>0?3*e:-2*Math.abs(e);
-    outGain.gain.value=Math.pow(10,emoDb/20);
+    // 模式默认增益：耳机 0dB（原声）、扬声器 -12dB（压低避免闭环放大）
+    const modeDb=listenMode==='spk'?-12:0;
+    // 主音量滑块（默认 -6dB，留 6dB 裕量防削波）
+    const mv=document.getElementById('masterVol');
+    const userDb=mv?parseFloat(mv.value):-6;
+    const totalDb=emoDb+modeDb+userDb;
+    if(outGain)outGain.gain.value=Math.pow(10,totalDb/20);
   }
 
   // ---- DSP: pitch shift via resample+OLA (frame by frame inside onaudioprocess) ----
@@ -507,7 +565,7 @@
     // 固定路由：hs → bp(allpass/bandpass) → lp(lowpass) → proc，
     // 由滤波器类型/参数决定效果，运行中切换预设无需重连。
     hsNode.connect(bpNode);bpNode.connect(lpNode);lpNode.connect(procNode);
-    procNode.connect(wetGain);wetGain.connect(outGain);
+    procNode.connect(wetGain);wetGain.connect(compNode);compNode.connect(limiterNode);limiterNode.connect(outGain);
     outGain.connect(outAnalyser);
     if(destMode==='speak')outGain.connect(AC.destination);
     // input tap
@@ -516,7 +574,7 @@
   function disconnectAll(){
     try{hpNode&&hpNode.disconnect();lsNode&&lsNode.disconnect();
       hsNode&&hsNode.disconnect();bpNode&&bpNode.disconnect();lpNode&&lpNode.disconnect();
-      procNode&&procNode.disconnect();wetGain&&wetGain.disconnect();outGain&&outGain.disconnect();
+      procNode&&procNode.disconnect();wetGain&&wetGain.disconnect();compNode&&compNode.disconnect();limiterNode&&limiterNode.disconnect();outGain&&outGain.disconnect();
       micSrc&&micSrc.disconnect();srcNode&&srcNode.disconnect();}catch(e){}
   }
 
@@ -542,6 +600,35 @@
 
   // ---- Mic mode ----
   // 修复：在用户手势内显式确保 AC 已激活；捕获麦克风失败并给出清晰提示。
+  // ---- 监听模式（耳机 / 扬声器）----
+  function applyMode(mode){
+    listenMode=mode;
+    const hp=document.getElementById('modeHeadphone'), spk=document.getElementById('modeSpeaker');
+    if(hp){hp.classList.toggle('active',mode==='hp');hp.setAttribute('aria-checked',mode==='hp'?'true':'false');}
+    if(spk){spk.classList.toggle('active',mode==='spk');spk.setAttribute('aria-checked',mode==='spk'?'true':'false');}
+    // 切换模式后重建 FX（因为要改默认增益），不重连音频图
+    if(typeof rebuildFX==='function')rebuildFX();
+  }
+  const btnHp=document.getElementById('modeHeadphone'), btnSpk=document.getElementById('modeSpeaker');
+  if(btnHp)btnHp.addEventListener('click',()=>applyMode('hp'));
+  if(btnSpk)btnSpk.addEventListener('click',()=>{applyMode('spk');});
+  applyMode('hp');
+
+  // 主音量滑块
+  const mvEl=document.getElementById('masterVol'), mvVal=document.getElementById('masterVolVal');
+  if(mvEl){
+    mvEl.addEventListener('input',()=>{
+      const v=parseFloat(mvEl.value);
+      if(mvVal)mvVal.textContent=(v>=0?'+':'')+v+' dB';
+      if(typeof rebuildFX==='function')rebuildFX();
+    });
+    mvEl.dispatchEvent(new Event('input'));
+  }
+
+  // 关闭防啸叫提示
+  const fbClose=document.getElementById('fbTipClose'), fbTip=document.getElementById('fbTip');
+  if(fbClose&&fbTip)fbClose.addEventListener('click',()=>{fbTip.style.display='none';});
+
   btnMic.addEventListener('click',async()=>{
     let stream=null;
     try{
@@ -550,8 +637,15 @@
       if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
         throw new Error('当前浏览器不支持麦克风访问（请使用 HTTPS 或现代浏览器）');
       }
+      // 耳机模式（默认）：关闭AEC/NS/AGC→原声低延迟变声；
+      // 扬声器模式：开启浏览器内建回声消除+降噪+自动增益，抑制扬声器→麦克风的闭环反馈
+      const useAEC = (listenMode==='spk');
       stream=await navigator.mediaDevices.getUserMedia({
-        audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},
+        audio:{
+          echoCancellation:useAEC,
+          noiseSuppression:useAEC,
+          autoGainControl:useAEC
+        },
         video:false
       });
       setStatus('⏳ 初始化音频上下文（首次需用户手势）…');
@@ -572,7 +666,8 @@
       btnMic.disabled=true;btnMic.classList.add('btn-disabled');
       btnStop.disabled=false;btnStop.classList.remove('btn-disabled');
       btnPlay.disabled=true;btnPlay.classList.add('btn-disabled');
-      setStatus('🎙️ 实时变声进行中，说话即听（若无声请检查系统输出/麦克风授权）','on');
+      const modeLabel=listenMode==='spk'?'🔊 扬声器模式（AEC已开/增益-12dB）':'🎧 耳机模式（原声/增益0dB，推荐）';
+      setStatus('🎙️ 实时变声进行中｜'+modeLabel+'｜如听到啸叫/回声请立即点停止或切到扬声器模式并戴耳机','on');
       drawWave();
     }catch(err){
       console.error('[voice-changer] mic open failed:',err);
