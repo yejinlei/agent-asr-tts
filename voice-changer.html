@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>声音变脸 · 实时变声 | agent-speech</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 <style>
   .preset-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.9rem}
@@ -97,7 +98,7 @@
   </div>
 
   <div class="slider-row">
-    <label>F0 移位</label>
+    <label for="f0shift">F0 移位</label>
     <input type="range" id="f0shift" min="-12" max="19" step="1" value="0">
     <span class="val" id="f0shiftVal">0 st</span>
   </div>
@@ -107,7 +108,7 @@
   </div>
 
   <div class="slider-row">
-    <label>共振峰尺度</label>
+    <label for="formant">共振峰尺度</label>
     <input type="range" id="formant" min="0.7" max="1.4" step="0.01" value="1.0">
     <span class="val" id="formantVal">1.00</span>
   </div>
@@ -117,7 +118,7 @@
   </div>
 
   <div class="slider-row">
-    <label>机器人感</label>
+    <label for="robot">机器人感</label>
     <input type="range" id="robot" min="0" max="100" step="1" value="0">
     <span class="val" id="robotVal">0%</span>
   </div>
@@ -127,7 +128,7 @@
   </div>
 
   <div class="slider-row">
-    <label>噪声 / 气声</label>
+    <label for="noise">噪声 / 气声</label>
     <input type="range" id="noise" min="0" max="1" step="0.01" value="0">
     <span class="val" id="noiseVal">0.00</span>
   </div>
@@ -143,7 +144,7 @@
     <button class="emo-btn exc" data-emo="1">😤 激动</button>
   </div>
   <div class="slider-row">
-    <label>情绪强度</label>
+    <label for="emo">情绪强度</label>
     <input type="range" id="emo" min="-1" max="1" step="0.05" value="0">
     <span class="val" id="emoVal">0.00</span>
   </div>
@@ -253,9 +254,15 @@
 
   // ---- params ----
   let params = { f0:0, formant:1.0, robot:0, noise:0, emo:0 };
+  // 关键：curPreset 必须在 bindSlider 立即执行之前声明。否则 applyPresetUI() 访问它时
+  // 处于 TDZ(暂时性死区)，抛 ReferenceError 并中断整个 IIFE，导致后面所有按钮的事件监听器都不生效。
+  let curPreset=null;
   function bindSlider(el,valEl,fmt,key){
-    const update=()=>{valEl.textContent=fmt(el.value);params[key]=parseFloat(el.value);applyPresetUI()};
-    el.addEventListener('input',update);update();
+    const update=()=>{valEl.textContent=fmt(el.value);params[key]=parseFloat(el.value);};
+    el.addEventListener('input',update);
+    // 只有“用户手动拖动”(isTrusted) 才清除预设高亮；预设按钮派发的合成 input 事件不清除
+    el.addEventListener('input',e=>{if(e.isTrusted)applyPresetUI();});
+    update();
   }
   bindSlider(f0shift,f0shiftVal,v=>v+' st','f0');
   bindSlider(formant,formantVal,v=>(+v).toFixed(2),'formant');
@@ -272,7 +279,6 @@
     phone:      {f0:0,  formant:1.0, robot:0, noise:0.01, emo:0, bandpass:true},
     underwater: {f0:-4, formant:0.8, robot:0, noise:0.02, emo:0, underwater:true}
   };
-  let curPreset=null;
   function applyPresetUI(){
     // de-highlight all when user drags
     document.querySelectorAll('#presets button').forEach(b=>b.classList.remove('active'));
@@ -333,8 +339,10 @@
     hpNode=AC.createBiquadFilter();hpNode.type='highpass';hpNode.frequency.value=80;
     lsNode=AC.createBiquadFilter();lsNode.type='lowshelf';lsNode.frequency.value=250;
     hsNode=AC.createBiquadFilter();hsNode.type='highshelf';hsNode.frequency.value=2500;
-    bpNode=AC.createBiquadFilter();bpNode.type='bandpass';bpNode.frequency.value=1500;bpNode.Q.value=0.6;
-    lpNode=AC.createBiquadFilter();lpNode.type='lowpass';lpNode.frequency.value=800;
+    // bp 常态用 allpass 旁路（不改变幅度），只有“电话音”预设才切成 bandpass；
+    // 这样运行中切换预设无需重连路由即可实时生效。
+    bpNode=AC.createBiquadFilter();bpNode.type='allpass';bpNode.frequency.value=1500;bpNode.Q.value=0.7;
+    lpNode=AC.createBiquadFilter();lpNode.type='lowpass';lpNode.frequency.value=18000;
     wetGain=AC.createGain();
     outGain=AC.createGain();outGain.gain.value=1;
 
@@ -343,7 +351,8 @@
   }
 
   function rebuildFX(){
-    if(!AC)return;
+    // 节点必须齐备（上传文件后、尚未建立 FX 图时拖滑块会走到这里，需保护）
+    if(!AC||!lsNode||!hsNode||!bpNode||!lpNode||!outGain)return;
     const s=params.formant||1;
     // formant scale: s>1 提高频、降低频（短声道=女/童）
     // 公式：db = (s-1)*24（经验值，范围约 ±10dB）
@@ -352,7 +361,8 @@
     hsNode.gain.value=db;         // 高频段同向
     // 机器人/电话/水下 滤波
     const isBP=curPreset==='phone', isUW=curPreset==='underwater';
-    bpNode.frequency.value=isBP?1800:1500;bpNode.Q.value=isBP?0.9:0.6;
+    bpNode.type=isBP?'bandpass':'allpass';
+    bpNode.frequency.value=isBP?1800:1500;bpNode.Q.value=isBP?0.9:0.7;
     lpNode.frequency.value=isUW?800:(curPreset==='robot'?3500:18000);
     // emotion → gain
     const e=params.emo||0;
@@ -485,10 +495,9 @@
   function connectChain(src, destMode /*'speak'|'file'*/){
     src.connect(hpNode);
     hpNode.connect(lsNode);lsNode.connect(hsNode);
-    // route through bandpass/lp as needed
-    if(curPreset==='phone'){hsNode.connect(bpNode);bpNode.connect(procNode);}
-    else if(curPreset==='underwater'){hsNode.connect(lpNode);lpNode.connect(procNode);}
-    else{hsNode.connect(procNode);}
+    // 固定路由：hs → bp(allpass/bandpass) → lp(lowpass) → proc，
+    // 由滤波器类型/参数决定效果，运行中切换预设无需重连。
+    hsNode.connect(bpNode);bpNode.connect(lpNode);lpNode.connect(procNode);
     procNode.connect(wetGain);wetGain.connect(outGain);
     outGain.connect(outAnalyser);
     if(destMode==='speak')outGain.connect(AC.destination);
@@ -544,7 +553,7 @@
   btnStop.addEventListener('click',stopAll);
 
   // ---- File upload ----
-  btnUpload.addEventListener('click',()=>fileInput.click());
+  btnUpload.addEventListener('click',()=>{setStatus('📂 请在弹出的文件对话框中选择音频文件…');fileInput.click();});
   fileInput.addEventListener('change',async()=>{
     const f=fileInput.files[0];if(!f)return;
     try{
@@ -600,7 +609,7 @@
 
   // redraw FX when any slider changes (in case no active graph it's harmless)
   [f0shift,formant,robot,noise,emo].forEach(el=>{
-    el.addEventListener('change',()=>{rebuildFX();});
+    el.addEventListener('input',()=>{rebuildFX();});   // input 而非 change：拖动中即时生效
   });
 
   // initial canvases
